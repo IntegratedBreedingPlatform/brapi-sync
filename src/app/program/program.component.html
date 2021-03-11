@@ -4,13 +4,23 @@
 <div class="modal-body">
   <div class="row">
     <div class="col">
-      <h2>Source</h2>
+      <h2>Program</h2>
+      <form>
+        <div class="form-group row">
+          <label for="programs" class="col-auto col-form-label">Program</label>
+          <div class="col-5">
+            <select class="form-control" id="programs" name="destination" [(ngModel)]="context.programSelected">
+              <option *ngFor="let program of programs">{{program.name}}</option>
+            </select>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.programSelected">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>

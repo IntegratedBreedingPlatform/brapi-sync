@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { brapiCatch } from '../util/brapi-catch';
 import { Router } from '@angular/router';
+import { ContextService } from '../context.service';
 
 declare const BrAPI: any;
 
@@ -16,44 +17,37 @@ export class ConnectionsComponent implements OnInit {
   sourceSuccess: boolean | null = null;
   destSuccess: boolean | null = null;
 
-  source = 'https://test-server.brapi.org/brapi/v1/';
-  destination = 'https://bms-uat-test.net/bmsapi/maize/brapi/v1/';
-
   sourceAuth = 'token';
   destinationAuth = 'token';
 
-  sourceToken = '';
-  destinationToken = '';
-
   constructor(
-    private router: Router
+    private router: Router,
+    public context: ContextService
   ) {
   }
 
   ngOnInit(): void {
   }
 
-  async next() {
+  async next(): Promise<void> {
     this.loading = true;
     try {
-      const brapiSrc = BrAPI(this.source, '2.0', this.sourceToken);
+      const brapiSrc = BrAPI(this.context.source, '2.0', this.context.sourceToken);
       await brapiCatch(brapiSrc.calls());
       this.sourceSuccess = true;
     } catch (e) {
       this.sourceSuccess = false;
-      this.loading = false;
-      return;
     }
 
     try {
-      const brapiDest = BrAPI(this.destination, '2.0', this.destinationToken);
+      const brapiDest = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
       await brapiCatch(brapiDest.calls());
       this.destSuccess = true;
     } catch (e) {
       this.destSuccess = false;
-      this.loading = false;
-      return;
     }
+
+    this.loading = false;
 
     if (this.sourceSuccess && this.destSuccess) {
       this.router.navigate(['program']);

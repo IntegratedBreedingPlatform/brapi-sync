@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { brapiCatch } from '../util/brapi-catch';
+import { ContextService } from '../context.service';
+
+declare const BrAPI: any;
 
 @Component({
   selector: 'app-program',
@@ -8,20 +12,24 @@ import { Router } from '@angular/router';
 })
 export class ProgramComponent implements OnInit {
   loading = false;
+  programs: any[] = [];
 
   constructor(
-    private router: Router
+    private router: Router,
+    public context: ContextService
   ) {
+    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    brapi.programs().all((programs: any[]) => this.programs = programs);
   }
 
   ngOnInit(): void {
   }
 
-  async next() {
+  async next(): Promise<void> {
 
   }
 
-  back() {
+  back(): void {
     this.router.navigate(['connections']);
   }
 }
