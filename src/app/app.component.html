@@ -8,7 +8,7 @@
       <form>
         <div class="form-group row">
           <label for="source" class="col-auto col-form-label">BrAPI Base URL</label>
-          <div class="col-auto">
+          <div class="col-3">
             <input type="text" class="form-control" id="source" name="source" [(ngModel)]="source">
           </div>
         </div>
@@ -32,9 +32,11 @@
         <div class="form-group row">
           <label for="sourceToken" class="col-auto col-form-label">Token</label>
           <div class="col-auto">
-            <input type="text" class="form-control" id="sourceToken" value="">
+            <input type="text" class="form-control" id="sourceToken" name="sourceToken" [(ngModel)]="sourceToken">
           </div>
         </div>
+        <div class="alert alert-danger" *ngIf="sourceSuccess === false">Error</div>
+        <div class="alert alert-success" *ngIf="sourceSuccess === true">Success</div>
       </form>
     </div>
   </div>
@@ -44,7 +46,7 @@
       <form>
         <div class="form-group row">
           <label for="destination" class="col-auto col-form-label">BrAPI Base URL</label>
-          <div class="col-auto">
+          <div class="col-3">
             <input type="text" class="form-control" id="destination" name="destination" [(ngModel)]="destination">
           </div>
         </div>
@@ -68,9 +70,11 @@
         <div class="form-group row">
           <label for="sourceToken" class="col-auto col-form-label">Token</label>
           <div class="col-auto">
-            <input type="text" class="form-control" id="sourceToken" value="">
+            <input type="text" class="form-control" id="destinationToken" name="destinationToken" [(ngModel)]="destinationToken">
           </div>
         </div>
+        <div class="alert alert-danger" *ngIf="destSuccess === false">Error</div>
+        <div class="alert alert-success" *ngIf="destSuccess === true">Success</div>
       </form>
     </div>
   </div>
