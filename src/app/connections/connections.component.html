@@ -1,0 +1,88 @@
+<div class="modal-header">
+  <h1 class="modal-title">BrAPI Germplasm Synchronization Tool</h1>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col">
+      <h2>Source</h2>
+      <form>
+        <div class="form-group row">
+          <label for="source" class="col-auto col-form-label">BrAPI Base URL</label>
+          <div class="col-3">
+            <input type="text" class="form-control" id="source" name="source" [(ngModel)]="source">
+          </div>
+        </div>
+        <h4>Authentication</h4>
+        <div class="form-group row">
+          <div class="col">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="sourceAuth" id="delegatedSourceAuth" value="delegated" disabled [(ngModel)]="sourceAuth">
+              <label class="form-check-label" for="delegatedSourceAuth">Delegated</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="sourceSourceAuth" id="credentialsSourceAuth" value="credentials" disabled [(ngModel)]="sourceAuth">
+              <label class="form-check-label" for="credentialsSourceAuth">Credentials</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="sourceSourceAuth" id="tokenSourceAuth" value="token" [(ngModel)]="sourceAuth">
+              <label class="form-check-label" for="tokenSourceAuth">Token</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="sourceToken" class="col-auto col-form-label">Token</label>
+          <div class="col-auto">
+            <input type="text" class="form-control" id="sourceToken" name="sourceToken" [(ngModel)]="sourceToken">
+          </div>
+        </div>
+        <div class="alert alert-danger" *ngIf="sourceSuccess === false">Error</div>
+        <div class="alert alert-success" *ngIf="sourceSuccess === true">Success</div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <h2>Destination</h2>
+      <form>
+        <div class="form-group row">
+          <label for="destination" class="col-auto col-form-label">BrAPI Base URL</label>
+          <div class="col-3">
+            <input type="text" class="form-control" id="destination" name="destination" [(ngModel)]="destination">
+          </div>
+        </div>
+        <h4>Authentication</h4>
+        <div class="form-group row">
+          <div class="col">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="destinationSourceAuth" id="delegatedSourceAuth" value="delegated" disabled [(ngModel)]="destinationAuth">
+              <label class="form-check-label" for="delegatedSourceAuth">Delegated</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="destinationSourceAuth" id="credentialsSourceAuth" value="credentials" disabled [(ngModel)]="destinationAuth">
+              <label class="form-check-label" for="credentialsSourceAuth">Credentials</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="destinationSourceAuth" id="tokenSourceAuth" value="token" [(ngModel)]="destinationAuth">
+              <label class="form-check-label" for="tokenSource">Token</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="sourceToken" class="col-auto col-form-label">Token</label>
+          <div class="col-auto">
+            <input type="text" class="form-control" id="destinationToken" name="destinationToken" [(ngModel)]="destinationToken">
+          </div>
+        </div>
+        <div class="alert alert-danger" *ngIf="destSuccess === false">Error</div>
+        <div class="alert alert-success" *ngIf="destSuccess === true">Success</div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+    <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Next
+  </button>
+</div>
