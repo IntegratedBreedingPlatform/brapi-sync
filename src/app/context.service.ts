@@ -11,7 +11,8 @@ export class ContextService {
   sourceToken = '';
   destinationToken = '';
 
-  programSelected = {};
+  programSelected: any = {};
+  trialSelected: any = {};
 
   constructor() {
   }

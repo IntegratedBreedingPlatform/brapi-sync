@@ -1,0 +1,35 @@
+<div class="modal-header">
+  <h1 class="modal-title">BrAPI Germplasm Synchronization Tool</h1>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col">
+      <h2>Germplasm</h2>
+      <form>
+        <div class="form-group row">
+          <label for="programs" class="col-auto col-form-label">Filter by</label>
+          <div class="col-5">
+            <div class="input-group">
+              <select class="form-control" id="programs" name="destination" [(ngModel)]="filter">
+                <option [value]="FILTERS.STUDY">Study</option>
+                <option [value]="FILTERS.LIST" disabled>List</option>
+              </select>
+              <div class="input-group-append">
+                <button class="btn btn-info float-right" (click)="addFilter()" >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+    <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Next
+  </button>
+</div>

@@ -26,7 +26,7 @@ export class ProgramComponent implements OnInit {
   }
 
   async next(): Promise<void> {
-
+    this.router.navigate(['germplasm']);
   }
 
   back(): void {
