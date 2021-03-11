@@ -1,0 +1,29 @@
+<div class="modal-header">
+  <h4 class="modal-title">Select study</h4>
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+          (click)="dismiss()">&times;
+  </button>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col">
+      <form>
+        <div class="form-group row">
+          <label for="trial" class="col-auto col-form-label">Trial</label>
+          <div class="col-auto">
+            <select class="form-control" id="trial" name="trial" [(ngModel)]="context.trialSelected">
+              <option *ngFor="let trial of trials" [ngValue]="trial">{{trial.trialName}}</option>
+            </select>
+          </div>
+        </div>
+        <!-- TODO locations / study -->
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="dismiss()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="filter()">
+    Filter
+  </button>
+</div>
