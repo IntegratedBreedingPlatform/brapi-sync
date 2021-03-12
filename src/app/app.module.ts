@@ -9,6 +9,8 @@ import { routes } from './app.route';
 import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
 import { StudyFilterComponent } from './study-filter/study-filter.component';
+import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -23,8 +25,11 @@ import { StudyFilterComponent } from './study-filter/study-filter.component';
     FormsModule,
     RouterModule.forRoot(routes),
     RouterModule,
+    NgbPaginationModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}

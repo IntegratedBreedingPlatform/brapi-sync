@@ -11,19 +11,34 @@
         <div class="form-group row">
           <label for="trial" class="col-auto col-form-label">Trial</label>
           <div class="col-auto">
-            <select class="form-control" id="trial" name="trial" [(ngModel)]="context.trialSelected">
+            <select class="form-control" id="trial" name="trial" [(ngModel)]="context.trialSelected" (change)="onChange()">
               <option *ngFor="let trial of trials" [ngValue]="trial">{{trial.trialName}}</option>
             </select>
           </div>
         </div>
-        <!-- TODO locations / study -->
+        <div class="form-group row">
+          <label for="location" class="col-auto col-form-label">Location</label>
+          <div class="col-auto">
+            <select class="form-control" id="location" name="location" [(ngModel)]="context.locationSelected" (change)="onChange()">
+              <option *ngFor="let location of locations" [ngValue]="location">{{location.locationName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="study" class="col-auto col-form-label">Study</label>
+          <div class="col-auto">
+            <select class="form-control" id="study" name="study" [(ngModel)]="studySelected">
+              <option *ngFor="let study of studies" [ngValue]="study">{{study.studyName}}</option>
+            </select>
+          </div>
+        </div>
       </form>
     </div>
   </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="dismiss()">Cancel</button>
-  <button type="button" class="btn btn-primary" (click)="filter()">
-    Filter
+  <button type="button" class="btn btn-primary" (click)="select()" [disabled]="!studySelected">
+    Select
   </button>
 </div>

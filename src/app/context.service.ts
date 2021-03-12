@@ -11,8 +11,11 @@ export class ContextService {
   sourceToken = '';
   destinationToken = '';
 
-  programSelected: any = {};
+  // TODO clear data for testing
+  programSelected: any = {programDbId: 1};
   trialSelected: any = {};
+  locationSelected: any = {};
+  studySelected: any = {studyDbId: 1001, studyName: 'Study 1'};
 
   constructor() {
   }
