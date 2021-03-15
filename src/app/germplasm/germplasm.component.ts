@@ -22,6 +22,10 @@ export class GermplasmComponent implements OnInit {
   pageSize = 20;
   totalCount = 0;
 
+  // { germplasmDbId: germplasm }
+  selectedItems: {[key: string]: any} = {};
+  isSelectAllPages = false;
+
   constructor(
     private router: Router,
     public context: ContextService,
@@ -70,6 +74,50 @@ export class GermplasmComponent implements OnInit {
       this.germplasm = res.result.data;
       this.totalCount = res.metadata.pagination.totalCount;
     });
+  }
+
+  isSelected(row: any): boolean {
+    return this.selectedItems[row.germplasmDbId];
+  }
+
+  toggleSelect(row: any): void {
+    if (this.selectedItems[row.germplasmDbId]) {
+      delete this.selectedItems[row.germplasmDbId];
+    } else {
+      this.selectedItems[row.germplasmDbId] = row;
+    }
+  }
+
+  isPageSelected(): boolean {
+    const pageItems = this.getPageItems();
+    return Boolean(this.size(this.selectedItems)) && pageItems.every((item) => this.selectedItems[item.germplasmDbId]);
+  }
+
+  onSelectPage(): void {
+    const pageItems = this.getPageItems();
+    if (this.isPageSelected()) {
+      // remove all items
+      pageItems.forEach((item) => delete this.selectedItems[item.germplasmDbId]);
+    } else {
+      // check remaining items
+      pageItems.forEach((item) => this.selectedItems[item.germplasmDbId] = item);
+    }
+  }
+
+  onSelectAllPages(): void {
+    this.isSelectAllPages = !this.isSelectAllPages;
+    this.selectedItems = {};
+  }
+
+  getPageItems(): any[] {
+    if (!(this.germplasm && this.germplasm.length)) {
+      return [];
+    }
+    return this.germplasm;
+  }
+
+  size(obj: any): number {
+    return Object.keys(obj).length;
   }
 }
 

@@ -30,9 +30,17 @@
       </form>
       <div class="row" *ngIf="context.studySelected.studyDbId">
         <div class="col">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
+            <label class="form-check-label" for="selectAll">
+              Select all
+            </label>
+          </div>
           <table class="table">
             <thead>
-            <th></th>
+            <th *ngIf="germplasm.length && !isSelectAllPages">
+              <input type="checkbox" tooltip="select current page" [checked]="isPageSelected()" (click)="onSelectPage()" [title]="'select current page'" />
+            </th>
             <th>ID</th>
             <th>GERMPLASM NAME</th>
             <th>SYNONYMS</th>
@@ -45,7 +53,9 @@
 
             <tbody>
             <tr *ngFor="let row of germplasm">
-              <td><input type="checkbox"></td>
+              <td *ngIf="!isSelectAllPages">
+                <input type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+              </td>
               <td>{{row.germplasmDbId}}</td>
               <td>{{row.germplasmName}}</td>
               <td>{{row.synonyms.join(', ')}}</td>
@@ -62,7 +72,7 @@
             </ngb-pagination>
 
             <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">
-              <option [ngValue]="2">2</option>
+              <option [ngValue]="20">20</option>
               <option [ngValue]="50">50</option>
               <option [ngValue]="100">100</option>
             </select>
