@@ -10,7 +10,8 @@ import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
 import { StudyFilterComponent } from './study-filter/study-filter.component';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,13 @@ import { HttpClientModule } from '@angular/common/http';
     NgbPaginationModule,
     HttpClientModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {
