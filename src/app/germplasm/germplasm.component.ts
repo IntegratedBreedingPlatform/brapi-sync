@@ -119,6 +119,13 @@ export class GermplasmComponent implements OnInit {
   size(obj: any): number {
     return Object.keys(obj).length;
   }
+
+  getSynonyms(synonyms: any[]): string {
+    if (!(synonyms && synonyms.length)) {
+      return '';
+    }
+    return synonyms.map((s) => s.synonym).join(', ');
+  }
 }
 
 enum FILTER {

@@ -30,10 +30,14 @@ export class ConnectionsComponent implements OnInit {
   }
 
   async next(): Promise<void> {
+    // TODO verify only v2 endpoints
     this.loading = true;
     try {
       const brapiSrc = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-      await brapiCatch(brapiSrc.calls());
+      await brapiCatch(brapiSrc.simple_brapi_call({
+        defaultMethod: 'get',
+        urlTemplate: '/serverinfo'
+      }));
       this.sourceSuccess = true;
     } catch (e) {
       this.sourceSuccess = false;
@@ -41,7 +45,10 @@ export class ConnectionsComponent implements OnInit {
 
     try {
       const brapiDest = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-      await brapiCatch(brapiDest.calls());
+      await brapiCatch(brapiDest.simple_brapi_call({
+        defaultMethod: 'get',
+        urlTemplate: '/serverinfo'
+      }));
       this.destSuccess = true;
     } catch (e) {
       this.destSuccess = false;

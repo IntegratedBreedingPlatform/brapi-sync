@@ -46,7 +46,8 @@ export class StudyFilterComponent implements OnInit {
     this.studySelected = null;
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     brapi.studies(Object.assign({
-      programDbId: this.context.programSelected.programDbId
+      programDbId: this.context.programSelected.programDbId,
+      active: true,
     }, params)).all((studies: any[]) => this.studies = studies);
   }
 
