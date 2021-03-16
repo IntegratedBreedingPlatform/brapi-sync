@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 declare const BrAPI: any;
 
@@ -13,18 +13,24 @@ declare const BrAPI: any;
   styleUrls: ['./germplasm.component.css']
 })
 export class GermplasmComponent implements OnInit {
-  loading = false;
+  isSaving = false;
+  isLoading = false;
+
   filter = FILTER.STUDY;
   FILTERS = FILTER;
-  brapi: any;
   germplasm: any = [];
   page = 1;
   pageSize = 20;
   totalCount = 0;
 
   // { germplasmDbId: germplasm }
-  selectedItems: {[key: string]: any} = {};
+  selectedItems: { [key: string]: any } = {};
   isSelectAllPages = false;
+
+  breedingMethodsDestByName: any = {};
+  breedingMethodsDestById: any = {};
+  breedingMethodsSourceByName: any = {};
+  breedingMethodsSourceById: any = {};
 
   constructor(
     private router: Router,
@@ -43,8 +49,65 @@ export class GermplasmComponent implements OnInit {
     this.router.navigate(['program']);
   }
 
-  async next(): Promise<void> {
+  import(): void {
+    if (this.isSelectAllPages) {
+      const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+      brapi.germplasm().all((germplasm: any[]) => {
+        this.post(germplasm);
+      });
+    } else {
+      const germplasm = Object.values(this.selectedItems).map((g) => this.transformForSave(g));
+      this.post(germplasm);
+    }
+  }
 
+  private async post(germplasm: any[]): Promise<void> {
+    try {
+
+      const request = germplasm.map((g) => this.transformForSave(g));
+      const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
+      this.onSuccess(res);
+    } catch (error) {
+      this.onError(error);
+    }
+  }
+
+  transformForSave(germplasm: any): any {
+    const copy = Object.assign({}, germplasm);
+    delete copy.germplasmDbId;
+    if (!(copy.externalReferences && copy.externalReferences.length)) {
+      copy.externalReferences = [];
+    }
+    copy.externalReferences.push({
+      referenceID: this.context.source + '/germplasm/' + germplasm.germplasmDbId,
+      referenceSource: 'brapi-sync'
+    });
+    copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);
+    return copy;
+  }
+
+  private getBreedingMethodIdInDest(copy: any): string {
+    const bmSource = this.breedingMethodsSourceById[copy.breedingMethodDbId];
+    if (!bmSource) {
+      return '';
+    }
+    const bmDest = this.breedingMethodsDestByName[bmSource.breedingMethodName];
+    if (!bmDest) {
+      return '';
+    }
+    return bmDest.breedingMethodDbId;
+  }
+
+  onError(res: HttpErrorResponse): void {
+    // TODO ng-toast?
+    alert('error');
+    console.error(res);
+  }
+
+  onSuccess(res: any): void {
+    // TODO ng-toast?
+    alert('success');
+    console.log(res);
   }
 
   addFilter(): void {
@@ -52,7 +115,7 @@ export class GermplasmComponent implements OnInit {
       .then(() => this.load());
   }
 
-  load(): void {
+  async load(): Promise<void> {
     /* TODO get page count brapijs?
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     brapi.germplasm({
@@ -64,16 +127,51 @@ export class GermplasmComponent implements OnInit {
       this.germplasm = germplasm;
     });
      */
-    this.http.get(this.context.source + '/germplasm', {
-      params: {
-        studyDbId: this.context.studySelected.studyDbId,
-        page: (this.page - 1).toString(),
-        pageSize: this.pageSize.toString(),
-      }
-    }).subscribe((res: any) => {
+    this.isLoading = true;
+    try {
+      const res: any = await this.http.get(this.context.source + '/germplasm', {
+        params: {
+          // https://github.com/plantbreeding/brapi-Java-TestServer/issues/45
+          // studyDbId: this.context.studySelected.studyDbId,
+          page: (this.page - 1).toString(),
+          pageSize: this.pageSize.toString(),
+        }
+      }).toPromise();
       this.germplasm = res.result.data;
       this.totalCount = res.metadata.pagination.totalCount;
-    });
+
+      this.searchInTarget(this.germplasm);
+
+      const bmDestSource: any = await this.http.get(this.context.source + '/breedingmethods').toPromise();
+      if (bmDestSource.result.data && bmDestSource.result.data.length) {
+        bmDestSource.result.data.forEach((bm: any) => {
+          this.breedingMethodsSourceByName[bm.breedingMethodName] = bm;
+          this.breedingMethodsSourceById[bm.breedingMethodDbId] = bm;
+        });
+      }
+
+      const bmDestResp: any = await this.http.get(this.context.destination + '/breedingmethods').toPromise();
+      if (bmDestResp.result.data && bmDestResp.result.data.length) {
+        bmDestResp.result.data.forEach((bm: any) => {
+          this.breedingMethodsDestByName[bm.breedingMethodName] = bm;
+          this.breedingMethodsDestById[bm.breedingMethodDbId] = bm;
+        });
+      }
+    } catch (error) {
+      this.onError(error);
+    }
+    this.isLoading = false;
+  }
+
+  async searchInTarget(germplasm: any[]): Promise<void> {
+    /**
+     * TODO
+     *  - search by PUID, documentationUrl, externalReferences
+     *  - show synchronized sources
+     *  - BMS: /search/germplasm
+     */
+    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    // const byPUID = brapi.germplasm({externalReferenceId: })
   }
 
   isSelected(row: any): boolean {

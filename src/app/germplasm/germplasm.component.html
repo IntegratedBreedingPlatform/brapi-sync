@@ -28,7 +28,7 @@
           </div>
         </div>
       </form>
-      <div class="row" *ngIf="context.studySelected.studyDbId">
+      <div class="row" *ngIf="germplasm.length">
         <div class="col">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
@@ -63,7 +63,7 @@
               <td>{{row.documentationURL}}</td>
               <td>{{row.acquisitionDate}}</td>
               <td>{{row.pedigree}}</td>
-              <td>{{row.breedingMethodName}}</td>
+              <td>{{breedingMethodsSourceById[row.breedingMethodDbId].breedingMethodName}}</td>
             </tr>
             </tbody>
           </table>
@@ -79,13 +79,18 @@
           </div>
         </div>
       </div>
+      <div class="row" *ngIf="isLoading">
+        <div class="col">
+          <span class="throbber"></span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
-    <span class="throbber throbber-btn" *ngIf="loading"></span>
-    Next
+  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">
+    <span class="throbber throbber-btn" *ngIf="isSaving"></span>
+    Import
   </button>
 </div>
