@@ -131,8 +131,7 @@ export class GermplasmComponent implements OnInit {
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
-          // https://github.com/plantbreeding/brapi-Java-TestServer/issues/45
-          // studyDbId: this.context.studySelected.studyDbId,
+          studyDbId: this.context.studySelected.studyDbId,
           page: (this.page - 1).toString(),
           pageSize: this.pageSize.toString(),
         }
