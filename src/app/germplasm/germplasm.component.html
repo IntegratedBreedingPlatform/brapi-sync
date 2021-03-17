@@ -28,7 +28,7 @@
           </div>
         </div>
       </form>
-      <div class="row" *ngIf="germplasm.length">
+      <div class="row" *ngIf="germplasm.length && !isLoading">
         <div class="col">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
@@ -54,7 +54,8 @@
             <tbody>
             <tr *ngFor="let row of germplasm">
               <td *ngIf="!isSelectAllPages">
-                <input type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                <i *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]">&#10003;</i>
               </td>
               <td>{{row.germplasmDbId}}</td>
               <td>{{row.germplasmName}}</td>
@@ -63,7 +64,7 @@
               <td>{{row.documentationURL}}</td>
               <td>{{row.acquisitionDate}}</td>
               <td>{{row.pedigree}}</td>
-              <td>{{breedingMethodsSourceById[row.breedingMethodDbId].breedingMethodName}}</td>
+              <td>{{breedingMethodsSourceById[row.breedingMethodDbId]?.breedingMethodName}}</td>
             </tr>
             </tbody>
           </table>

@@ -4,6 +4,7 @@ import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { brapiAll } from '../util/brapi-all';
 
 declare const BrAPI: any;
 
@@ -31,6 +32,7 @@ export class GermplasmComponent implements OnInit {
   breedingMethodsDestById: any = {};
   breedingMethodsSourceByName: any = {};
   breedingMethodsSourceById: any = {};
+  germplasmInDestByRefId: any = {};
 
   constructor(
     private router: Router,
@@ -52,24 +54,33 @@ export class GermplasmComponent implements OnInit {
   import(): void {
     if (this.isSelectAllPages) {
       const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-      brapi.germplasm().all((germplasm: any[]) => {
+      brapi.germplasm({
+        studyDbId: this.context.studySelected.studyDbId,
+        // put a limit on synchronization (default page=1000). TODO improve
+        pageRange: [0, 1],
+      }).all((germplasm: any[]) => {
         this.post(germplasm);
       });
     } else {
-      const germplasm = Object.values(this.selectedItems).map((g) => this.transformForSave(g));
+      const germplasm = Object.values(this.selectedItems);
       this.post(germplasm);
     }
   }
 
   private async post(germplasm: any[]): Promise<void> {
     try {
-
+      this.isSaving = true;
+      germplasm = germplasm.filter((g) => !this.germplasmInDestByRefId[g.germplasmDbId]);
+      if (!germplasm.length) {
+        return;
+      }
       const request = germplasm.map((g) => this.transformForSave(g));
       const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
       this.onSuccess(res);
     } catch (error) {
       this.onError(error);
     }
+    this.isSaving = false;
   }
 
   transformForSave(germplasm: any): any {
@@ -79,7 +90,7 @@ export class GermplasmComponent implements OnInit {
       copy.externalReferences = [];
     }
     copy.externalReferences.push({
-      referenceID: this.context.source + '/germplasm/' + germplasm.germplasmDbId,
+      referenceID: this.getRefId(germplasm.germplasmDbId),
       referenceSource: 'brapi-sync'
     });
     copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);
@@ -108,6 +119,8 @@ export class GermplasmComponent implements OnInit {
     // TODO ng-toast?
     alert('success');
     console.log(res);
+
+    this.load();
   }
 
   addFilter(): void {
@@ -139,7 +152,7 @@ export class GermplasmComponent implements OnInit {
       this.germplasm = res.result.data;
       this.totalCount = res.metadata.pagination.totalCount;
 
-      this.searchInTarget(this.germplasm);
+      await this.searchInTarget(this.germplasm);
 
       const bmDestSource: any = await this.http.get(this.context.source + '/breedingmethods').toPromise();
       if (bmDestSource.result.data && bmDestSource.result.data.length) {
@@ -167,10 +180,36 @@ export class GermplasmComponent implements OnInit {
      * TODO
      *  - search by PUID, documentationUrl, externalReferences
      *  - show synchronized sources
-     *  - BMS: /search/germplasm
+     *  - BMS: /search/germplasm (IBP-4448)
+     *  - search by other fields: e.g PUID
      */
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    // const byPUID = brapi.germplasm({externalReferenceId: })
+    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    const germplasmInDest = await brapiAll(
+      brapi.data(
+        this.germplasm.map((g: any) => this.getRefId(g.germplasmDbId))
+      ).germplasm((id: any) => {
+        return {
+          externalReferenceID: id,
+          // guard against brapjs get-all behaviour
+          pageRange: [0, 1],
+          pageSize: 1
+        };
+      })
+      , 20000);
+
+    if (germplasmInDest && germplasmInDest.length) {
+      germplasmInDest.forEach((g: any) => {
+        if (g.externalReferences && g.externalReferences.length) {
+          g.externalReferences.forEach((ref: any) => {
+            this.germplasmInDestByRefId[ref.referenceID] = g;
+          });
+        }
+      });
+    }
+  }
+
+  getRefId(germplasmDbId: string): string {
+    return this.context.source + '/germplasm/' + germplasmDbId;
   }
 
   isSelected(row: any): boolean {
