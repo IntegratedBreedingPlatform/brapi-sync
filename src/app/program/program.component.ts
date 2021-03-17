@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { brapiCatch } from '../util/brapi-catch';
+import { brapiAll } from '../util/brapi-all';
 import { ContextService } from '../context.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 declare const BrAPI: any;
 
@@ -19,7 +20,10 @@ export class ProgramComponent implements OnInit {
     public context: ContextService
   ) {
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.programs().all((programs: any[]) => this.programs = programs);
+    brapiAll(brapi.programs()).then(
+      (programs: any[]) => this.programs = programs,
+      (error) => this.onError(error)
+    );
   }
 
   ngOnInit(): void {
@@ -31,5 +35,17 @@ export class ProgramComponent implements OnInit {
 
   back(): void {
     this.router.navigate(['connections']);
+  }
+
+  onError(res: HttpErrorResponse): void {
+    // TODO ng-toast?
+    alert('error');
+    console.error(res);
+  }
+
+  onSuccess(res: any): void {
+    // TODO ng-toast?
+    alert('success');
+    console.log(res);
   }
 }

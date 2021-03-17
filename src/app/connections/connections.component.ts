@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { brapiCatch } from '../util/brapi-catch';
+import { brapiAll } from '../util/brapi-all';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
