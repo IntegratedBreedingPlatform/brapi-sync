@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { brapiCatch } from '../util/brapi-catch';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
+import { HttpClient } from '@angular/common/http';
 
 declare const BrAPI: any;
 
@@ -22,7 +23,8 @@ export class ConnectionsComponent implements OnInit {
 
   constructor(
     private router: Router,
-    public context: ContextService
+    public context: ContextService,
+    private http: HttpClient
   ) {
   }
 
@@ -33,22 +35,14 @@ export class ConnectionsComponent implements OnInit {
     // TODO verify only v2 endpoints
     this.loading = true;
     try {
-      const brapiSrc = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-      await brapiCatch(brapiSrc.simple_brapi_call({
-        defaultMethod: 'get',
-        urlTemplate: '/serverinfo'
-      }));
+      await this.http.get(this.context.source + '/serverinfo').toPromise();
       this.sourceSuccess = true;
     } catch (e) {
       this.sourceSuccess = false;
     }
 
     try {
-      const brapiDest = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-      await brapiCatch(brapiDest.simple_brapi_call({
-        defaultMethod: 'get',
-        urlTemplate: '/serverinfo'
-      }));
+      await this.http.get(this.context.destination + '/serverinfo').toPromise();
       this.destSuccess = true;
     } catch (e) {
       this.destSuccess = false;
