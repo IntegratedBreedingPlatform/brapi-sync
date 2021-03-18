@@ -32,6 +32,8 @@ export class ConnectionsComponent implements OnInit {
   }
 
   async next(): Promise<void> {
+    this.removeTrailingSlashes();
+
     // TODO verify only v2 endpoints
     this.loading = true;
     try {
@@ -53,6 +55,14 @@ export class ConnectionsComponent implements OnInit {
     if (this.sourceSuccess && this.destSuccess) {
       this.router.navigate(['program']);
     }
+  }
+
+  /**
+   * Some servers (e.g breedbase catalyst) won't accept double slash //
+   */
+  removeTrailingSlashes(): void {
+    this.context.source = this.context.source.replace(/\/+$/, '');
+    this.context.destination = this.context.destination.replace(/\/+$/, '');
   }
 
 }
