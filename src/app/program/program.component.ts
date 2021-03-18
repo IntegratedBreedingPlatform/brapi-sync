@@ -20,7 +20,10 @@ export class ProgramComponent implements OnInit {
     public context: ContextService
   ) {
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapiAll(brapi.programs()).then(
+    brapiAll(brapi.programs({
+      // put a limit for now (default page=1000). TODO paginated dropdown
+      pageRange: [0, 1],
+    })).then(
       (programs: any[]) => this.programs = programs,
       (error) => this.onError(error)
     );
@@ -39,13 +42,13 @@ export class ProgramComponent implements OnInit {
 
   onError(res: HttpErrorResponse): void {
     // TODO ng-toast?
-    alert('error');
+    // alert('error');
     console.error(res);
   }
 
   onSuccess(res: any): void {
     // TODO ng-toast?
-    alert('success');
+    // alert('success');
     console.log(res);
   }
 }

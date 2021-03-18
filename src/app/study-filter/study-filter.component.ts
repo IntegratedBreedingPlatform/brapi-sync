@@ -23,12 +23,18 @@ export class StudyFilterComponent implements OnInit {
     public context: ContextService
   ) {
     let brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.trials({ programDbId: this.context.programSelected.programDbId })
-      .all((trials: any[]) => this.trials = trials);
+    brapi.trials({
+      programDbId: this.context.programSelected.programDbId,
+      // put a limit for now (default page=1000). TODO paginated dropdown
+      pageRange: [0, 1],
+    }).all((trials: any[]) => this.trials = trials);
 
     brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.locations({ programDbId: this.context.programSelected.programDbId })
-      .all((locations: any[]) => this.locations = locations);
+    brapi.locations({
+      programDbId: this.context.programSelected.programDbId,
+      // put a limit for now (default page=1000). TODO paginated dropdown
+      pageRange: [0, 1],
+    }).all((locations: any[]) => this.locations = locations);
 
   }
 
@@ -48,6 +54,8 @@ export class StudyFilterComponent implements OnInit {
     brapi.studies(Object.assign({
       programDbId: this.context.programSelected.programDbId,
       active: true,
+      // put a limit for now (default page=1000). TODO paginated dropdown
+      pageRange: [0, 1],
     }, params)).all((studies: any[]) => this.studies = studies);
   }
 

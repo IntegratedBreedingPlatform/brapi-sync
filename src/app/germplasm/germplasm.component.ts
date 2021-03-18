@@ -21,7 +21,8 @@ export class GermplasmComponent implements OnInit {
   FILTERS = FILTER;
   germplasm: any = [];
   page = 1;
-  pageSize = 20;
+  // TODO bms /search/germplasm, using many get /germplasm for now
+  pageSize = 5;
   totalCount = 0;
 
   // { germplasmDbId: germplasm }
@@ -41,7 +42,7 @@ export class GermplasmComponent implements OnInit {
     private http: HttpClient
   ) {
     // TODO / testing / remove
-    this.load();
+    // this.load();
   }
 
   ngOnInit(): void {
@@ -85,7 +86,9 @@ export class GermplasmComponent implements OnInit {
 
   transformForSave(germplasm: any): any {
     const copy = Object.assign({}, germplasm);
+
     delete copy.germplasmDbId;
+
     if (!(copy.externalReferences && copy.externalReferences.length)) {
       copy.externalReferences = [];
     }
@@ -93,7 +96,21 @@ export class GermplasmComponent implements OnInit {
       referenceID: this.getRefId(germplasm.germplasmDbId),
       referenceSource: 'brapi-sync'
     });
+
     copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);
+
+    // FIXME! bms should handle defaults
+    if (!copy.acquisitionDate) {
+      copy.acquisitionDate = new Date().toISOString().slice(0, 10);
+    }
+    if (!copy.countryOfOriginCode) {
+      copy.countryOfOriginCode = 'USA';
+    }
+
+    if (!copy.additionalInfo) {
+      copy.additionalInfo = {};
+    }
+
     return copy;
   }
 
@@ -111,7 +128,7 @@ export class GermplasmComponent implements OnInit {
 
   onError(res: HttpErrorResponse): void {
     // TODO ng-toast?
-    alert('error');
+    // alert('error');
     console.error(res);
   }
 
@@ -195,7 +212,7 @@ export class GermplasmComponent implements OnInit {
           pageSize: 1
         };
       })
-      , 20000);
+      , 30000);
 
     if (germplasmInDest && germplasmInDest.length) {
       germplasmInDest.forEach((g: any) => {
