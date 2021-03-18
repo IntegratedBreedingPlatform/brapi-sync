@@ -1,3 +1,7 @@
 i {
   cursor: default;
 }
+
+table {
+  white-space: nowrap;
+}

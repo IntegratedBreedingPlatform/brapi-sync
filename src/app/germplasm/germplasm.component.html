@@ -36,38 +36,40 @@
               Select all
             </label>
           </div>
-          <table class="table">
-            <thead>
-            <th *ngIf="germplasm.length && !isSelectAllPages">
-              <input type="checkbox" tooltip="select current page" [checked]="isPageSelected()" (click)="onSelectPage()" [title]="'select current page'" />
-            </th>
-            <th>ID</th>
-            <th>GERMPLASM NAME</th>
-            <th>SYNONYMS</th>
-            <th>ORIGIN</th>
-            <th>DOCUMENTATION URL</th>
-            <th>ACQUISITION DATE</th>
-            <th>PEDIGREE</th>
-            <th>BREEDING METHOD NAME</th>
-            </thead>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+              <th *ngIf="germplasm.length && !isSelectAllPages">
+                <input type="checkbox" tooltip="select current page" [checked]="isPageSelected()" (click)="onSelectPage()" [title]="'select current page'" />
+              </th>
+              <th>ID</th>
+              <th>GERMPLASM NAME</th>
+              <th>SYNONYMS</th>
+              <th>ORIGIN</th>
+              <th>DOCUMENTATION URL</th>
+              <th>ACQUISITION DATE</th>
+              <th>PEDIGREE</th>
+              <th>BREEDING METHOD NAME</th>
+              </thead>
 
-            <tbody>
-            <tr *ngFor="let row of germplasm">
-              <td *ngIf="!isSelectAllPages">
-                <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                <i *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]" class="text-success" title="already in target">&#10003;</i>
-              </td>
-              <td>{{row.germplasmDbId}}</td>
-              <td>{{row.germplasmName}}</td>
-              <td>{{getSynonyms(row.synonyms)}}</td>
-              <td>{{row.countryOfOrigin}}</td>
-              <td>{{row.documentationURL}}</td>
-              <td>{{row.acquisitionDate}}</td>
-              <td>{{row.pedigree}}</td>
-              <td [innerHTML]="renderBreedingMethodCell(row)"></td>
-            </tr>
-            </tbody>
-          </table>
+              <tbody>
+              <tr *ngFor="let row of germplasm">
+                <td *ngIf="!isSelectAllPages">
+                  <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                  <i *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]" class="text-success" title="already in target">&#10003;</i>
+                </td>
+                <td>{{row.germplasmDbId}}</td>
+                <td>{{row.germplasmName}}</td>
+                <td>{{getSynonyms(row.synonyms)}}</td>
+                <td>{{row.countryOfOrigin}}</td>
+                <td>{{row.documentationURL}}</td>
+                <td>{{row.acquisitionDate}}</td>
+                <td>{{row.pedigree}}</td>
+                <td [innerHTML]="renderBreedingMethodCell(row)"></td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
           <div class="d-flex justify-content-between p-2">
             <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()">
             </ngb-pagination>
