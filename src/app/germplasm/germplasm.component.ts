@@ -126,6 +126,21 @@ export class GermplasmComponent implements OnInit {
     return bmDest.breedingMethodDbId;
   }
 
+  renderBreedingMethodCell(g: any): string {
+    if (!this.breedingMethodsSourceById[g.breedingMethodDbId]) {
+      return '';
+    }
+    let cell = this.breedingMethodsSourceById[g.breedingMethodDbId].breedingMethodName;
+    const b = this.getBreedingMethodIdInDest(g);
+
+    if (!b) {
+      cell = '<i class="text-danger" title="Doesn\'t exists in target">&#10007;</i> ' + cell;
+    } else {
+      cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
+    }
+    return cell;
+  }
+
   onError(res: HttpErrorResponse): void {
     // TODO ng-toast?
     // alert('error');

@@ -64,7 +64,7 @@
               <td>{{row.documentationURL}}</td>
               <td>{{row.acquisitionDate}}</td>
               <td>{{row.pedigree}}</td>
-              <td>{{breedingMethodsSourceById[row.breedingMethodDbId]?.breedingMethodName}}</td>
+              <td [innerHTML]="renderBreedingMethodCell(row)"></td>
             </tr>
             </tbody>
           </table>
