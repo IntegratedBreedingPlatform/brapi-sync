@@ -71,7 +71,7 @@ export class GermplasmComponent implements OnInit {
   private async post(germplasm: any[]): Promise<void> {
     try {
       this.isSaving = true;
-      germplasm = germplasm.filter((g) => !this.germplasmInDestByRefId[g.germplasmDbId]);
+      germplasm = germplasm.filter((g) => !this.germplasmInDestByRefId[this.getRefId(g.germplasmDbId)]);
       if (!germplasm.length) {
         return;
       }
