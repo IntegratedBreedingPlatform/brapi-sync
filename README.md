@@ -2,8 +2,43 @@
 
 Synchronize [BrAPI] enabled instances.
 
+## How it works
 
-[BrAPI]: https://github.com/plantbreeding/API
+Using brapi v2 endpoints, it retrieves/filter entities from one server and push them to a target server.
+To keep track of submitted entities it adds another entry into the externalReferences field:
+
+```json
+{
+    "externalReferences": [
+        // copied from source germplasm
+        {
+            "referenceID": "doi:10.155454/12341234",
+            "referenceSource": "DOI"
+        },
+        {
+            "referenceID": "http://purl.obolibrary.org/obo/ro.owl",
+            "referenceSource": "OBO Library"
+        },
+        {
+            "referenceID": "75a50e76",
+            "referenceSource": "Remote Data Collection Upload Tool"
+        },
+        // added by the brapp on submission  
+        {
+            "referenceID": "https://www.bms-uat-test.net/bmsapi/maize/brapi/v2/germplasm/3304",
+            "referenceSource": "brapi-sync"
+        }
+    ]
+}
+```
+
+## TODO
+
+- [x] Keep track using external references 
+- [ ] Keep track using PUID
+
+
+# How to run
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 11.2.3.
 
@@ -30,3 +65,5 @@ Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protrac
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+
+[BrAPI]: https://github.com/plantbreeding/API
