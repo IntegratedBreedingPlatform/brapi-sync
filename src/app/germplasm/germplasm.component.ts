@@ -161,6 +161,7 @@ export class GermplasmComponent implements OnInit {
   }
 
   async load(): Promise<void> {
+    this.reset();
     /* TODO get page count brapijs?
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     brapi.germplasm({
@@ -205,6 +206,16 @@ export class GermplasmComponent implements OnInit {
       this.onError(error);
     }
     this.isLoading = false;
+  }
+
+  reset(): void {
+    this.selectedItems = {};
+    this.isSelectAllPages = false;
+    this.breedingMethodsDestByName = {};
+    this.breedingMethodsDestById = {};
+    this.breedingMethodsSourceByName = {};
+    this.breedingMethodsSourceById = {};
+    this.germplasmInDestByRefId = {};
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
