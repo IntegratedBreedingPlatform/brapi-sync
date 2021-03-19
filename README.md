@@ -2,6 +2,8 @@
 
 Synchronize [BrAPI] enabled instances.
 
+![preview](images/preview.png)
+
 ## How it works
 
 Using brapi v2 endpoints, it retrieves/filter entities from one server and push them to a target server.
