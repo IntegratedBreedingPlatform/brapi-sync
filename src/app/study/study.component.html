@@ -1,0 +1,79 @@
+<div class="modal-header">
+  <h1 class="modal-title">Studies</h1>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col-md-6">
+      <form class="form-inline">
+        <label for="searchBy">Search By</label>
+        <div class="input-group pl-3">
+          <select class="form-control" id="searchBy">
+            <option value="Study" selected="selected">Study</option>
+          </select>
+          <div class="input-group-append">
+            <button type="button" class="btn btn-primary">
+              <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <app-collapsible heading="Connection Info">
+        <h5><span class="badge badge-pill badge-primary">Some trial</span></h5>
+      </app-collapsible>
+      <app-collapsible heading="Trial MetaData">
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead>
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Trial Description</span></th>
+              <td>Description</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Start Date</span></th>
+              <td>Start Date</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">End Date</span></th>
+              <td>End Date</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
+              <td>Documentation URL</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Publications</span></th>
+              <td>Publications</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Contacts</span></th>
+              <td>Contacts</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Additional Info</span></th>
+              <td>Additional Info</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-collapsible>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.programSelected.programDbId">
+    <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Next
+  </button>
+</div>
+

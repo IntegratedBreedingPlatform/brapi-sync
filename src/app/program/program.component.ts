@@ -33,7 +33,7 @@ export class ProgramComponent implements OnInit {
   }
 
   async next(): Promise<void> {
-    this.router.navigate(['germplasm']);
+    this.router.navigate(['entity-selector']);
   }
 
   back(): void {

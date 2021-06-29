@@ -2,6 +2,8 @@ import { Route } from '@angular/router';
 import { ConnectionsComponent } from './connections/connections.component';
 import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
+import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
+import { StudyComponent } from './study/study.component';
 
 export const routes: Route[] = [
   {
@@ -20,5 +22,13 @@ export const routes: Route[] = [
   {
     path: 'germplasm',
     component: GermplasmComponent
+  },
+  {
+    path: 'study',
+    component: StudyComponent
+  },
+  {
+    path: 'entity-selector',
+    component: EntitySelectorComponent
   }
 ];

@@ -1,0 +1,9 @@
+<label (click)="isCollapsed = !isCollapsed"
+       [attr.aria-expanded]="!isCollapsed">
+  <fa-icon *ngIf="!isCollapsed" [icon]="['fas', 'caret-down']" size="2x"></fa-icon>
+  <fa-icon *ngIf="isCollapsed" [icon]="['fas', 'caret-right']" size="2x"></fa-icon>
+  <span class="d-inline-flex p-2 h5 font-weight-bold">{{heading}}</span>
+</label><br>
+<section id="{{heading}}" [hidden]="isCollapsed">
+  <ng-content></ng-content>
+</section>
