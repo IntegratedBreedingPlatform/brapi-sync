@@ -1,0 +1,41 @@
+<div class="modal-header">
+  <h5 class="modal-title">Select Study</h5>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col">
+      <form>
+        <div class="form-group row">
+          <label for="trialSelect" class="col-sm-3 col-form-label">Trial</label>
+          <div class="col-sm-9">
+            <ng-select name="trialSelect" [items]="trials" bindLabel="trialName" [(ngModel)]="selectedTrial" (change)="loadStudies()">
+            </ng-select>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="locationSelect" class="col-sm-3 col-form-label">Location</label>
+          <div class="col-sm-9">
+            <ng-select name="locationSelect" [items]="locations" bindLabel="locationName" [(ngModel)]="selectedLocation">
+            </ng-select>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="studySelect" class="col-sm-3 col-form-label">Study Name</label>
+          <div class="col-sm-9">
+            <ng-select name="studySelect" [items]="studies" bindLabel="studyName" [(ngModel)]="selectedStudy">
+            </ng-select>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="select()" [disabled]="loading">
+    <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Select
+  </button>
+</div>
+
+

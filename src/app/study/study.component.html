@@ -3,7 +3,7 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    <div class="col-md-6">
+    <div class="col">
       <form class="form-inline">
         <label for="searchBy">Search By</label>
         <div class="input-group pl-3">
@@ -11,7 +11,7 @@
             <option value="Study" selected="selected">Study</option>
           </select>
           <div class="input-group-append">
-            <button type="button" class="btn btn-primary">
+            <button type="button" class="btn btn-primary" (click)="openSearchModal()">
               <fa-icon [icon]="['fas', 'plus']"></fa-icon>
             </button>
           </div>
@@ -22,7 +22,7 @@
   <div class="row">
     <div class="col">
       <app-collapsible heading="Connection Info">
-        <h5><span class="badge badge-pill badge-primary">Some trial</span></h5>
+        <h5><span class="badge badge-pill badge-primary">{{study.studyName}}</span></h5>
       </app-collapsible>
       <app-collapsible heading="Trial MetaData">
         <div class="table-responsive">
@@ -36,15 +36,15 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Trial Description</span></th>
-              <td>Description</td>
+              <td>{{study.studyDescription}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Start Date</span></th>
-              <td>Start Date</td>
+              <td>{{study.startDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">End Date</span></th>
-              <td>End Date</td>
+              <td>{{study.endDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
@@ -71,7 +71,8 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.programSelected.programDbId">
+  <button type="button" class="btn btn-secondary">Import Trial Metadata</button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>
