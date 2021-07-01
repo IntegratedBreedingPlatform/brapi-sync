@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
-import { TrialSelectModalComponent } from './trial-select-modal/trial-select-modal.component';
+import { StudyFilterComponent } from '../study-filter/study-filter.component';
 
 declare const BrAPI: any;
 
@@ -26,8 +26,7 @@ export class TrialComponent implements OnInit {
   }
 
   openSearchModal() {
-    this.modalService.open(TrialSelectModalComponent).result.then((result) => {
-      this.context.studySelected = result;
+    this.modalService.open(StudyFilterComponent).result.then((result) => {
     });
   }
 

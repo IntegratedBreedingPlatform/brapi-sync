@@ -15,13 +15,13 @@ import { AuthInterceptor } from './auth.interceptor';
 import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
 import { CollapsibleComponent } from './shared/collapsible/collapsible.component';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCaretRight, faPlus, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCaretRight, faCheck, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TrialComponent } from './trial/trial.component';
-import { TrialSelectModalComponent } from './trial/trial-select-modal/trial-select-modal.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { ExpandableJsonViewerComponent } from './shared/expandable-json-viewer/expandable-json-viewer.component';
 import { StudyComponent } from './study/study.component';
+import { ObservationComponent } from './observation/observation.component';
 
 @NgModule({
   declarations: [
@@ -33,9 +33,9 @@ import { StudyComponent } from './study/study.component';
     EntitySelectorComponent,
     CollapsibleComponent,
     TrialComponent,
-    TrialSelectModalComponent,
     ExpandableJsonViewerComponent,
-    StudyComponent
+    StudyComponent,
+    ObservationComponent
   ],
   imports: [
     BrowserModule,

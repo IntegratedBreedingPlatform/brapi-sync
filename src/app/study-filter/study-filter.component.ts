@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
-import { HttpClient } from '@angular/common/http';
 
 declare const BrAPI: any;
 
@@ -12,60 +11,68 @@ declare const BrAPI: any;
 })
 export class StudyFilterComponent implements OnInit {
 
+  brapi: any;
   trials: any[] = [];
-  locations: any[] = [];
   studies: any[] = [];
+  locations: any[] = [];
+  trialSelected: any;
+  studySelected: any;
+  locationSelected: any;
+  loading = false;
 
-  studySelected: any = null;
-
-  constructor(
-    private modal: NgbActiveModal,
-    public context: ContextService
-  ) {
-    let brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.trials({
-      programDbId: this.context.programSelected.programDbId,
-      // put a limit for now (default page=1000). TODO paginated dropdown
-      pageRange: [0, 1],
-    }).all((trials: any[]) => this.trials = trials);
-
-    brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.locations({
-      programDbId: this.context.programSelected.programDbId,
-      // put a limit for now (default page=1000). TODO paginated dropdown
-      pageRange: [0, 1],
-    }).all((locations: any[]) => this.locations = locations);
-
+  constructor(public activeModal: NgbActiveModal,
+              public context: ContextService) {
   }
 
   ngOnInit(): void {
+    this.brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    this.loadTrials();
+    this.loadLocations();
   }
 
-  onChange(): void {
+  loadTrials(): void {
+    this.brapi.trials({
+      programDbId: this.context.programSelected.programDbId
+    }).all((result: any[]) => {
+      this.trials = result;
+    });
+  }
+
+  loadLocations(): void {
+    // TODO: Enable virtual scrolling
+    this.brapi.locations({}).all((result: any[]) => {
+      this.locations = result;
+    });
+  }
+
+  loadStudies(): void {
     const params: any = {};
-    if (this.context.trialSelected.trialDbId) {
-      params.trialDbId = this.context.trialSelected.trialDbId;
+    if (this.trialSelected) {
+      params.trialDbId = this.trialSelected.trialDbId;
     }
-    if (this.context.locationSelected.locationDbId) {
-      params.locationDbId = this.context.locationSelected.locationDbId;
+    if (this.locationSelected && this.locationSelected.locationDbId) {
+      params.locationDbId = this.locationSelected.locationDbId;
     }
     this.studySelected = null;
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.studies(Object.assign({
+    this.brapi.studies(Object.assign({
       programDbId: this.context.programSelected.programDbId,
       active: true,
       // put a limit for now (default page=1000). TODO paginated dropdown
       pageRange: [0, 1],
-    }, params)).all((studies: any[]) => this.studies = studies);
-  }
-
-  dismiss(): void {
-    this.modal.dismiss();
+    }, params)).all((result: any[]) => {
+      this.studies = result;
+    });
   }
 
   select(): void {
     this.context.studySelected = this.studySelected;
-    this.modal.close();
+    this.context.trialSelected = this.trialSelected;
+    this.context.locationSelected = this.locationSelected;
+    this.activeModal.close();
+  }
+
+  cancel(): void {
+    this.activeModal.dismiss();
   }
 
 }
