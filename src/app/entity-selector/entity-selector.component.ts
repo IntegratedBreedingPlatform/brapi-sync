@@ -9,6 +9,10 @@ import { ContextService } from '../context.service';
 })
 export class EntitySelectorComponent implements OnInit {
 
+  ENTITY_GERMPLASM = 'germplasm';
+  ENTITY_STUDY = 'study';
+
+  entitySelected: string = '';
   loading = false;
 
   constructor(private router: Router,
@@ -19,7 +23,11 @@ export class EntitySelectorComponent implements OnInit {
   }
 
   async next(): Promise<void> {
-    this.router.navigate(['study']);
+    if (this.entitySelected == this.ENTITY_GERMPLASM) {
+      this.router.navigate(['germplasm']);
+    } else {
+      this.router.navigate(['trial']);
+    }
   }
 
   back(): void {

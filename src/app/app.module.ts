@@ -15,10 +15,13 @@ import { AuthInterceptor } from './auth.interceptor';
 import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
 import { CollapsibleComponent } from './shared/collapsible/collapsible.component';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCaretRight, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { StudyComponent } from './study/study.component';
-import { StudySelectModalComponent } from './study/study-select-modal/study-select-modal.component';
+import { faCaretDown, faCaretRight, faPlus, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { TrialComponent } from './trial/trial.component';
+import { TrialSelectModalComponent } from './trial/trial-select-modal/trial-select-modal.component';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { NgxJsonViewerModule } from 'ngx-json-viewer';
+import { ExpandableJsonViewerComponent } from './shared/expandable-json-viewer/expandable-json-viewer.component';
+import { StudyComponent } from './study/study.component';
 
 @NgModule({
   declarations: [
@@ -29,8 +32,10 @@ import { NgSelectModule } from '@ng-select/ng-select';
     StudyFilterComponent,
     EntitySelectorComponent,
     CollapsibleComponent,
-    StudyComponent,
-    StudySelectModalComponent
+    TrialComponent,
+    TrialSelectModalComponent,
+    ExpandableJsonViewerComponent,
+    StudyComponent
   ],
   imports: [
     BrowserModule,
@@ -41,6 +46,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
     HttpClientModule,
     FontAwesomeModule,
     NgSelectModule,
+    NgxJsonViewerModule
   ],
   providers: [
     {
@@ -56,7 +62,7 @@ export class AppModule {
   constructor(faIconLibrary: FaIconLibrary) {
     // Add an icon to the library for convenient access in other components
     // Only add specific icons explicitly to avoid loading all icons to the bundle.
-    faIconLibrary.addIcons(faCaretDown, faCaretRight, faPlus);
+    faIconLibrary.addIcons(faCaretDown, faCaretRight, faPlus, faCheck);
   }
 
 }

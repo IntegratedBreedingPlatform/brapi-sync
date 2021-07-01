@@ -23,11 +23,11 @@
             </thead>
             <tbody>
             <tr>
-              <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType"/></div></th>
+              <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_GERMPLASM" [(ngModel)]="entitySelected"/></div></th>
               <td>Germplasm</td>
             </tr>
             <tr>
-              <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType"/></div></th>
+              <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_STUDY" [(ngModel)]="entitySelected"/></div></th>
               <td>Studies</td>
             </tr>
             </tbody>

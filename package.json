@@ -20,6 +20,7 @@
     "@ng-select/ng-select": "6.1.0",
     "@solgenomics/brapijs": "git+ssh://git@github.com:solgenomics/BrAPI-js.git#semver:^1.0.1",
     "bootstrap": "^4.6.0",
+    "ngx-json-viewer": "^3.0.2",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
     "zone.js": "~0.11.3"

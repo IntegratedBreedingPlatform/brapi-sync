@@ -1,10 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
-import { StudySelectModalComponent } from './study-select-modal/study-select-modal.component';
-
-declare const BrAPI: any;
 
 @Component({
   selector: 'app-study',
@@ -13,29 +9,29 @@ declare const BrAPI: any;
 })
 export class StudyComponent implements OnInit {
 
+  searchOptions: any[] = [{ id: 1, name: 'Study' }];
+  searchSelected: number = 1;
   loading = false;
   study: any = {};
 
   constructor(private router: Router,
-              public context: ContextService,
-              public modalService: NgbModal) {
+              public context: ContextService) {
   }
 
   ngOnInit(): void {
+    console.log(this.context.studySelected);
   }
 
   openSearchModal() {
-    this.modalService.open(StudySelectModalComponent).result.then((result) => {
-        this.study = result;
-    });
   }
 
   async next(): Promise<void> {
-    this.router.navigate(['entity-selector']);
+    this.router.navigate(['observation']);
   }
 
   back(): void {
-    this.router.navigate(['entity-selector']);
+    this.router.navigate(['trial']);
   }
+
 
 }

@@ -6,10 +6,10 @@ declare const BrAPI: any;
 
 @Component({
   selector: 'app-study-select-modal',
-  templateUrl: './study-select-modal.component.html',
-  styleUrls: ['./study-select-modal.component.css']
+  templateUrl: './trial-select-modal.component.html',
+  styleUrls: ['./trial-select-modal.component.css']
 })
-export class StudySelectModalComponent implements OnInit {
+export class TrialSelectModalComponent implements OnInit {
 
   brapi: any;
   trials: any[] = [];

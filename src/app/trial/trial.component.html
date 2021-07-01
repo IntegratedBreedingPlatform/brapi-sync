@@ -4,6 +4,22 @@
 <div class="modal-body">
   <div class="row">
     <div class="col">
+      <form class="form-inline">
+        <label for="searchBy">Search By</label>
+        <div class="pl-3">
+          <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
+          </ng-select>
+        </div>
+        <div class="pl-3">
+          <button type="button" class="btn btn-primary" (click)="openSearchModal()">
+            <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
       <app-collapsible heading="Connection Info">
         <div class="card">
           <div class="card-body">
@@ -11,7 +27,7 @@
           </div>
         </div>
       </app-collapsible>
-      <app-collapsible heading="{{context.studySelected.studyName + ' Metadata'}}">
+      <app-collapsible heading="{{context.studySelected.trialName + ' Metadata'}}">
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
@@ -22,6 +38,10 @@
             </tr>
             </thead>
             <tbody>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Trial Description</span></th>
+              <td>{{context.studySelected.studyDescription}}</td>
+            </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Start Date</span></th>
               <td>{{context.studySelected.startDate}}</td>
@@ -52,39 +72,6 @@
                 <app-expandable-json-viewer *ngIf="context.studySelected?.additionalInfo" [json]="context.studySelected?.additionalInfo"></app-expandable-json-viewer>
               </td>
             </tr>
-            <tr>
-              <th scope="row"><span class="font-weight-bold">Experimental Design</span></th>
-              <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.experimentalDesign" [json]="context.studySelected?.experimentalDesign"></app-expandable-json-viewer>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row"><span class="font-weight-bold">Environment Parameters</span></th>
-              <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.environmentParameters" [json]="context.studySelected?.environmentParameters"></app-expandable-json-viewer>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </app-collapsible>
-      <app-collapsible heading="Study Location Mapping">
-        <div class="table-responsive">
-          <table class="table table-bordered">
-            <caption></caption>
-            <thead>
-            <tr>
-              <th scope="col">Source</th>
-              <th scope="col">Target</th>
-              <th scope="col">Status</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td scope="row">{{context.studySelected.locationName}}</td>
-              <td scope="row">{{context.studySelected.locationName}}</td>
-              <td scope="row"><span style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span></td>
-            </tr>
             </tbody>
           </table>
         </div>
@@ -94,11 +81,10 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary">Import Studies</button>
+  <button type="button" class="btn btn-secondary">Import Trial Metadata</button>
   <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>
 </div>
-
 
