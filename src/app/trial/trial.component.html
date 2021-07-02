@@ -3,22 +3,20 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    <div class="col">
-      <form class="form-inline">
+    <div class="col-10">
+      <div class="form-inline">
         <label for="searchBy">Search By</label>
-        <div class="pl-3">
+        <div class="col-4">
           <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
           </ng-select>
         </div>
-        <div class="pl-3">
-          <button type="button" class="btn btn-primary" (click)="openSearchModal()">
-            <fa-icon [icon]="['fas', 'plus']"></fa-icon>
-          </button>
-        </div>
-      </form>
+        <button type="button" class="btn btn-primary" (click)="openSearchModal()">
+          <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+        </button>
+      </div>
     </div>
   </div>
-  <div class="row">
+  <div class="row" *ngIf="context.studySelected?.studyDbId && !loading">
     <div class="col">
       <app-collapsible heading="Connection Info">
         <div class="card">
@@ -27,7 +25,7 @@
           </div>
         </div>
       </app-collapsible>
-      <app-collapsible heading="{{context.studySelected.trialName + ' Metadata'}}">
+      <app-collapsible heading="{{context.trialSelected.trialName + ' Metadata'}}">
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
@@ -40,36 +38,36 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Trial Description</span></th>
-              <td>{{context.studySelected.studyDescription}}</td>
+              <td>{{context.trialSelected.trialDescription}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Start Date</span></th>
-              <td>{{context.studySelected.startDate}}</td>
+              <td>{{context.trialSelected.startDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">End Date</span></th>
-              <td>{{context.studySelected.endDate}}</td>
+              <td>{{context.trialSelected.endDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
-              <td></td>
+              <td>{{context.trialSelected.documentationUrl}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Publications</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.dataLinks" [json]="context.studySelected?.dataLinks"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.trialSelected?.publications" [json]="context.trialSelected?.publications"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Contacts</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.contacts" [json]="context.studySelected?.contacts"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.trialSelected?.contacts" [json]="context.trialSelected?.contacts"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Additional Info</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.additionalInfo" [json]="context.studySelected?.additionalInfo"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.trialSelected?.additionalInfo" [json]="context.trialSelected?.additionalInfo"></app-expandable-json-viewer>
               </td>
             </tr>
             </tbody>
@@ -81,9 +79,11 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary">Import Trial Metadata</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="loading || !context.studySelected?.studyDbId">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Import Trial Metadata
+  </button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.studySelected?.studyDbId">
     Next
   </button>
 </div>

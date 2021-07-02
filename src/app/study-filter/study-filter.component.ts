@@ -31,6 +31,7 @@ export class StudyFilterComponent implements OnInit {
   }
 
   loadTrials(): void {
+    // TODO: Enable virtual scrolling
     this.brapi.trials({
       programDbId: this.context.programSelected.programDbId
     }).all((result: any[]) => {
@@ -46,6 +47,7 @@ export class StudyFilterComponent implements OnInit {
   }
 
   loadStudies(): void {
+    // TODO: Enable virtual scrolling
     const params: any = {};
     if (this.trialSelected) {
       params.trialDbId = this.trialSelected.trialDbId;
@@ -69,6 +71,7 @@ export class StudyFilterComponent implements OnInit {
     this.context.trialSelected = this.trialSelected;
     this.context.locationSelected = this.locationSelected;
     this.activeModal.close();
+    console.log(this.context.trialSelected);
   }
 
   cancel(): void {

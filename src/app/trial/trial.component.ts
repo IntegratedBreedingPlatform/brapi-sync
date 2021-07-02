@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
+import { HttpClient } from '@angular/common/http';
+import { ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
 
@@ -18,6 +20,8 @@ export class TrialComponent implements OnInit {
   loading = false;
 
   constructor(private router: Router,
+              private http: HttpClient,
+              private externalReferenceService: ExternalReferenceService,
               public context: ContextService,
               public modalService: NgbModal) {
   }
@@ -37,5 +41,30 @@ export class TrialComponent implements OnInit {
   back(): void {
     this.router.navigate(['entity-selector']);
   }
+
+  async post() {
+    this.loading = true;
+    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise();
+    this.loading = false;
+  }
+
+  transform(trial: any) {
+    return {
+      active: trial.active,
+      additionalInfo: trial.additionalInfo,
+      datasetAuthorships: trial.datasetAuthorships,
+      documentationURL: trial.documentationURL,
+      endDate: trial.endDate,
+      externalReferences: this.externalReferenceService.generateExternalReference(trial.trialDbId, 'trials', trial.externalReferences),
+      programDbId: this.context.targetProgramSelected.programDbId,
+      programName: this.context.targetProgramSelected.programName,
+      publications: trial.publications,
+      startDate: trial.startDate,
+      trialName: trial.trialName,
+      trialDescription: trial.trialDescription,
+      trialPUI: trial.trialPUI
+    };
+  }
+
 
 }

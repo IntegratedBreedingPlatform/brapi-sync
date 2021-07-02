@@ -7,11 +7,11 @@
       <app-collapsible heading="Connection Info">
         <div class="card">
           <div class="card-body">
-            <h5><span class="badge badge-pill badge-primary">{{context.studySelected.studyName}}</span></h5>
+            <h5><span class="badge badge-pill badge-primary">{{studyDetail.studyName}}</span></h5>
           </div>
         </div>
       </app-collapsible>
-      <app-collapsible heading="{{context.studySelected.studyName + ' Metadata'}}">
+      <app-collapsible heading="{{studyDetail.studyName + ' Metadata'}}">
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
@@ -24,44 +24,44 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Start Date</span></th>
-              <td>{{context.studySelected.startDate}}</td>
+              <td>{{studyDetail.startDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">End Date</span></th>
-              <td>{{context.studySelected.endDate}}</td>
+              <td>{{studyDetail.endDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
-              <td></td>
+              <td>{{studyDetail.documentationUrl}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Publications</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.dataLinks" [json]="context.studySelected?.dataLinks"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.publications" [json]="studyDetail?.publications"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Contacts</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.contacts" [json]="context.studySelected?.contacts"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.contacts" [json]="studyDetail?.contacts"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Additional Info</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.additionalInfo" [json]="context.studySelected?.additionalInfo"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.additionalInfo" [json]="studyDetail?.additionalInfo"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Experimental Design</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.experimentalDesign" [json]="context.studySelected?.experimentalDesign"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.experimentalDesign" [json]="studyDetail?.experimentalDesign"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Environment Parameters</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.studySelected?.environmentParameters" [json]="context.studySelected?.environmentParameters"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.environmentParameters" [json]="studyDetail?.environmentParameters"></app-expandable-json-viewer>
               </td>
             </tr>
             </tbody>
@@ -94,9 +94,10 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary">Import Studies</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+  <button type="button" class="btn btn-secondary" (click)="post()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Import Studies</button>
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
     Next
   </button>
 </div>

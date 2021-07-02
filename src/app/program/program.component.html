@@ -7,10 +7,18 @@
       <h2>Program</h2>
       <form>
         <div class="form-group row">
-          <label for="programs" class="col-auto col-form-label">Program</label>
+          <label for="sourceProgram" class="col-2 col-form-label">Source Program</label>
           <div class="col-5">
-            <select class="form-control" id="programs" name="destination" [(ngModel)]="context.programSelected">
-              <option *ngFor="let program of programs" [ngValue]="program">{{program.programName}}</option>
+            <select class="form-control" id="sourceProgram" name="sourceProgram" [(ngModel)]="context.programSelected">
+              <option *ngFor="let program of sourcePrograms" [ngValue]="program">{{program.programName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group row">
+          <label for="targetProgram" class="col-2 col-form-label">Destination Program</label>
+          <div class="col-5">
+            <select class="form-control" id="targetProgram" name="targetProgram" [(ngModel)]="context.targetProgramSelected">
+              <option *ngFor="let program of targetPrograms" [ngValue]="program">{{program.programName}}</option>
             </select>
           </div>
         </div>
@@ -20,7 +28,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.programSelected.programDbId">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || (!context.programSelected?.programDbId && !context.targetProgramSelected?.programDbId)">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>
