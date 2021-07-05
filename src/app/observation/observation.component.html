@@ -28,11 +28,11 @@
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
-              <td></td>
+              <td>{{sourceObservationUnits.length}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold"># of Germplasm</span></th>
-              <td></td>
+              <td>{{germplasmTotalCount}}</td>
             </tr>
             </tbody>
           </table>
@@ -53,16 +53,30 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-              <td scope="row"></td>
-              <td scope="row"></td>
-              <td scope="row"></td>
-              <td scope="row"></td>
-              <td scope="row"></td>
-              <td scope="row"><span style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span></td>
+            <tr *ngFor="let germplasm of sourceGermplasm">
+              <td>{{germplasm?.germplasmPUI}}</td>
+              <td>{{germplasm?.germplasmDbId}}</td>
+              <td>{{germplasm?.germplasmName}}</td>
+              <td>{{germplasmInDestinationByRefId[externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId)]?.germplasmDbId}}</td>
+              <td>{{germplasmInDestinationByRefId[externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId)]?.germplasmName}}</td>
+              <td>
+                <span *ngIf="germplasmInDestinationByRefId[externalReferenceService.getReferenceId( 'germplasm', germplasm.germplasmDbId)]" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                <span *ngIf="!germplasmInDestinationByRefId[externalReferenceService.getReferenceId( 'germplasm', germplasm.germplasmDbId)]" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+              </td>
             </tr>
             </tbody>
           </table>
+        </div>
+        <div class="d-flex justify-content-between p-2">
+          <ngb-pagination [collectionSize]="germplasmTotalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="loadGermplasm()">
+          </ngb-pagination>
+
+          <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="loadGermplasm()">
+            <option [ngValue]="5">5</option>
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
         </div>
       </app-collapsible>
     </div>
