@@ -29,7 +29,7 @@
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
-            <thead>
+            <thead class="thead-light">
             <tr>
               <th scope="col">Key</th>
               <th scope="col">Value</th>
@@ -87,9 +87,7 @@
     </ul>
   </div>
   <div class="alert alert-info" *ngIf="trialAlreadyExists">
-    <ul>
-      <li>This trial already exists in the destination server.</li>
-    </ul>
+    "{{this.context.trialSelected.trialName}}" already exists in the destination server.
   </div>
 </div>
 <div class="modal-footer">
@@ -98,7 +96,7 @@
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Trial Metadata
   </button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !context.studySelected?.studyDbId">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !this.trialAlreadyExists">
     Next
   </button>
 </div>

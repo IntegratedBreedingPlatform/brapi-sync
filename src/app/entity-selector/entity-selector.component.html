@@ -16,18 +16,18 @@
         <div class="pt-3">What needs to be synced today?</div>
         <div class="table-responsive">
           <table class="table table-bordered">
-            <thead>
+            <thead class="thead-light">
             <tr>
               <th scope="col" style="width: 10%">Select</th>
               <th scope="col">Entity</th>
             </tr>
             </thead>
             <tbody>
-            <tr>
+            <tr (click)="entitySelected = ENTITY_GERMPLASM">
               <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_GERMPLASM" [(ngModel)]="entitySelected"/></div></th>
               <td>Germplasm</td>
             </tr>
-            <tr>
+            <tr (click)="entitySelected = ENTITY_STUDY">
               <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_STUDY" [(ngModel)]="entitySelected"/></div></th>
               <td>Studies</td>
             </tr>

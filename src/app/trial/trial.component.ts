@@ -53,6 +53,9 @@ export class TrialComponent implements OnInit {
       if (result.metadata) {
         this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
         this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
+        if (this.errors.length === 0) {
+          this.trialAlreadyExists = true;
+        }
       }
     });
     this.loading = false;
@@ -92,7 +95,8 @@ export class TrialComponent implements OnInit {
   }
 
   isValid() {
-    return !this.trialAlreadyExists && !this.loading && this.context.studySelected;
+    return this.context.trialSelected.trialDbId && this.context.studySelected.studyDbId
+      && !this.trialAlreadyExists && !this.loading;
   }
 
   reset() {

@@ -49,7 +49,7 @@ export class GermplasmComponent implements OnInit {
   }
 
   back(): void {
-    this.router.navigate(['program']);
+    this.router.navigate(['entity-selector']);
   }
 
   import(): void {

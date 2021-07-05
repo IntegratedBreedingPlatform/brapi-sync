@@ -15,7 +15,7 @@
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
-            <thead>
+            <thead class="thead-light">
             <tr>
               <th scope="col">Key</th>
               <th scope="col">Value</th>
@@ -94,15 +94,20 @@
       </app-collapsible>
     </div>
   </div>
-  <div class="alert alert-danger" *ngIf="errors.length">
-    <ul>
-      <li *ngFor="let error of errors">{{error.message}}</li>
-    </ul>
+  <div class="row">
+    <div class="alert alert-danger" *ngIf="errors.length">
+      <ul>
+        <li *ngFor="let error of errors">{{error.message}}</li>
+      </ul>
+    </div>
+    <div class="alert alert-success" *ngIf="info.length && !errors.length">
+      <ul>
+        <li *ngFor="let i of info">{{i.message}}</li>
+      </ul>
+    </div>
   </div>
-  <div class="alert alert-success" *ngIf="info.length && !errors.length">
-    <ul>
-      <li *ngFor="let i of info">{{i.message}}</li>
-    </ul>
+  <div class="alert alert-info" *ngIf="studyAlreadyExists">
+    "{{this.context.studySelected.studyName}}" already exists in the destination server.
   </div>
 </div>
 <div class="modal-footer">
@@ -111,7 +116,7 @@
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Studies
   </button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !studyAlreadyExists">
     Next
   </button>
 </div>

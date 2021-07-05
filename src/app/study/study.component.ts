@@ -19,6 +19,7 @@ export class StudyComponent implements OnInit {
   studyDetail: any = {};
   importedTrial: any = {};
   targetLocation: any = {};
+  studyAlreadyExists: boolean = false;
   info: any = [];
   errors: any = [];
 
@@ -34,6 +35,7 @@ export class StudyComponent implements OnInit {
     brapi.studies_detail({ studyDbId: this.context.studySelected.studyDbId }).all((result: any) => {
       this.studyDetail = result[0];
       this.searchLocationByName(this.studyDetail.locationName);
+      this.checkStudyAlreadyExists();
     });
 
     // Get the imported Trial from destination server so that we know its trialDbId
@@ -44,6 +46,7 @@ export class StudyComponent implements OnInit {
     }).all((result: any) => {
       this.importedTrial = result[0];
     });
+
   }
 
   async next(): Promise<void> {
@@ -95,8 +98,23 @@ export class StudyComponent implements OnInit {
     };
   }
 
+  checkStudyAlreadyExists() {
+    // Check if the study to be imported already exists in the destination server
+    if (this.studyDetail && this.studyDetail.studyDbId) {
+      const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+      brapiDestination.studies({
+        externalReferenceId: this.externalReferenceService.getReferenceId('studies', this.studyDetail.studyDbId),
+        externalReferenceSource: 'brapi-sync'
+      }).all((result: any) => {
+        if (result.length) {
+          this.studyAlreadyExists = true;
+        }
+      });
+    }
+  }
+
   isValid() {
-    return this.targetLocation && !this.loading;
+    return this.targetLocation && !this.studyAlreadyExists && !this.loading;
   }
 
   reset() {
