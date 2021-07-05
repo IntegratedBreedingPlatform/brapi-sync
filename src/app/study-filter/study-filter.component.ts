@@ -71,7 +71,6 @@ export class StudyFilterComponent implements OnInit {
     this.context.trialSelected = this.trialSelected;
     this.context.locationSelected = this.locationSelected;
     this.activeModal.close();
-    console.log(this.context.trialSelected);
   }
 
   cancel(): void {

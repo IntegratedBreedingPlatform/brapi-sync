@@ -16,7 +16,7 @@
       </div>
     </div>
   </div>
-  <div class="row" *ngIf="context.studySelected?.studyDbId && !loading">
+  <div class="row" *ngIf="context.studySelected?.studyDbId">
     <div class="col">
       <app-collapsible heading="Connection Info">
         <div class="card">
@@ -76,10 +76,25 @@
       </app-collapsible>
     </div>
   </div>
+  <div class="alert alert-danger" *ngIf="errors.length">
+    <ul>
+      <li *ngFor="let error of errors">{{error.message}}</li>
+    </ul>
+  </div>
+  <div class="alert alert-success" *ngIf="info.length && !errors.length">
+    <ul>
+      <li *ngFor="let i of info">{{i.message}}</li>
+    </ul>
+  </div>
+  <div class="alert alert-info" *ngIf="trialAlreadyExists">
+    <ul>
+      <li>This trial already exists in the destination server.</li>
+    </ul>
+  </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="loading || !context.studySelected?.studyDbId">
+  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Trial Metadata
   </button>

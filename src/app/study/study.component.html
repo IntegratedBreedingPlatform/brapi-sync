@@ -82,8 +82,11 @@
             <tbody>
             <tr>
               <td scope="row">{{context.studySelected.locationName}}</td>
-              <td scope="row">{{context.studySelected.locationName}}</td>
-              <td scope="row"><span style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span></td>
+              <td scope="row">{{this.targetLocation?.locationName}}</td>
+              <td scope="row">
+                <span *ngIf="this.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                <span *ngIf="!this.targetLocation?.locationName" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+              </td>
             </tr>
             </tbody>
           </table>
@@ -91,12 +94,23 @@
       </app-collapsible>
     </div>
   </div>
+  <div class="alert alert-danger" *ngIf="errors.length">
+    <ul>
+      <li *ngFor="let error of errors">{{error.message}}</li>
+    </ul>
+  </div>
+  <div class="alert alert-success" *ngIf="info.length && !errors.length">
+    <ul>
+      <li *ngFor="let i of info">{{i.message}}</li>
+    </ul>
+  </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary" (click)="post()">
+  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
-    Import Studies</button>
+    Import Studies
+  </button>
   <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
     Next
   </button>

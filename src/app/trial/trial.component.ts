@@ -18,6 +18,9 @@ export class TrialComponent implements OnInit {
   searchOptions: any[] = [{ id: 1, name: 'Study' }];
   searchSelected: number = 1;
   loading = false;
+  info: any = [];
+  errors: any = [];
+  trialAlreadyExists: boolean = false;
 
   constructor(private router: Router,
               private http: HttpClient,
@@ -27,10 +30,12 @@ export class TrialComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.checkTrialAlreadyExists();
   }
 
   openSearchModal() {
     this.modalService.open(StudyFilterComponent).result.then((result) => {
+      this.checkTrialAlreadyExists();
     });
   }
 
@@ -43,8 +48,13 @@ export class TrialComponent implements OnInit {
   }
 
   async post() {
-    this.loading = true;
-    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise();
+    this.reset();
+    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise().then((result: any) => {
+      if (result.metadata) {
+        this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+        this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
+      }
+    });
     this.loading = false;
   }
 
@@ -64,6 +74,31 @@ export class TrialComponent implements OnInit {
       trialDescription: trial.trialDescription,
       trialPUI: trial.trialPUI
     };
+  }
+
+  checkTrialAlreadyExists() {
+    // Check if the trial to be imported already exists in the destination server
+    if (this.context.trialSelected && this.context.trialSelected.trialDbId) {
+      const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+      brapiDestination.trials({
+        externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.trialSelected.trialDbId),
+        externalReferenceSource: 'brapi-sync'
+      }).all((result: any) => {
+        if (result.length) {
+          this.trialAlreadyExists = true;
+        }
+      });
+    }
+  }
+
+  isValid() {
+    return !this.trialAlreadyExists && !this.loading && this.context.studySelected;
+  }
+
+  reset() {
+    this.loading = true;
+    this.info = [];
+    this.errors = [];
   }
 
 
