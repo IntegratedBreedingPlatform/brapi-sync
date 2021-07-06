@@ -23,7 +23,6 @@ export class ObservationComponent implements OnInit {
   loading = false;
   isSaving = false;
   germplasmInDestinationByRefId: any = {};
-  germplasmInDestinationByPUI: any = {};
   info: any = [];
   errors: any = [];
 
@@ -106,8 +105,10 @@ export class ObservationComponent implements OnInit {
   async searchInTarget(germplasm: any[]): Promise<void> {
     /**
      * TODO
+     *  - search by PUID, documentationUrl, externalReferences
      *  - show synchronized sources
      *  - BMS: /search/germplasm (IBP-4448)
+     *  - search by other fields: e.g PUID
      */
     const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
     const germplasmInDestination = await brapiAll(
@@ -124,7 +125,6 @@ export class ObservationComponent implements OnInit {
 
     if (germplasmInDestination && germplasmInDestination.length) {
       germplasmInDestination.forEach((g: any) => {
-        this.germplasmInDestinationByPUI[g.germplasmPUI] = g;
         if (g.externalReferences && g.externalReferences.length) {
           g.externalReferences.forEach((ref: any) => {
             this.germplasmInDestinationByRefId[ref.referenceID] = g;
@@ -136,19 +136,12 @@ export class ObservationComponent implements OnInit {
 
   getTargetGermplasm(germplasm: any) {
     const referenceId = this.externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId);
-    if (germplasm.germplasmPUI && this.germplasmInDestinationByPUI[germplasm.germplasmPUI]) {
-      // Search for germplasmPUI match first
-      return this.germplasmInDestinationByPUI[germplasm.germplasmPUI];
-    } else if (this.germplasmInDestinationByRefId[referenceId]) {
-      // then by externalReferenceId
-      return this.germplasmInDestinationByRefId[referenceId];
-    }
+    return this.germplasmInDestinationByRefId[referenceId];
   }
 
   transform(observationUnits: any[]) {
     return observationUnits.map(observationUnit => {
 
-      // TODO: also match by PUI
       const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId('germplasm', observationUnit.germplasmDbId)];
       return {
         // FIXME: mock additionalInfo for now because search observationunit schema is not yet fixed.
