@@ -20,6 +20,7 @@ export class StudyComponent implements OnInit {
   importedTrial: any = {};
   targetLocation: any = {};
   studyAlreadyExists: boolean = false;
+  studySaved: boolean = false;
   info: any = [];
   errors: any = [];
 
@@ -59,10 +60,12 @@ export class StudyComponent implements OnInit {
 
   async post() {
     this.reset();
+    this.loading = true;
     await this.http.post(this.context.destination + '/studies', [this.transform(this.studyDetail)]).toPromise().then((result: any) => {
       if (result.metadata) {
         this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
         this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
+        this.studySaved = this.errors.length === 0;
       }
     });
     this.loading = false;
@@ -87,7 +90,7 @@ export class StudyComponent implements OnInit {
       dataLinks: studyDetail.dataLinks,
       documentationURL: studyDetail.documentationURL,
       experimentalDesign: studyDetail.experimentalDesign,
-      externalReferences: this.externalReferenceService.generateExternalReference(studyDetail.trialDbId, 'studies', studyDetail.externalReferences),
+      externalReferences: this.externalReferenceService.generateExternalReference(studyDetail.studyDbId, 'studies', studyDetail.externalReferences),
       locationDbId: this.targetLocation.locationDbId,
       locationDbName: this.targetLocation.locationName,
       observationUnitsDescription: '',
@@ -117,10 +120,16 @@ export class StudyComponent implements OnInit {
     return this.targetLocation && !this.studyAlreadyExists && !this.loading;
   }
 
+  canProceed(): boolean {
+    return !this.loading && (this.studyAlreadyExists || this.studySaved);
+  }
+
   reset() {
-    this.loading = true;
+    this.loading = false;
     this.info = [];
     this.errors = [];
+    this.studyAlreadyExists = false;
+    this.studySaved = false;
   }
 
 }

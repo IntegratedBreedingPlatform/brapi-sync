@@ -24,7 +24,7 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Levels</span></th>
-              <td></td>
+              <td><app-expandable-json-viewer *ngIf="context.studySelected?.observationLevels" [json]="context.studySelected?.observationLevels"></app-expandable-json-viewer></td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
@@ -57,11 +57,11 @@
               <td>{{germplasm?.germplasmPUI}}</td>
               <td>{{germplasm?.germplasmDbId}}</td>
               <td>{{germplasm?.germplasmName}}</td>
-              <td>{{germplasmInDestinationByRefId[externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId)]?.germplasmDbId}}</td>
-              <td>{{germplasmInDestinationByRefId[externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId)]?.germplasmName}}</td>
+              <td>{{getTargetGermplasm(germplasm)?.germplasmDbId}}</td>
+              <td>{{getTargetGermplasm(germplasm)?.germplasmName}}</td>
               <td>
-                <span *ngIf="germplasmInDestinationByRefId[externalReferenceService.getReferenceId( 'germplasm', germplasm.germplasmDbId)]" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                <span *ngIf="!germplasmInDestinationByRefId[externalReferenceService.getReferenceId( 'germplasm', germplasm.germplasmDbId)]" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                <span *ngIf="getTargetGermplasm(germplasm)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                <span *ngIf="!getTargetGermplasm(germplasm)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
               </td>
             </tr>
             </tbody>
@@ -84,12 +84,8 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary">Import Observation Units</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
-    <span class="throbber throbber-btn" *ngIf="loading"></span>
-    Next
-  </button>
-</div>
+  <button type="button" class="btn btn-secondary" [disabled]="!isValid()">Import Observation Units</button>
+</div>s
 
 
 

@@ -21,6 +21,7 @@ export class TrialComponent implements OnInit {
   info: any = [];
   errors: any = [];
   trialAlreadyExists: boolean = false;
+  trialSaved: boolean = false;
 
   constructor(private router: Router,
               private http: HttpClient,
@@ -35,6 +36,7 @@ export class TrialComponent implements OnInit {
 
   openSearchModal() {
     this.modalService.open(StudyFilterComponent).result.then((result) => {
+      this.reset();
       this.checkTrialAlreadyExists();
     });
   }
@@ -49,13 +51,12 @@ export class TrialComponent implements OnInit {
 
   async post() {
     this.reset();
+    this.loading = true;
     await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise().then((result: any) => {
       if (result.metadata) {
         this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
         this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
-        if (this.errors.length === 0) {
-          this.trialAlreadyExists = true;
-        }
+        this.trialSaved = this.errors.length === 0;
       }
     });
     this.loading = false;
@@ -94,15 +95,21 @@ export class TrialComponent implements OnInit {
     }
   }
 
-  isValid() {
+  isValid(): boolean {
     return this.context.trialSelected.trialDbId && this.context.studySelected.studyDbId
       && !this.trialAlreadyExists && !this.loading;
   }
 
+  canProceed(): boolean {
+    return !this.loading && (this.trialSaved || this.trialAlreadyExists);
+  }
+
   reset() {
-    this.loading = true;
+    this.loading = false;
     this.info = [];
     this.errors = [];
+    this.trialSaved = false;
+    this.trialAlreadyExists = false;
   }
 
 

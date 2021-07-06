@@ -55,13 +55,13 @@
             <tr>
               <th scope="row"><span class="font-weight-bold">Publications</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.trialSelected?.publications" [json]="context.trialSelected?.publications"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.trialSelected?.publications?.length" [json]="context.trialSelected?.publications"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Contacts</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.trialSelected?.contacts" [json]="context.trialSelected?.contacts"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.trialSelected?.contacts?.length" [json]="context.trialSelected?.contacts"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
@@ -96,7 +96,7 @@
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Trial Metadata
   </button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !this.trialAlreadyExists">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!canProceed()">
     Next
   </button>
 </div>

@@ -37,13 +37,13 @@
             <tr>
               <th scope="row"><span class="font-weight-bold">Publications</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="studyDetail?.publications" [json]="studyDetail?.publications"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.publications?.length" [json]="studyDetail?.publications"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Contacts</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="studyDetail?.contacts" [json]="studyDetail?.contacts"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.contacts?.length" [json]="studyDetail?.contacts"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
@@ -61,7 +61,7 @@
             <tr>
               <th scope="row"><span class="font-weight-bold">Environment Parameters</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="studyDetail?.environmentParameters" [json]="studyDetail?.environmentParameters"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="studyDetail?.environmentParameters?.length" [json]="studyDetail?.environmentParameters"></app-expandable-json-viewer>
               </td>
             </tr>
             </tbody>
@@ -81,9 +81,9 @@
             </thead>
             <tbody>
             <tr>
-              <td scope="row">{{context.studySelected.locationName}}</td>
-              <td scope="row">{{this.targetLocation?.locationName}}</td>
-              <td scope="row">
+              <td>{{context.studySelected.locationName}}</td>
+              <td>{{this.targetLocation?.locationName}}</td>
+              <td>
                 <span *ngIf="this.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
                 <span *ngIf="!this.targetLocation?.locationName" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
               </td>
@@ -95,19 +95,21 @@
     </div>
   </div>
   <div class="row">
-    <div class="alert alert-danger" *ngIf="errors.length">
-      <ul>
-        <li *ngFor="let error of errors">{{error.message}}</li>
-      </ul>
+    <div class="col">
+      <div class="alert alert-danger" *ngIf="errors.length">
+        <ul>
+          <li *ngFor="let error of errors">{{error.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-success" *ngIf="info.length && !errors.length">
+        <ul>
+          <li *ngFor="let i of info">{{i.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-info" *ngIf="studyAlreadyExists">
+        "{{this.context.studySelected.studyName}}" already exists in the destination server.
+      </div>
     </div>
-    <div class="alert alert-success" *ngIf="info.length && !errors.length">
-      <ul>
-        <li *ngFor="let i of info">{{i.message}}</li>
-      </ul>
-    </div>
-  </div>
-  <div class="alert alert-info" *ngIf="studyAlreadyExists">
-    "{{this.context.studySelected.studyName}}" already exists in the destination server.
   </div>
 </div>
 <div class="modal-footer">
@@ -116,7 +118,7 @@
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Studies
   </button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading || !studyAlreadyExists">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!canProceed()">
     Next
   </button>
 </div>
