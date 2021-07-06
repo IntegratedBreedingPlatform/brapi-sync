@@ -52,11 +52,12 @@ export class TrialComponent implements OnInit {
   async post() {
     this.reset();
     this.loading = true;
-    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise().then((result: any) => {
-      if (result.metadata) {
-        this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
-        this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise().then((response: any) => {
+      if (response.metadata) {
+        this.errors = response.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+        this.info = response.metadata.status.filter((s: any) => s.messageType === 'INFO');
         this.trialSaved = this.errors.length === 0;
+        this.context.targetTrial = response.result.data[0];
       }
     });
     this.loading = false;
@@ -97,7 +98,7 @@ export class TrialComponent implements OnInit {
 
   isValid(): boolean {
     return this.context.trialSelected.trialDbId && this.context.studySelected.studyDbId
-      && !this.trialAlreadyExists && !this.loading;
+      && !this.trialAlreadyExists && !this.trialSaved && !this.loading;
   }
 
   canProceed(): boolean {

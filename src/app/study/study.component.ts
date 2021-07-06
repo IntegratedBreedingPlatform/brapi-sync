@@ -17,8 +17,6 @@ export class StudyComponent implements OnInit {
   searchSelected: number = 1;
   loading = false;
   studyDetail: any = {};
-  importedTrial: any = {};
-  targetLocation: any = {};
   studyAlreadyExists: boolean = false;
   studySaved: boolean = false;
   info: any = [];
@@ -45,7 +43,7 @@ export class StudyComponent implements OnInit {
       externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.trialSelected.trialDbId),
       externalReferenceSource: 'brapi-sync'
     }).all((result: any) => {
-      this.importedTrial = result[0];
+      this.context.targetTrial = result[0];
     });
 
   }
@@ -61,11 +59,12 @@ export class StudyComponent implements OnInit {
   async post() {
     this.reset();
     this.loading = true;
-    await this.http.post(this.context.destination + '/studies', [this.transform(this.studyDetail)]).toPromise().then((result: any) => {
-      if (result.metadata) {
-        this.errors = result.metadata.status.filter((s: any) => s.messageType === 'ERROR');
-        this.info = result.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    await this.http.post(this.context.destination + '/studies', [this.transform(this.studyDetail)]).toPromise().then((response: any) => {
+      if (response.metadata) {
+        this.errors = response.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+        this.info = response.metadata.status.filter((s: any) => s.messageType === 'INFO');
         this.studySaved = this.errors.length === 0;
+        this.context.targetStudy = response.result.data[0];
       }
     });
     this.loading = false;
@@ -76,7 +75,7 @@ export class StudyComponent implements OnInit {
     // FIXME: The Brapi GET locations doesn't have a parameter to search location by name,
     // as a workaround, we load all locations and then search the location by name.
     brapi.locations({}).all((locations: any[]) => {
-      this.targetLocation = locations.find((loc) => {
+      this.context.targetLocation = locations.find((loc) => {
         return loc.locationName === locationName;
       });
     });
@@ -91,13 +90,13 @@ export class StudyComponent implements OnInit {
       documentationURL: studyDetail.documentationURL,
       experimentalDesign: studyDetail.experimentalDesign,
       externalReferences: this.externalReferenceService.generateExternalReference(studyDetail.studyDbId, 'studies', studyDetail.externalReferences),
-      locationDbId: this.targetLocation.locationDbId,
-      locationDbName: this.targetLocation.locationName,
+      locationDbId: this.context.targetLocation.locationDbId,
+      locationDbName: this.context.targetLocation.locationName,
       observationUnitsDescription: '',
       studyName: studyDetail.studyName,
       studyPUI: studyDetail.studyPUI,
-      trialDbId: this.importedTrial.trialDbId,
-      trialName: this.importedTrial.trialName
+      trialDbId: this.context.targetTrial.trialDbId,
+      trialName: this.context.targetTrial.trialName
     };
   }
 
@@ -111,13 +110,14 @@ export class StudyComponent implements OnInit {
       }).all((result: any) => {
         if (result.length) {
           this.studyAlreadyExists = true;
+          this.context.targetStudy = result[0];
         }
       });
     }
   }
 
   isValid() {
-    return this.targetLocation && !this.studyAlreadyExists && !this.loading;
+    return this.context.targetLocation.locationDbId && !this.studyAlreadyExists && !this.studySaved && !this.loading;
   }
 
   canProceed(): boolean {

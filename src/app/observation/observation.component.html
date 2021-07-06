@@ -24,7 +24,9 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Levels</span></th>
-              <td><app-expandable-json-viewer *ngIf="context.studySelected?.observationLevels" [json]="context.studySelected?.observationLevels"></app-expandable-json-viewer></td>
+              <td>
+                <app-expandable-json-viewer *ngIf="context.studySelected?.observationLevels" [json]="context.studySelected?.observationLevels"></app-expandable-json-viewer>
+              </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
@@ -39,52 +41,78 @@
         </div>
       </app-collapsible>
       <app-collapsible heading="Germplasm Mapping">
-        <div class="table-responsive">
-          <table class="table table-bordered">
-            <caption></caption>
-            <thead class="thead-light">
-            <tr>
-              <th scope="col">PUID</th>
-              <th scope="col">Source germplasmDbId</th>
-              <th scope="col">Source Name</th>
-              <th scope="col">Target germplasmDbId</th>
-              <th scope="col">Target Name</th>
-              <th scope="col">Status</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let germplasm of sourceGermplasm">
-              <td>{{germplasm?.germplasmPUI}}</td>
-              <td>{{germplasm?.germplasmDbId}}</td>
-              <td>{{germplasm?.germplasmName}}</td>
-              <td>{{getTargetGermplasm(germplasm)?.germplasmDbId}}</td>
-              <td>{{getTargetGermplasm(germplasm)?.germplasmName}}</td>
-              <td>
-                <span *ngIf="getTargetGermplasm(germplasm)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                <span *ngIf="!getTargetGermplasm(germplasm)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+        <div class="row" *ngIf="loading">
+          <div class="col">
+            <span class="throbber"></span>
+          </div>
         </div>
-        <div class="d-flex justify-content-between p-2">
-          <ngb-pagination [collectionSize]="germplasmTotalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="loadGermplasm()">
-          </ngb-pagination>
+        <div class="row" *ngIf="!loading">
+          <div class="col">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <caption></caption>
+                <thead class="thead-light">
+                <tr>
+                  <th scope="col">PUID</th>
+                  <th scope="col">Source germplasmDbId</th>
+                  <th scope="col">Source Name</th>
+                  <th scope="col">Target germplasmDbId</th>
+                  <th scope="col">Target Name</th>
+                  <th scope="col">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let germplasm of sourceGermplasm">
+                  <td>{{germplasm?.germplasmPUI}}</td>
+                  <td>{{germplasm?.germplasmDbId}}</td>
+                  <td>{{germplasm?.germplasmName}}</td>
+                  <td>{{getTargetGermplasm(germplasm)?.germplasmDbId}}</td>
+                  <td>{{getTargetGermplasm(germplasm)?.germplasmName}}</td>
+                  <td>
+                    <span *ngIf="getTargetGermplasm(germplasm)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!getTargetGermplasm(germplasm)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between p-2">
+              <ngb-pagination [collectionSize]="germplasmTotalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="loadGermplasm()">
+              </ngb-pagination>
 
-          <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="loadGermplasm()">
-            <option [ngValue]="5">5</option>
-            <option [ngValue]="20">20</option>
-            <option [ngValue]="50">50</option>
-            <option [ngValue]="100">100</option>
-          </select>
+              <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="loadGermplasm()">
+                <option [ngValue]="5">5</option>
+                <option [ngValue]="20">20</option>
+                <option [ngValue]="50">50</option>
+                <option [ngValue]="100">100</option>
+              </select>
+            </div>
+          </div>
         </div>
       </app-collapsible>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="alert alert-danger" *ngIf="errors.length">
+        <ul>
+          <li *ngFor="let error of errors">{{error.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-success" *ngIf="info.length && !errors.length">
+        <ul>
+          <li *ngFor="let i of info">{{i.message}}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-secondary" [disabled]="!isValid()">Import Observation Units</button>
+  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
+    <span class="throbber throbber-btn" *ngIf="isSaving"></span>
+    Import Observation Units
+  </button>
 </div>s
 
 

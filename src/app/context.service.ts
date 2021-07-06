@@ -22,6 +22,20 @@ export class ContextService {
   locationSelected: any = {};
   studySelected: any = {};
 
+  targetProgramSelected: any = {};
+  targetLocation: any = {};
+  targetTrial: any = {};
+  targetStudy: any = {};
+
   constructor() {
+  }
+
+  reset() {
+    this.trialSelected = {};
+    this.studySelected = {};
+    this.locationSelected = {};
+    this.targetLocation = {};
+    this.targetTrial = {};
+    this.targetStudy = {};
   }
 }

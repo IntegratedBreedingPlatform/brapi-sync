@@ -20,9 +20,7 @@ export class EntitySelectorComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.context.trialSelected = {};
-    this.context.studySelected = {};
-    this.context.locationSelected = {};
+    this.context.reset();
   }
 
   async next(): Promise<void> {

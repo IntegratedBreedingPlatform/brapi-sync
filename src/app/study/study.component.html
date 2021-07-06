@@ -82,10 +82,10 @@
             <tbody>
             <tr>
               <td>{{context.studySelected.locationName}}</td>
-              <td>{{this.targetLocation?.locationName}}</td>
+              <td>{{this.context.targetLocation?.locationName}}</td>
               <td>
-                <span *ngIf="this.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                <span *ngIf="!this.targetLocation?.locationName" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                <span *ngIf="this.context.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                <span *ngIf="!this.context.targetLocation?.locationName" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
               </td>
             </tr>
             </tbody>

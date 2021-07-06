@@ -21,8 +21,11 @@ export class ObservationComponent implements OnInit {
   pageSize = 20;
   germplasmTotalCount = 0;
   loading = false;
+  isSaving = false;
   germplasmInDestinationByRefId: any = {};
   germplasmInDestinationByPUI: any = {};
+  info: any = [];
+  errors: any = [];
 
   constructor(private router: Router,
               private http: HttpClient,
@@ -45,8 +48,26 @@ export class ObservationComponent implements OnInit {
     this.router.navigate(['study']);
   }
 
-  post() {
-    // TODO: Post the observation units.
+  async post(): Promise<void> {
+    this.isSaving = true;
+    // Load all germplasm from source
+    const res: any = await this.http.get(this.context.source + '/germplasm', {
+      params: {
+        studyDbId: this.context.studySelected.studyDbId,
+        pageSize: '10000'
+      }
+    }).toPromise();
+    let allGermplasm = res.result.data;
+
+    await this.searchInTarget(allGermplasm);
+
+    const data = this.transform(this.sourceObservationUnits);
+    console.log(data);
+    const postRes: any = await this.http.post(this.context.destination + '/observationunits', data
+    ).toPromise();
+    this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+    this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    this.isSaving = false;
   }
 
   loadObservationUnits() {
@@ -61,6 +82,7 @@ export class ObservationComponent implements OnInit {
   }
 
   async loadGermplasm(): Promise<void> {
+    this.loading = true;
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
@@ -78,6 +100,7 @@ export class ObservationComponent implements OnInit {
     } catch (error) {
       console.log(error);
     }
+    this.loading = false;
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
@@ -88,8 +111,7 @@ export class ObservationComponent implements OnInit {
      */
     const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
     const germplasmInDestination = await brapiAll(
-      brapi.data(
-        this.sourceGermplasm.map((germplasm: any) => this.externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId))
+      brapi.data(germplasm.map((germplasm: any) => this.externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId))
       ).germplasm((id: any) => {
         return {
           externalReferenceID: id,
@@ -123,8 +145,71 @@ export class ObservationComponent implements OnInit {
     }
   }
 
+  transform(observationUnits: any[]) {
+    return observationUnits.map(observationUnit => {
+
+      // TODO: also match by PUI
+      const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId('germplasm', observationUnit.germplasmDbId)];
+      return {
+        // FIXME: mock additionalInfo for now because search observationunit schema is not yet fixed.
+        // TODO: IBP-4725 Fix search observationunit schema first
+        additionalInfo: {},
+        externalReferences: this.externalReferenceService.generateExternalReference(observationUnit.observationUnitDbId, 'observationunits', observationUnit.externalReferences),
+        germplasmDbId: targetGermplasm.germplasmDbId,
+        germplasmName: targetGermplasm.germplasmName,
+        locationDbId: this.context.targetLocation.locationDbId,
+        locationName: this.context.targetLocation.locationName,
+        observationUnitName: observationUnit.observationUnitName,
+        observationUnitPUI: observationUnit.observationUnitPUI,
+        // FIXME: mock observationUnitPosition for now becaus search observationunit is not yet fixed.
+        // TODO: IBP-4725 Fix search observationunit schema first
+        observationUnitPosition: {
+          'entryType': 'Test entry',
+          'geoCoordinates': {
+            'geometry': {
+              'coordinates': [
+                -76.506042,
+                42.417373,
+                123
+              ],
+              'type': 'Point'
+            },
+            'type': 'Feature'
+          },
+          'observationLevelRelationships': [
+            {
+              'levelCode': '1',
+              'levelName': 'PLOT_NO',
+              'levelOrder': 0
+            },
+            {
+              'levelCode': '1',
+              'levelName': 'REP_NO',
+              'levelOrder': 0
+            }
+          ],
+          'positionCoordinateX': '1',
+          'positionCoordinateY': '3'
+        },
+        programDbId: this.context.targetProgramSelected.programDbId,
+        programName: this.context.targetProgramSelected.programName,
+        seedLotDbId: observationUnit.seedLotDbId,
+        studyDbId: this.context.targetStudy.studyDbId,
+        studyName: this.context.targetStudy.studyName,
+        treatments: observationUnit.treatments,
+        trialDbId: this.context.targetTrial.trialDbId,
+        trialName: this.context.targetTrial.trialName
+      }
+    });
+  }
+
+  checkObservationAlreadyExists() {
+    // TODO: Implement this.
+
+  }
+
   isValid(): boolean {
-    return false;
+    return !this.loading && !this.isSaving && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
   }
 
 }
