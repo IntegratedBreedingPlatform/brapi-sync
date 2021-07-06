@@ -8,7 +8,7 @@
         <div class="form-group row">
           <label for="trialSelect" class="col-sm-3 col-form-label">Trial</label>
           <div class="col-sm-9">
-            <ng-select name="trialSelect" [items]="trials" bindLabel="trialName" [(ngModel)]="trialSelected" (change)="loadStudies()">
+            <ng-select name="trialSelect" [items]="trials" bindLabel="trialName" [(ngModel)]="trialSelected" (change)="loadStudies()" [disabled]="isTrialDisabled">
             </ng-select>
           </div>
         </div>

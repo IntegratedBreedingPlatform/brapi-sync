@@ -3,6 +3,20 @@
 </div>
 <div class="modal-body">
   <div class="row">
+    <div class="col-10">
+      <div class="form-inline">
+        <label for="searchBy">Search By</label>
+        <div class="col-4">
+          <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
+          </ng-select>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openSearchModal()">
+          <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
     <div class="col">
       <app-collapsible heading="Connection Info">
         <div class="card">
@@ -81,7 +95,7 @@
             </thead>
             <tbody>
             <tr>
-              <td>{{context.studySelected.locationName}}</td>
+              <td>{{context.sourceStudy.locationName}}</td>
               <td>{{this.context.targetLocation?.locationName}}</td>
               <td>
                 <span *ngIf="this.context.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
@@ -107,13 +121,13 @@
         </ul>
       </div>
       <div class="alert alert-info" *ngIf="studyAlreadyExists">
-        "{{this.context.studySelected.studyName}}" already exists in the destination server.
+        "{{this.context.sourceStudy.studyName}}" already exists in the destination server.
       </div>
     </div>
   </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
+  <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
   <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Studies

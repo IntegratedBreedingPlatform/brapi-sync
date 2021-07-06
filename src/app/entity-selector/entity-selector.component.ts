@@ -12,7 +12,7 @@ export class EntitySelectorComponent implements OnInit {
   ENTITY_GERMPLASM = 'germplasm';
   ENTITY_STUDY = 'study';
 
-  entitySelected: string = '';
+  entitySelected: string = this.ENTITY_GERMPLASM;
   loading = false;
 
   constructor(private router: Router,

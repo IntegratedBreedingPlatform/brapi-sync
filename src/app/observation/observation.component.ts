@@ -52,7 +52,7 @@ export class ObservationComponent implements OnInit {
     // Load all germplasm from source
     const res: any = await this.http.get(this.context.source + '/germplasm', {
       params: {
-        studyDbId: this.context.studySelected.studyDbId,
+        studyDbId: this.context.sourceStudy.studyDbId,
         pageSize: '10000'
       }
     }).toPromise();
@@ -72,7 +72,7 @@ export class ObservationComponent implements OnInit {
   loadObservationUnits() {
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     brapi.search_observationunits({
-        studyDbIds: [this.context.studySelected.studyDbId]
+        studyDbIds: [this.context.sourceStudy.studyDbId]
       }
     ).all((result: any) => {
       this.sourceObservationUnits = result;
@@ -85,7 +85,7 @@ export class ObservationComponent implements OnInit {
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
-          studyDbId: this.context.studySelected.studyDbId,
+          studyDbId: this.context.sourceStudy.studyDbId,
           page: (this.page - 1).toString(),
           pageSize: this.pageSize.toString(),
         }

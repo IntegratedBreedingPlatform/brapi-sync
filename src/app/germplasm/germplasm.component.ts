@@ -56,7 +56,7 @@ export class GermplasmComponent implements OnInit {
     if (this.isSelectAllPages) {
       const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
       brapi.germplasm({
-        studyDbId: this.context.studySelected.studyDbId,
+        studyDbId: this.context.sourceStudy.studyDbId,
         // put a limit on synchronization (default page=1000). TODO improve
         pageRange: [0, 1],
       }).all((germplasm: any[]) => {
@@ -157,7 +157,11 @@ export class GermplasmComponent implements OnInit {
 
   addFilter(): void {
     this.modalService.open(StudyFilterComponent).result
-      .then(() => this.load());
+      .then(() => {
+        if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+          this.load();
+        }
+      });
   }
 
   async load(): Promise<void> {
@@ -177,7 +181,7 @@ export class GermplasmComponent implements OnInit {
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
-          studyDbId: this.context.studySelected.studyDbId,
+          studyDbId: this.context.sourceStudy.studyDbId,
           page: (this.page - 1).toString(),
           pageSize: this.pageSize.toString(),
         }

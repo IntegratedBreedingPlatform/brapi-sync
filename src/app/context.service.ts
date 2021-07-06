@@ -17,10 +17,10 @@ export class ContextService {
   sourceToken = 'admin:1625121537941:b85ee0cfa33fbec8b7dbd8aeffe23e9e';
   destinationToken = 'admin:1625121537941:b85ee0cfa33fbec8b7dbd8aeffe23e9e';
 
-  programSelected: any = {};
-  trialSelected: any = {};
-  locationSelected: any = {};
-  studySelected: any = {};
+  sourceProgram: any = {};
+  sourceTrial: any = {};
+  sourceLocation: any = {};
+  sourceStudy: any = {};
 
   targetProgramSelected: any = {};
   targetLocation: any = {};
@@ -31,9 +31,9 @@ export class ContextService {
   }
 
   reset() {
-    this.trialSelected = {};
-    this.studySelected = {};
-    this.locationSelected = {};
+    this.sourceTrial = {};
+    this.sourceStudy = {};
+    this.sourceLocation = {};
     this.targetLocation = {};
     this.targetTrial = {};
     this.targetStudy = {};

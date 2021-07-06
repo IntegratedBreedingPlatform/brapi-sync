@@ -16,16 +16,16 @@
       </div>
     </div>
   </div>
-  <div class="row" *ngIf="context.studySelected?.studyDbId">
+  <div class="row" *ngIf="context.sourceStudy?.studyDbId">
     <div class="col">
       <app-collapsible heading="Connection Info">
         <div class="card">
           <div class="card-body">
-            <h5><span class="badge badge-pill badge-primary">{{context.studySelected.studyName}}</span></h5>
+            <h5><span class="badge badge-pill badge-primary">{{context.sourceStudy.studyName}}</span></h5>
           </div>
         </div>
       </app-collapsible>
-      <app-collapsible heading="{{context.trialSelected.trialName + ' Metadata'}}">
+      <app-collapsible heading="{{context.sourceTrial.trialName + ' Metadata'}}">
         <div class="table-responsive">
           <table class="table table-bordered">
             <caption></caption>
@@ -38,36 +38,36 @@
             <tbody>
             <tr>
               <th scope="row"><span class="font-weight-bold">Trial Description</span></th>
-              <td>{{context.trialSelected.trialDescription}}</td>
+              <td>{{context.sourceTrial.trialDescription}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Start Date</span></th>
-              <td>{{context.trialSelected.startDate}}</td>
+              <td>{{context.sourceTrial.startDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">End Date</span></th>
-              <td>{{context.trialSelected.endDate}}</td>
+              <td>{{context.sourceTrial.endDate}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
-              <td>{{context.trialSelected.documentationUrl}}</td>
+              <td>{{context.sourceTrial.documentationUrl}}</td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Publications</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.trialSelected?.publications?.length" [json]="context.trialSelected?.publications"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.sourceTrial?.publications?.length" [json]="context.sourceTrial?.publications"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Contacts</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.trialSelected?.contacts?.length" [json]="context.trialSelected?.contacts"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.sourceTrial?.contacts?.length" [json]="context.sourceTrial?.contacts"></app-expandable-json-viewer>
               </td>
             </tr>
             <tr>
               <th scope="row"><span class="font-weight-bold">Additional Info</span></th>
               <td>
-                <app-expandable-json-viewer *ngIf="context.trialSelected?.additionalInfo" [json]="context.trialSelected?.additionalInfo"></app-expandable-json-viewer>
+                <app-expandable-json-viewer *ngIf="context.sourceTrial?.additionalInfo" [json]="context.sourceTrial?.additionalInfo"></app-expandable-json-viewer>
               </td>
             </tr>
             </tbody>
@@ -87,7 +87,7 @@
     </ul>
   </div>
   <div class="alert alert-info" *ngIf="trialAlreadyExists">
-    "{{this.context.trialSelected.trialName}}" already exists in the destination server.
+    "{{this.context.sourceTrial.trialName}}" already exists in the destination server.
   </div>
 </div>
 <div class="modal-footer">

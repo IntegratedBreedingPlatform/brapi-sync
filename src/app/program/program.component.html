@@ -9,7 +9,7 @@
         <div class="form-group row">
           <label for="sourceProgram" class="col-2 col-form-label">Source Program</label>
           <div class="col-5">
-            <ng-select [items]="sourcePrograms" name="sourceProgram" bindLabel="programName" [(ngModel)]="context.programSelected">
+            <ng-select [items]="sourcePrograms" name="sourceProgram" bindLabel="programName" [(ngModel)]="context.sourceProgram">
             </ng-select>
           </div>
         </div>
@@ -26,7 +26,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!context.programSelected?.programDbId && !context.targetProgramSelected?.programDbId">
+  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!context.sourceProgram?.programDbId && !context.targetProgramSelected?.programDbId">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>

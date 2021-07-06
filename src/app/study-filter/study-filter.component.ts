@@ -11,6 +11,7 @@ declare const BrAPI: any;
 })
 export class StudyFilterComponent implements OnInit {
 
+  isTrialDisabled = false;
   brapi: any;
   trials: any[] = [];
   studies: any[] = [];
@@ -28,12 +29,13 @@ export class StudyFilterComponent implements OnInit {
     this.brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.loadTrials();
     this.loadLocations();
+    this.loadStudies();
   }
 
   loadTrials(): void {
     // TODO: Enable virtual scrolling
     this.brapi.trials({
-      programDbId: this.context.programSelected.programDbId
+      programDbId: this.context.sourceProgram.programDbId
     }).all((result: any[]) => {
       this.trials = result;
     });
@@ -57,7 +59,7 @@ export class StudyFilterComponent implements OnInit {
     }
     this.studySelected = null;
     this.brapi.studies(Object.assign({
-      programDbId: this.context.programSelected.programDbId,
+      programDbId: this.context.sourceProgram.programDbId,
       active: true,
       // put a limit for now (default page=1000). TODO paginated dropdown
       pageRange: [0, 1],
@@ -67,14 +69,14 @@ export class StudyFilterComponent implements OnInit {
   }
 
   select(): void {
-    this.context.studySelected = this.studySelected;
-    this.context.trialSelected = this.trialSelected;
-    this.context.locationSelected = this.locationSelected;
+    this.context.sourceStudy = this.studySelected;
+    this.context.sourceTrial = this.trialSelected;
+    this.context.sourceLocation = this.locationSelected;
     this.activeModal.close();
   }
 
   cancel(): void {
-    this.activeModal.dismiss();
+    this.activeModal.close();
   }
 
 }

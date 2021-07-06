@@ -35,9 +35,11 @@ export class TrialComponent implements OnInit {
   }
 
   openSearchModal() {
-    this.modalService.open(StudyFilterComponent).result.then((result) => {
-      this.reset();
-      this.checkTrialAlreadyExists();
+    this.modalService.open(StudyFilterComponent).result.then(() => {
+      if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+        this.reset();
+        this.checkTrialAlreadyExists();
+      }
     });
   }
 
@@ -52,7 +54,7 @@ export class TrialComponent implements OnInit {
   async post() {
     this.reset();
     this.loading = true;
-    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.trialSelected)]).toPromise().then((response: any) => {
+    await this.http.post(this.context.destination + '/trials', [this.transform(this.context.sourceTrial)]).toPromise().then((response: any) => {
       if (response.metadata) {
         this.errors = response.metadata.status.filter((s: any) => s.messageType === 'ERROR');
         this.info = response.metadata.status.filter((s: any) => s.messageType === 'INFO');
@@ -83,10 +85,10 @@ export class TrialComponent implements OnInit {
 
   checkTrialAlreadyExists() {
     // Check if the trial to be imported already exists in the destination server
-    if (this.context.trialSelected && this.context.trialSelected.trialDbId) {
+    if (this.context.sourceTrial && this.context.sourceTrial.trialDbId) {
       const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
       brapiDestination.trials({
-        externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.trialSelected.trialDbId),
+        externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.sourceTrial.trialDbId),
         externalReferenceSource: 'brapi-sync'
       }).all((result: any) => {
         if (result.length) {
@@ -97,7 +99,7 @@ export class TrialComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return this.context.trialSelected.trialDbId && this.context.studySelected.studyDbId
+    return this.context.sourceTrial.trialDbId && this.context.sourceStudy.studyDbId
       && !this.trialAlreadyExists && !this.trialSaved && !this.loading;
   }
 

@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { StudyFilterComponent } from '../study-filter/study-filter.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 declare const BrAPI: any;
 
@@ -25,27 +27,49 @@ export class StudyComponent implements OnInit {
   constructor(private router: Router,
               private http: HttpClient,
               private externalReferenceService: ExternalReferenceService,
+              public modalService: NgbModal,
               public context: ContextService) {
   }
 
   ngOnInit(): void {
     // Load the study detail from the source server to make sure we have the properties we need to import it
+    this.loadStudyDetail();
+    // Get the imported Trial from destination server so that we know its trialDbId
+    this.loadTrialFromDestination();
+  }
+
+  loadStudyDetail() {
     const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.studies_detail({ studyDbId: this.context.studySelected.studyDbId }).all((result: any) => {
+    brapi.studies_detail({ studyDbId: this.context.sourceStudy.studyDbId }).all((result: any) => {
       this.studyDetail = result[0];
       this.searchLocationByName(this.studyDetail.locationName);
       this.checkStudyAlreadyExists();
     });
+  }
 
-    // Get the imported Trial from destination server so that we know its trialDbId
+  loadTrialFromDestination() {
     const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
     brapiDestination.trials({
-      externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.trialSelected.trialDbId),
+      externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.sourceTrial.trialDbId),
       externalReferenceSource: 'brapi-sync'
     }).all((result: any) => {
       this.context.targetTrial = result[0];
     });
+  }
 
+  openSearchModal() {
+    const modalReference = this.modalService.open(StudyFilterComponent)
+    modalReference.componentInstance.trialSelected = this.context.sourceTrial;
+    modalReference.componentInstance.studySelected = this.context.sourceStudy;
+    modalReference.componentInstance.locationSelected = this.context.sourceLocation;
+    modalReference.componentInstance.isTrialDisabled = true;
+    modalReference.result.then(() => {
+      if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+        this.reset();
+        this.loadStudyDetail();
+        this.loadTrialFromDestination();
+      }
+    });
   }
 
   async next(): Promise<void> {
