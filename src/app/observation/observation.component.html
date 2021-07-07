@@ -104,6 +104,9 @@
           <li *ngFor="let i of info">{{i.message}}</li>
         </ul>
       </div>
+      <div class="alert alert-info" *ngIf="observationsAlreadyExist">
+        Observations already exists in the destination server.
+      </div>
     </div>
   </div>
 </div>

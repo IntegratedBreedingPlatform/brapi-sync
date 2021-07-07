@@ -22,6 +22,8 @@ export class ObservationComponent implements OnInit {
   germplasmTotalCount = 0;
   loading = false;
   isSaving = false;
+  observationsAlreadyExist = false;
+  observationsSaved = false;
   germplasmInDestinationByRefId: any = {};
   info: any = [];
   errors: any = [];
@@ -37,6 +39,7 @@ export class ObservationComponent implements OnInit {
     this.loadGermplasm();
     // Get the observation units of the study from source
     this.loadObservationUnits();
+    this.checkObservationAlreadyExists();
   }
 
   async next(): Promise<void> {
@@ -48,6 +51,8 @@ export class ObservationComponent implements OnInit {
   }
 
   async post(): Promise<void> {
+    this.info = [];
+    this.errors = [];
     this.isSaving = true;
     // Load all germplasm from source
     const res: any = await this.http.get(this.context.source + '/germplasm', {
@@ -60,12 +65,18 @@ export class ObservationComponent implements OnInit {
 
     await this.searchInTarget(allGermplasm);
 
-    const data = this.transform(this.sourceObservationUnits);
-    console.log(data);
-    const postRes: any = await this.http.post(this.context.destination + '/observationunits', data
-    ).toPromise();
-    this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
-    this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    try {
+      const data = this.transform(this.sourceObservationUnits);
+      const postRes: any = await this.http.post(this.context.destination + '/observationunits', data
+      ).toPromise();
+      this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+      this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
+      if (!this.errors.length) {
+        this.observationsSaved = true;
+      }
+    } catch (message) {
+      this.errors.push({ message: message });
+    }
     this.isSaving = false;
   }
 
@@ -76,7 +87,6 @@ export class ObservationComponent implements OnInit {
       }
     ).all((result: any) => {
       this.sourceObservationUnits = result;
-      console.log(result);
     });
   }
 
@@ -105,8 +115,7 @@ export class ObservationComponent implements OnInit {
   async searchInTarget(germplasm: any[]): Promise<void> {
     /**
      * TODO
-     *  - search by PUID, documentationUrl, externalReferences
-     *  - show synchronized sources
+     *  - search by PUID, externalReferences
      *  - BMS: /search/germplasm (IBP-4448)
      *  - search by other fields: e.g PUID
      */
@@ -143,6 +152,9 @@ export class ObservationComponent implements OnInit {
     return observationUnits.map(observationUnit => {
 
       const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId('germplasm', observationUnit.germplasmDbId)];
+      if (!targetGermplasm) {
+        throw 'Some germplasm from source server are not yet imported in the destination server.';
+      }
       return {
         // FIXME: mock additionalInfo for now because search observationunit schema is not yet fixed.
         // TODO: IBP-4725 Fix search observationunit schema first
@@ -197,12 +209,22 @@ export class ObservationComponent implements OnInit {
   }
 
   checkObservationAlreadyExists() {
-    // TODO: Implement this.
-
+    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    brapi.search_observationunits({
+        studyDbIds: [this.context.targetStudy.studyDbId],
+        pageRange: [0, 1],
+        pageSize: 1
+      }
+    ).all((result: any) => {
+      if (result.length) {
+        this.observationsAlreadyExist = true;
+      }
+    });
   }
 
   isValid(): boolean {
-    return !this.loading && !this.isSaving && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
+    return !this.loading && !this.isSaving && !this.observationsAlreadyExist && !this.observationsSaved
+      && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
   }
 
 }

@@ -79,4 +79,8 @@ export class StudyFilterComponent implements OnInit {
     this.activeModal.close();
   }
 
+  isValid() {
+    return !this.loading && this.studySelected && this.trialSelected;
+  }
+
 }
