@@ -16,8 +16,13 @@
       </div>
     </div>
   </div>
-  <div class="row">
+  <div class="row" *ngIf="loading">
     <div class="col">
+      <span class="throbber"></span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col" *ngIf="studyDetail.studyDbId">
       <app-collapsible heading="Connection Info">
         <div class="card">
           <div class="card-body">
@@ -108,7 +113,7 @@
       </app-collapsible>
     </div>
   </div>
-  <div class="row">
+  <div class="row pt-3">
     <div class="col">
       <div class="alert alert-danger" *ngIf="errors.length">
         <ul>

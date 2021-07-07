@@ -6,6 +6,7 @@ import { EntityEnum, ExternalReferenceService } from '../shared/external-referen
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
+import { brapiAll } from '../util/brapi-all';
 
 declare const BrAPI: any;
 
@@ -19,6 +20,7 @@ export class StudyComponent implements OnInit {
   searchOptions: any[] = [{ id: 1, name: 'Study' }];
   searchSelected: number = 1;
   loading = false;
+  isSaving = false;
   studyDetail: any = {};
   studyAlreadyExists: boolean = false;
   studySaved: boolean = false;
@@ -44,12 +46,17 @@ export class StudyComponent implements OnInit {
     this.loadTrialFromDestination();
   }
 
-  loadStudyDetail() {
-    this.brapiSource.studies_detail({ studyDbId: this.context.sourceStudy.studyDbId }).all((result: any) => {
-      this.studyDetail = result[0];
+  async loadStudyDetail() {
+    this.loading = true;
+    await brapiAll(this.brapiSource.studies_detail({ studyDbId: this.context.sourceStudy.studyDbId })
+    ).then((studyDetails: any) => {
+      this.studyDetail = studyDetails[0];
       this.searchLocationByName(this.studyDetail.locationName);
       this.checkStudyAlreadyExists();
+    }, (error: any) => {
+      this.errors.push({ message: 'Cannot load the study detail due to internal server error.' });
     });
+    this.loading = false;
   }
 
   loadTrialFromDestination() {
@@ -86,7 +93,7 @@ export class StudyComponent implements OnInit {
 
   async post() {
     this.reset();
-    this.loading = true;
+    this.isSaving = true;
     await this.http.post(this.context.destination + '/studies', [this.transform(this.studyDetail)]).toPromise().then((response: any) => {
       if (response.metadata) {
         this.errors = response.metadata.status.filter((s: any) => s.messageType === 'ERROR');
@@ -95,7 +102,7 @@ export class StudyComponent implements OnInit {
         this.context.targetStudy = response.result.data[0];
       }
     });
-    this.loading = false;
+    this.isSaving = false;
   }
 
   searchLocationByName(locationName: string) {
@@ -106,7 +113,7 @@ export class StudyComponent implements OnInit {
         return loc.locationName === locationName;
       });
       if (!this.context.targetLocation) {
-        this.errors.push({message: `"${locationName}" does not match any location records in the destination server.`});
+        this.errors.push({ message: `"${locationName}" does not match any location records in the destination server.` });
       }
     });
   }
@@ -146,7 +153,8 @@ export class StudyComponent implements OnInit {
   }
 
   isValid() {
-    return this.context.targetLocation && this.context.targetLocation.locationDbId && !this.studyAlreadyExists && !this.studySaved && !this.loading;
+    return this.context.targetLocation && this.context.targetLocation.locationDbId
+      && !this.studyAlreadyExists && !this.studySaved && !this.loading && !this.isSaving;
   }
 
   canProceed(): boolean {
