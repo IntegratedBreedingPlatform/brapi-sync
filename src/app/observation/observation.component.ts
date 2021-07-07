@@ -70,8 +70,15 @@ export class ObservationComponent implements OnInit {
 
     await this.searchInTarget(allGermplasm);
 
+    let data: any;
     try {
-      const data = this.transform(this.sourceObservationUnits);
+      data = this.transform(this.sourceObservationUnits);
+    } catch (message) {
+      this.errors.push({ message: message });
+      return;
+    }
+    try {
+
       const postRes: any = await this.http.post(this.context.destination + '/observationunits', data
       ).toPromise();
       this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
@@ -79,8 +86,8 @@ export class ObservationComponent implements OnInit {
       if (!this.errors.length) {
         this.observationsSaved = true;
       }
-    } catch (message) {
-      this.errors.push({ message: message });
+    } catch (error) {
+      this.errors.push({ message: error.message });
     }
     this.isSaving = false;
   }
@@ -197,9 +204,8 @@ export class ObservationComponent implements OnInit {
         throw 'Some germplasm from source server are not yet imported in the destination server.';
       }
       return {
-        // FIXME: mock additionalInfo for now because search observationunit schema is not yet fixed.
-        // TODO: IBP-4725 Fix search observationunit schema first
-        additionalInfo: {},
+
+        additionalInfo: observationUnit.additionalInfo, // TODO: IBP-4725 Fix search observationunit schema first
         externalReferences: this.externalReferenceService.generateExternalReference(observationUnit.observationUnitDbId, EntityEnum.OBSERVATIONUNITS, observationUnit.externalReferences),
         germplasmDbId: targetGermplasm.germplasmDbId,
         germplasmName: targetGermplasm.germplasmName,
@@ -207,39 +213,7 @@ export class ObservationComponent implements OnInit {
         locationName: this.context.targetLocation.locationName,
         observationUnitName: observationUnit.observationUnitName,
         observationUnitPUI: observationUnit.observationUnitPUI,
-        // FIXME: mock observationUnitPosition for now becaus search observationunit is not yet fixed.
-        // TODO: IBP-4725 Fix search observationunit schema first
-        /**
-         *
-         */
-        observationUnitPosition: {
-          'entryType': observationUnit.entryType,
-          'geoCoordinates': {
-            'geometry': {
-              'coordinates': [
-                -76.506042,
-                42.417373,
-                123
-              ],
-              'type': 'Point'
-            },
-            'type': 'Feature'
-          },
-          'observationLevelRelationships': [
-            {
-              'levelCode': observationUnit.plotNumber,
-              'levelName': 'PLOT_NO',
-              'levelOrder': 0
-            },
-            {
-              'levelCode': observationUnit.entryNumber,
-              'levelName': 'ENTRY_NO',
-              'levelOrder': 0
-            }
-          ],
-          'positionCoordinateX': '1',
-          'positionCoordinateY': '3'
-        },
+        observationUnitPosition: observationUnit.observationUnitPosition, // TODO: IBP-4725 Fix search observationunit schema first
         programDbId: this.context.targetProgramSelected.programDbId,
         programName: this.context.targetProgramSelected.programName,
         seedLotDbId: observationUnit.seedLotDbId,
