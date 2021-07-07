@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
+import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 
 declare const BrAPI: any;
 
@@ -94,7 +95,7 @@ export class GermplasmComponent implements OnInit {
     }
     copy.externalReferences.push({
       referenceID: this.getRefId(germplasm.germplasmDbId),
-      referenceSource: 'brapi-sync'
+      referenceSource: EXTERNAL_REFERENCE_SOURCE
     });
 
     copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);

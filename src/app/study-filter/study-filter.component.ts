@@ -12,7 +12,7 @@ declare const BrAPI: any;
 export class StudyFilterComponent implements OnInit {
 
   isTrialDisabled = false;
-  brapi: any;
+  brapiSource: any;
   trials: any[] = [];
   studies: any[] = [];
   locations: any[] = [];
@@ -23,10 +23,10 @@ export class StudyFilterComponent implements OnInit {
 
   constructor(public activeModal: NgbActiveModal,
               public context: ContextService) {
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
   }
 
   ngOnInit(): void {
-    this.brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.loadTrials();
     this.loadLocations();
     this.loadStudies();
@@ -34,7 +34,7 @@ export class StudyFilterComponent implements OnInit {
 
   loadTrials(): void {
     // TODO: Enable virtual scrolling
-    this.brapi.trials({
+    this.brapiSource.trials({
       programDbId: this.context.sourceProgram.programDbId
     }).all((result: any[]) => {
       this.trials = result;
@@ -43,7 +43,7 @@ export class StudyFilterComponent implements OnInit {
 
   loadLocations(): void {
     // TODO: Enable virtual scrolling
-    this.brapi.locations({}).all((result: any[]) => {
+    this.brapiSource.locations({}).all((result: any[]) => {
       this.locations = result;
     });
   }
@@ -58,7 +58,7 @@ export class StudyFilterComponent implements OnInit {
       params.locationDbId = this.locationSelected.locationDbId;
     }
     this.studySelected = null;
-    this.brapi.studies(Object.assign({
+    this.brapiSource.studies(Object.assign({
       programDbId: this.context.sourceProgram.programDbId,
       active: true,
       // put a limit for now (default page=1000). TODO paginated dropdown
@@ -80,7 +80,7 @@ export class StudyFilterComponent implements OnInit {
   }
 
   isValid() {
-    return !this.loading && this.studySelected && this.trialSelected;
+    return !this.loading && this.studySelected;
   }
 
 }

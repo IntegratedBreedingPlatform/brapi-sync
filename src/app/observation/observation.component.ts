@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
-import { ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
 
@@ -15,6 +15,7 @@ declare const BrAPI: any;
 export class ObservationComponent implements OnInit {
 
   brapiSource: any;
+  brapiDestination: any;
   sourceGermplasm: any[] = [];
   sourceObservationUnits: any[] = [];
   page = 1;
@@ -32,6 +33,8 @@ export class ObservationComponent implements OnInit {
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
               public context: ContextService) {
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
@@ -81,8 +84,7 @@ export class ObservationComponent implements OnInit {
   }
 
   loadObservationUnits() {
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.search_observationunits({
+    this.brapiSource.search_observationunits({
         studyDbIds: [this.context.sourceStudy.studyDbId]
       }
     ).all((result: any) => {
@@ -119,9 +121,8 @@ export class ObservationComponent implements OnInit {
      *  - BMS: /search/germplasm (IBP-4448)
      *  - search by other fields: e.g PUID
      */
-    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
     const germplasmInDestination = await brapiAll(
-      brapi.data(germplasm.map((germplasm: any) => this.externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId))
+      this.brapiDestination.data(germplasm.map((germplasm: any) => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId))
       ).germplasm((id: any) => {
         return {
           externalReferenceID: id,
@@ -144,14 +145,14 @@ export class ObservationComponent implements OnInit {
   }
 
   getTargetGermplasm(germplasm: any) {
-    const referenceId = this.externalReferenceService.getReferenceId('germplasm', germplasm.germplasmDbId);
+    const referenceId = this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId);
     return this.germplasmInDestinationByRefId[referenceId];
   }
 
   transform(observationUnits: any[]) {
     return observationUnits.map(observationUnit => {
 
-      const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId('germplasm', observationUnit.germplasmDbId)];
+      const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, observationUnit.germplasmDbId)];
       if (!targetGermplasm) {
         throw 'Some germplasm from source server are not yet imported in the destination server.';
       }
@@ -159,7 +160,7 @@ export class ObservationComponent implements OnInit {
         // FIXME: mock additionalInfo for now because search observationunit schema is not yet fixed.
         // TODO: IBP-4725 Fix search observationunit schema first
         additionalInfo: {},
-        externalReferences: this.externalReferenceService.generateExternalReference(observationUnit.observationUnitDbId, 'observationunits', observationUnit.externalReferences),
+        externalReferences: this.externalReferenceService.generateExternalReference(observationUnit.observationUnitDbId, EntityEnum.OBSERVATIONUNITS, observationUnit.externalReferences),
         germplasmDbId: targetGermplasm.germplasmDbId,
         germplasmName: targetGermplasm.germplasmName,
         locationDbId: this.context.targetLocation.locationDbId,
@@ -209,8 +210,7 @@ export class ObservationComponent implements OnInit {
   }
 
   checkObservationAlreadyExists() {
-    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-    brapi.search_observationunits({
+    this.brapiDestination.search_observationunits({
         studyDbIds: [this.context.targetStudy.studyDbId],
         pageRange: [0, 1],
         pageSize: 1

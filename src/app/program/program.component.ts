@@ -28,8 +28,8 @@ export class ProgramComponent implements OnInit {
       (programs: any[]) => this.sourcePrograms = programs,
       (error) => this.onError(error)
     );
-    const brapiTarget = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-    brapiAll(brapiTarget.programs({
+    const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    brapiAll(brapiDestination.programs({
       // put a limit for now (default page=1000). TODO paginated dropdown
       pageRange: [0, 1],
     })).then(

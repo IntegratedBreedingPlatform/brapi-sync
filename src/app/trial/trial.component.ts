@@ -4,7 +4,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient } from '@angular/common/http';
-import { ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 
 declare const BrAPI: any;
 
@@ -23,11 +24,14 @@ export class TrialComponent implements OnInit {
   trialAlreadyExists: boolean = false;
   trialSaved: boolean = false;
 
+  brapiDestination: any;
+
   constructor(private router: Router,
               private http: HttpClient,
               private externalReferenceService: ExternalReferenceService,
               public context: ContextService,
               public modalService: NgbModal) {
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
@@ -72,7 +76,7 @@ export class TrialComponent implements OnInit {
       datasetAuthorships: trial.datasetAuthorships,
       documentationURL: trial.documentationURL,
       endDate: trial.endDate,
-      externalReferences: this.externalReferenceService.generateExternalReference(trial.trialDbId, 'trials', trial.externalReferences),
+      externalReferences: this.externalReferenceService.generateExternalReference(trial.trialDbId, EntityEnum.TRIALS, trial.externalReferences),
       programDbId: this.context.targetProgramSelected.programDbId,
       programName: this.context.targetProgramSelected.programName,
       publications: trial.publications,
@@ -86,10 +90,9 @@ export class TrialComponent implements OnInit {
   checkTrialAlreadyExists() {
     // Check if the trial to be imported already exists in the destination server
     if (this.context.sourceTrial && this.context.sourceTrial.trialDbId) {
-      const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-      brapiDestination.trials({
-        externalReferenceId: this.externalReferenceService.getReferenceId('trials', this.context.sourceTrial.trialDbId),
-        externalReferenceSource: 'brapi-sync'
+      this.brapiDestination.trials({
+        externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.TRIALS, this.context.sourceTrial.trialDbId),
+        externalReferenceSource: EXTERNAL_REFERENCE_SOURCE
       }).all((result: any) => {
         if (result.length) {
           this.trialAlreadyExists = true;
@@ -115,5 +118,5 @@ export class TrialComponent implements OnInit {
     this.trialAlreadyExists = false;
   }
 
-
 }
+
