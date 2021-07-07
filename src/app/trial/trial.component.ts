@@ -73,6 +73,7 @@ export class TrialComponent implements OnInit {
     return {
       active: trial.active,
       additionalInfo: trial.additionalInfo,
+      contacts: trial.contacts,
       datasetAuthorships: trial.datasetAuthorships,
       documentationURL: trial.documentationURL,
       endDate: trial.endDate,
