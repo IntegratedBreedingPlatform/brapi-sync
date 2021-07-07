@@ -25,6 +25,8 @@ export class ObservationComponent implements OnInit {
   isSaving = false;
   observationsAlreadyExist = false;
   observationsSaved = false;
+  germplasmByGermplasmDbId: any = {};
+  germplasmInDestinationByPUI: any = {};
   germplasmInDestinationByRefId: any = {};
   info: any = [];
   errors: any = [];
@@ -115,14 +117,48 @@ export class ObservationComponent implements OnInit {
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
+
+    if (germplasm && germplasm.length) {
+      germplasm.forEach((g: any) => {
+        this.germplasmByGermplasmDbId[g.germplasmDbId] = g;
+      });
+    }
+
     /**
      * TODO
-     *  - search by PUID, externalReferences
      *  - BMS: /search/germplasm (IBP-4448)
-     *  - search by other fields: e.g PUID
      */
+    // Search germplasm in destination server by PUI
+    /** TODO: This code will not work because we don't have PUI stored per germplasm in the DB.
+     *  - Verify this once IBP-4662 is resolved.
+     **/
+    const germplasmInDestinationByPUI = await brapiAll(
+      this.brapiDestination.data(germplasm.filter((germplasm) => germplasm.germplasmPUI).map((germplasm: any) => germplasm.germplasmPUI)
+      ).germplasm((germplasmPUI: any) => {
+        return {
+          germplasmPUI: germplasmPUI,
+          // guard against brapjs get-all behaviour
+          pageRange: [0, 1],
+          pageSize: 1
+        };
+      })
+      , 30000);
+
+    if (germplasmInDestinationByPUI && germplasmInDestinationByPUI.length) {
+      germplasmInDestinationByPUI.forEach((g: any) => {
+        this.germplasmInDestinationByPUI[g.germpasmPUI] = g;
+      });
+    }
+
+    /**
+     * TODO
+     *  - BMS: /search/germplasm (IBP-4448)
+     */
+      // Search germplasm in destination server by PUI
+      // If germplasm is not found via PUI, then search the remaining
+      // germplasm in destination server by external reference id
     const germplasmInDestination = await brapiAll(
-      this.brapiDestination.data(germplasm.map((germplasm: any) => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId))
+      this.brapiDestination.data(germplasm.filter(germplasm => !this.germplasmInDestinationByPUI[germplasm.germpasmPUI]).map((germplasm: any) => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId))
       ).germplasm((id: any) => {
         return {
           externalReferenceID: id,
@@ -145,14 +181,18 @@ export class ObservationComponent implements OnInit {
   }
 
   getTargetGermplasm(germplasm: any) {
-    const referenceId = this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId);
-    return this.germplasmInDestinationByRefId[referenceId];
+    if (this.germplasmInDestinationByPUI[germplasm.germplasmPUI]) {
+      return this.germplasmInDestinationByPUI[germplasm.germplasmPUI];
+    } else {
+      const referenceId = this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId);
+      return this.germplasmInDestinationByRefId[referenceId];
+    }
   }
 
   transform(observationUnits: any[]) {
     return observationUnits.map(observationUnit => {
 
-      const targetGermplasm = this.germplasmInDestinationByRefId[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, observationUnit.germplasmDbId)];
+      const targetGermplasm = this.getTargetGermplasm(this.germplasmByGermplasmDbId[observationUnit.germplasmDbId]);
       if (!targetGermplasm) {
         throw 'Some germplasm from source server are not yet imported in the destination server.';
       }
@@ -169,8 +209,11 @@ export class ObservationComponent implements OnInit {
         observationUnitPUI: observationUnit.observationUnitPUI,
         // FIXME: mock observationUnitPosition for now becaus search observationunit is not yet fixed.
         // TODO: IBP-4725 Fix search observationunit schema first
+        /**
+         *
+         */
         observationUnitPosition: {
-          'entryType': 'Test entry',
+          'entryType': observationUnit.entryType,
           'geoCoordinates': {
             'geometry': {
               'coordinates': [
@@ -184,13 +227,13 @@ export class ObservationComponent implements OnInit {
           },
           'observationLevelRelationships': [
             {
-              'levelCode': '1',
+              'levelCode': observationUnit.plotNumber,
               'levelName': 'PLOT_NO',
               'levelOrder': 0
             },
             {
-              'levelCode': '1',
-              'levelName': 'REP_NO',
+              'levelCode': observationUnit.entryNumber,
+              'levelName': 'ENTRY_NO',
               'levelOrder': 0
             }
           ],

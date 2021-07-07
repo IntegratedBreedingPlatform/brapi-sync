@@ -105,6 +105,9 @@ export class StudyComponent implements OnInit {
       this.context.targetLocation = locations.find((loc) => {
         return loc.locationName === locationName;
       });
+      if (!this.context.targetLocation) {
+        this.errors.push({message: `"${locationName}" does not match any location records in the destination server.`});
+      }
     });
   }
 
@@ -143,7 +146,7 @@ export class StudyComponent implements OnInit {
   }
 
   isValid() {
-    return this.context.targetLocation.locationDbId && !this.studyAlreadyExists && !this.studySaved && !this.loading;
+    return this.context.targetLocation && this.context.targetLocation.locationDbId && !this.studyAlreadyExists && !this.studySaved && !this.loading;
   }
 
   canProceed(): boolean {
