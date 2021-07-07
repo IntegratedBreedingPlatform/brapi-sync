@@ -51,8 +51,8 @@ export class ObservationComponent implements OnInit {
     this.router.navigate(['observation']);
   }
 
-  back(): void {
-    this.router.navigate(['study']);
+  cancel(): void {
+    this.router.navigate(['entity-selector']);
   }
 
   async post(): Promise<void> {

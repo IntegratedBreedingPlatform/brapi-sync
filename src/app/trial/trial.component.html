@@ -91,7 +91,7 @@
   </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
+  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">Cancel</button>
   <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Trial Metadata

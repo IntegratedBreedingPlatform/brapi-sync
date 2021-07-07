@@ -51,7 +51,7 @@ export class TrialComponent implements OnInit {
     this.router.navigate(['study']);
   }
 
-  back(): void {
+  cancel(): void {
     this.router.navigate(['entity-selector']);
   }
 

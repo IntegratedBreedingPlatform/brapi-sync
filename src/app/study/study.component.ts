@@ -80,8 +80,8 @@ export class StudyComponent implements OnInit {
     this.router.navigate(['observation']);
   }
 
-  back(): void {
-    this.router.navigate(['trial']);
+  cancel(): void {
+    this.router.navigate(['entity-selector']);
   }
 
   async post() {
