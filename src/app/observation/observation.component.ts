@@ -75,6 +75,7 @@ export class ObservationComponent implements OnInit {
       data = this.transform(this.sourceObservationUnits);
     } catch (message) {
       this.errors.push({ message: message });
+      this.isSaving = false;
       return;
     }
     try {
