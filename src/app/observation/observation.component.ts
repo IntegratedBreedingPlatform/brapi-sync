@@ -215,8 +215,8 @@ export class ObservationComponent implements OnInit {
         observationUnitName: observationUnit.observationUnitName,
         observationUnitPUI: observationUnit.observationUnitPUI,
         observationUnitPosition: observationUnit.observationUnitPosition, // TODO: IBP-4725 Fix search observationunit schema first
-        programDbId: this.context.targetProgramSelected.programDbId,
-        programName: this.context.targetProgramSelected.programName,
+        programDbId: this.context.targetProgram.programDbId,
+        programName: this.context.targetProgram.programName,
         seedLotDbId: observationUnit.seedLotDbId,
         studyDbId: this.context.targetStudy.studyDbId,
         studyName: this.context.targetStudy.studyName,

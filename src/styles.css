@@ -1,3 +1,28 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~bootstrap/dist/css/bootstrap.css";
 @import "~@ng-select/ng-select/themes/default.theme.css";
+
+.btn-primary {
+  color: #212529;
+  background-color: #ff8109;
+  border-color: #ff8109;
+}
+
+.btn-primary:hover {
+  color: #212529;
+  background-color: #ff8109;
+  border-color: #ff8109;
+}
+
+.btn-primary:focus, .btn-primary.focus {
+  color: #212529;
+  background-color: #ff8109;
+  border-color: #ff8109;
+  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
+}
+
+.btn-primary.disabled, .btn-primary:disabled {
+  color: #212529;
+  background-color: #ff8109;
+  border-color: #ff8109;
+}

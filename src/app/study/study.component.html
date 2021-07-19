@@ -10,7 +10,7 @@
           <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
           </ng-select>
         </div>
-        <button type="button" class="btn btn-primary" (click)="openSearchModal()">
+        <button type="button" class="btn btn-info" (click)="openSearchModal()">
           <fa-icon [icon]="['fas', 'plus']"></fa-icon>
         </button>
       </div>
@@ -133,11 +133,11 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-  <button type="button" class="btn btn-secondary" (click)="post()" [disabled]="!isValid()">
+  <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Import Studies
   </button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!canProceed()">
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
     Next
   </button>
 </div>

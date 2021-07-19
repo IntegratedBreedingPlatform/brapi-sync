@@ -9,7 +9,7 @@
           <div class="card-body">
             <span class="font-weight-bold">Target URL:</span> {{context.destination}} <span class="badge badge-success">Connected</span><br/>
             <span class="font-weight-bold">Source URL:</span> {{context.source}} <span class="badge badge-success">Connected</span><br/>
-            <span class="font-weight-bold">Target Program:</span> {{context.targetProgramSelected.programName}} <br/>
+            <span class="font-weight-bold">Target Program:</span> {{context.targetProgram.programName}} <br/>
             <span class="font-weight-bold">Source Program:</span> {{context.sourceProgram.programName}} <br/>
           </div>
         </div>
@@ -40,7 +40,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="loading">
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="loading">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>

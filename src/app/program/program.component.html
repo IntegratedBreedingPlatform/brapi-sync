@@ -16,7 +16,7 @@
         <div class="form-group row">
           <label for="targetProgram" class="col-2 col-form-label">Destination Program</label>
           <div class="col-5">
-            <ng-select [items]="targetPrograms" name="targetProgram" bindLabel="programName" [(ngModel)]="context.targetProgramSelected">
+            <ng-select [items]="targetPrograms" name="targetProgram" bindLabel="programName" [(ngModel)]="context.targetProgram">
             </ng-select>
           </div>
         </div>
@@ -26,7 +26,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="next()" [disabled]="!context.sourceProgram?.programDbId && !context.targetProgramSelected?.programDbId">
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="!context.sourceProgram?.programDbId || !context.targetProgram?.programDbId">
     <span class="throbber throbber-btn" *ngIf="loading"></span>
     Next
   </button>
