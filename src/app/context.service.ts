@@ -22,7 +22,7 @@ export class ContextService {
   sourceLocation: any = {};
   sourceStudy: any = {};
 
-  targetProgramSelected: any = {};
+  targetProgram: any = {};
   targetLocation: any = {};
   targetTrial: any = {};
   targetStudy: any = {};
