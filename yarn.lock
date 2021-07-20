@@ -1320,17 +1320,9 @@
     semver "7.3.4"
     semver-intersect "1.4.0"
 
-"@solgenomics/brapijs@git+https://github.com/solgenomics/BrAPI.js.git":
+"@solgenomics/brapijs@git+https://github.com/solgenomics/BrAPI.js.git#semver:2.0.0":
   version "1.0.2"
-  uid "5ab54d39d8a9f6b283ccf21998c7aa92da6b7670"
   resolved "git+https://github.com/solgenomics/BrAPI.js.git#5ab54d39d8a9f6b283ccf21998c7aa92da6b7670"
-  dependencies:
-    node-fetch "2.6.1"
-    rollup "0.40"
-
-"@solgenomics/brapijs@git+ssh://git@github.com:solgenomics/BrAPI-js.git#semver:^2.0.0":
-  version "1.0.2"
-  resolved "git+ssh://git@github.com:solgenomics/BrAPI-js.git#5ab54d39d8a9f6b283ccf21998c7aa92da6b7670"
   dependencies:
     node-fetch "2.6.1"
     rollup "0.40"
