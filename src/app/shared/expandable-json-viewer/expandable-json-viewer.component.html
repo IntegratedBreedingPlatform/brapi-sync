@@ -1,0 +1,6 @@
+<div *ngIf="!showJson" class="d-flex align-content-center flex-wrap">
+  <button type="button" class="btn btn-success rounded-circle" (click)="show()">
+    <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+  </button>
+</div>
+<ngx-json-viewer *ngIf="showJson" [json]="json"></ngx-json-viewer>

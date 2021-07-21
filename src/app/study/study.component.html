@@ -1,0 +1,145 @@
+<div class="modal-header">
+  <h1 class="modal-title">Studies</h1>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col-10">
+      <div class="form-inline">
+        <label for="searchBy">Search By</label>
+        <div class="col-4">
+          <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
+          </ng-select>
+        </div>
+        <button type="button" class="btn btn-info" (click)="openSearchModal()">
+          <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="row" *ngIf="loading">
+    <div class="col">
+      <span class="throbber"></span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col" *ngIf="studyDetail.studyDbId">
+      <app-collapsible heading="Connection Info">
+        <div class="card">
+          <div class="card-body">
+            <h5><span class="badge badge-pill badge-primary">{{studyDetail.studyName}}</span></h5>
+          </div>
+        </div>
+      </app-collapsible>
+      <app-collapsible heading="{{studyDetail.studyName + ' Metadata'}}">
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <caption></caption>
+            <thead class="thead-light">
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Start Date</span></th>
+              <td>{{studyDetail.startDate}}</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">End Date</span></th>
+              <td>{{studyDetail.endDate}}</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Documentation URL</span></th>
+              <td>{{studyDetail.documentationUrl}}</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Publications</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="studyDetail?.publications?.length" [json]="studyDetail?.publications"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Contacts</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="studyDetail?.contacts?.length" [json]="studyDetail?.contacts"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Additional Info</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="studyDetail?.additionalInfo" [json]="studyDetail?.additionalInfo"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Experimental Design</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="studyDetail?.experimentalDesign" [json]="studyDetail?.experimentalDesign"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Environment Parameters</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="studyDetail?.environmentParameters?.length" [json]="studyDetail?.environmentParameters"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-collapsible>
+      <app-collapsible heading="Study Location Mapping">
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <caption></caption>
+            <thead class="thead-light">
+            <tr>
+              <th scope="col">Source</th>
+              <th scope="col">Target</th>
+              <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>{{context.sourceStudy.locationName}}</td>
+              <td>{{this.context.targetLocation?.locationName}}</td>
+              <td>
+                <span *ngIf="this.context.targetLocation?.locationName" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                <span *ngIf="!this.context.targetLocation?.locationName" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-collapsible>
+    </div>
+  </div>
+  <div class="row pt-3">
+    <div class="col">
+      <div class="alert alert-danger" *ngIf="errors.length">
+        <ul>
+          <li *ngFor="let error of errors">{{error.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-success" *ngIf="info.length && !errors.length">
+        <ul>
+          <li *ngFor="let i of info">{{i.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-info" *ngIf="studyAlreadyExists">
+        "{{this.context.sourceStudy.studyName}}" already exists in the destination server.
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
+    <span class="throbber throbber-btn" *ngIf="loading"></span>
+    Import Studies
+  </button>
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
+    Next
+  </button>
+</div>
+
+

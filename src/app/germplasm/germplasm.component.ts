@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
+import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 
 declare const BrAPI: any;
 
@@ -49,14 +50,14 @@ export class GermplasmComponent implements OnInit {
   }
 
   back(): void {
-    this.router.navigate(['program']);
+    this.router.navigate(['entity-selector']);
   }
 
   import(): void {
     if (this.isSelectAllPages) {
       const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
       brapi.germplasm({
-        studyDbId: this.context.studySelected.studyDbId,
+        studyDbId: this.context.sourceStudy.studyDbId,
         // put a limit on synchronization (default page=1000). TODO improve
         pageRange: [0, 1],
       }).all((germplasm: any[]) => {
@@ -94,7 +95,7 @@ export class GermplasmComponent implements OnInit {
     }
     copy.externalReferences.push({
       referenceID: this.getRefId(germplasm.germplasmDbId),
-      referenceSource: 'brapi-sync'
+      referenceSource: EXTERNAL_REFERENCE_SOURCE
     });
 
     copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);
@@ -157,7 +158,11 @@ export class GermplasmComponent implements OnInit {
 
   addFilter(): void {
     this.modalService.open(StudyFilterComponent).result
-      .then(() => this.load());
+      .then(() => {
+        if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+          this.load();
+        }
+      });
   }
 
   async load(): Promise<void> {
@@ -177,7 +182,7 @@ export class GermplasmComponent implements OnInit {
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
-          studyDbId: this.context.studySelected.studyDbId,
+          studyDbId: this.context.sourceStudy.studyDbId,
           page: (this.page - 1).toString(),
           pageSize: this.pageSize.toString(),
         }

@@ -10,8 +10,18 @@ import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
 import { StudyFilterComponent } from './study-filter/study-filter.component';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthInterceptor } from './auth.interceptor';
+import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
+import { CollapsibleComponent } from './shared/collapsible/collapsible.component';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCaretDown, faCaretRight, faCheck, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TrialComponent } from './trial/trial.component';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { NgxJsonViewerModule } from 'ngx-json-viewer';
+import { ExpandableJsonViewerComponent } from './shared/expandable-json-viewer/expandable-json-viewer.component';
+import { StudyComponent } from './study/study.component';
+import { ObservationComponent } from './observation/observation.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +29,13 @@ import { AuthInterceptor } from './auth.interceptor';
     ConnectionsComponent,
     ProgramComponent,
     GermplasmComponent,
-    StudyFilterComponent
+    StudyFilterComponent,
+    EntitySelectorComponent,
+    CollapsibleComponent,
+    TrialComponent,
+    ExpandableJsonViewerComponent,
+    StudyComponent,
+    ObservationComponent
   ],
   imports: [
     BrowserModule,
@@ -27,7 +43,10 @@ import { AuthInterceptor } from './auth.interceptor';
     RouterModule.forRoot(routes),
     RouterModule,
     NgbPaginationModule,
-    HttpClientModule
+    HttpClientModule,
+    FontAwesomeModule,
+    NgSelectModule,
+    NgxJsonViewerModule
   ],
   providers: [
     {
@@ -39,4 +58,11 @@ import { AuthInterceptor } from './auth.interceptor';
   bootstrap: [AppComponent]
 })
 export class AppModule {
+
+  constructor(faIconLibrary: FaIconLibrary) {
+    // Add an icon to the library for convenient access in other components
+    // Only add specific icons explicitly to avoid loading all icons to the bundle.
+    faIconLibrary.addIcons(faCaretDown, faCaretRight, faPlus, faCheck, faTimes);
+  }
+
 }

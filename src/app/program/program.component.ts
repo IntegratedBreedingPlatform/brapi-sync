@@ -13,18 +13,27 @@ declare const BrAPI: any;
 })
 export class ProgramComponent implements OnInit {
   loading = false;
-  programs: any[] = [];
+  sourcePrograms: any[] = [];
+  targetPrograms: any[] = [];
 
   constructor(
     private router: Router,
     public context: ContextService
   ) {
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapiAll(brapi.programs({
+    const brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    brapiAll(brapiSource.programs({
       // put a limit for now (default page=1000). TODO paginated dropdown
       pageRange: [0, 1],
     })).then(
-      (programs: any[]) => this.programs = programs,
+      (programs: any[]) => this.sourcePrograms = programs,
+      (error) => this.onError(error)
+    );
+    const brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    brapiAll(brapiDestination.programs({
+      // put a limit for now (default page=1000). TODO paginated dropdown
+      pageRange: [0, 1],
+    })).then(
+      (programs: any[]) => this.targetPrograms = programs,
       (error) => this.onError(error)
     );
   }
@@ -33,7 +42,7 @@ export class ProgramComponent implements OnInit {
   }
 
   async next(): Promise<void> {
-    this.router.navigate(['germplasm']);
+    this.router.navigate(['entity-selector']);
   }
 
   back(): void {

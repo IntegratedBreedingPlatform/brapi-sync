@@ -1,10 +1,9 @@
 <div class="modal-header">
-  <h1 class="modal-title">BrAPI Germplasm Synchronization Tool</h1>
+  <h1 class="modal-title">Germplasm</h1>
 </div>
 <div class="modal-body">
   <div class="row">
     <div class="col">
-      <h2>Germplasm</h2>
       <form>
         <div class="form-group row">
           <label for="programs" class="col-auto col-form-label">Search by</label>
@@ -22,65 +21,69 @@
             </div>
           </div>
         </div>
-        <div class="form-group row" *ngIf="context.studySelected.studyDbId">
-          <div class="col">
-            <div class="badge badge-info">{{context.studySelected.studyName}}</div>
-          </div>
-        </div>
       </form>
       <div class="row" *ngIf="germplasm.length && !isLoading">
         <div class="col">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
-            <label class="form-check-label" for="selectAll">
-              Select all
-            </label>
-          </div>
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-              <th *ngIf="germplasm.length && !isSelectAllPages">
-                <input type="checkbox" tooltip="select current page" [checked]="isPageSelected()" (click)="onSelectPage()" [title]="'select current page'" />
-              </th>
-              <th>ID</th>
-              <th>GERMPLASM NAME</th>
-              <th>SYNONYMS</th>
-              <th>ORIGIN</th>
-              <th>DOCUMENTATION URL</th>
-              <th>ACQUISITION DATE</th>
-              <th>PEDIGREE</th>
-              <th>BREEDING METHOD NAME</th>
-              </thead>
+          <app-collapsible heading="Connection Info">
+            <div class="card">
+              <div class="card-body">
+                <h5><span class="badge badge-pill badge-primary">{{context.sourceStudy.studyName}}</span></h5>
+              </div>
+            </div>
+          </app-collapsible>
+          <app-collapsible heading="Germplasm Mapping">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
+              <label class="form-check-label" for="selectAll">
+                Select all
+              </label>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead class="thead-light">
+                <th *ngIf="germplasm.length && !isSelectAllPages">
+                  <input type="checkbox" tooltip="select current page" [checked]="isPageSelected()" (click)="onSelectPage()" [title]="'select current page'"/>
+                </th>
+                <th>ID</th>
+                <th>GERMPLASM NAME</th>
+                <th>SYNONYMS</th>
+                <th>ORIGIN</th>
+                <th>DOCUMENTATION URL</th>
+                <th>ACQUISITION DATE</th>
+                <th>PEDIGREE</th>
+                <th>BREEDING METHOD NAME</th>
+                </thead>
 
-              <tbody>
-              <tr *ngFor="let row of germplasm">
-                <td *ngIf="!isSelectAllPages">
-                  <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                  <i *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]" class="text-success" title="already in target">&#10003;</i>
-                </td>
-                <td>{{row.germplasmDbId}}</td>
-                <td>{{row.germplasmName}}</td>
-                <td>{{getSynonyms(row.synonyms)}}</td>
-                <td>{{row.countryOfOrigin}}</td>
-                <td>{{row.documentationURL}}</td>
-                <td>{{row.acquisitionDate}}</td>
-                <td>{{row.pedigree}}</td>
-                <td [innerHTML]="renderBreedingMethodCell(row)"></td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="d-flex justify-content-between p-2">
-            <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()">
-            </ngb-pagination>
+                <tbody>
+                <tr *ngFor="let row of germplasm">
+                  <td *ngIf="!isSelectAllPages">
+                    <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                    <fa-icon *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
+                  </td>
+                  <td>{{row.germplasmDbId}}</td>
+                  <td>{{row.germplasmName}}</td>
+                  <td>{{getSynonyms(row.synonyms)}}</td>
+                  <td>{{row.countryOfOrigin}}</td>
+                  <td>{{row.documentationURL}}</td>
+                  <td>{{row.acquisitionDate}}</td>
+                  <td>{{row.pedigree}}</td>
+                  <td [innerHTML]="renderBreedingMethodCell(row)"></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between p-2">
+              <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()">
+              </ngb-pagination>
 
-            <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">
-              <option [ngValue]="5">5</option>
-              <option [ngValue]="20">20</option>
-              <option [ngValue]="50">50</option>
-              <option [ngValue]="100">100</option>
-            </select>
-          </div>
+              <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">
+                <option [ngValue]="5">5</option>
+                <option [ngValue]="20">20</option>
+                <option [ngValue]="50">50</option>
+                <option [ngValue]="100">100</option>
+              </select>
+            </div>
+          </app-collapsible>
         </div>
       </div>
       <div class="row" *ngIf="isLoading">
