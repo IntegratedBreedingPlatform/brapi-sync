@@ -126,6 +126,7 @@ export class StudyComponent implements OnInit {
       dataLinks: studyDetail.dataLinks,
       documentationURL: studyDetail.documentationURL,
       experimentalDesign: studyDetail.experimentalDesign,
+      environmentParameters: studyDetail.environmentParameters,
       externalReferences: this.externalReferenceService.generateExternalReference(studyDetail.studyDbId, EntityEnum.STUDIES, studyDetail.externalReferences),
       locationDbId: this.context.targetLocation.locationDbId,
       locationDbName: this.context.targetLocation.locationName,
