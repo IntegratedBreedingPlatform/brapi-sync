@@ -5,7 +5,7 @@ import { GermplasmComponent } from './germplasm/germplasm.component';
 import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
 import { TrialComponent } from './trial/trial.component';
 import { StudyComponent } from './study/study.component';
-import { ObservationComponent } from './observation/observation.component';
+import { ObservationUnitComponent } from './observation-unit/observation-unit.component';
 
 export const routes: Route[] = [
   {
@@ -38,8 +38,8 @@ export const routes: Route[] = [
     component: StudyComponent
   },
   {
-    path: 'observation',
-    component: ObservationComponent
+    path: 'observation-unit',
+    component: ObservationUnitComponent
   }
 
 ];

@@ -21,7 +21,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { ExpandableJsonViewerComponent } from './shared/expandable-json-viewer/expandable-json-viewer.component';
 import { StudyComponent } from './study/study.component';
-import { ObservationComponent } from './observation/observation.component';
+import { ObservationUnitComponent } from './observation-unit/observation-unit.component';
 
 @NgModule({
   declarations: [
@@ -35,7 +35,7 @@ import { ObservationComponent } from './observation/observation.component';
     TrialComponent,
     ExpandableJsonViewerComponent,
     StudyComponent,
-    ObservationComponent
+    ObservationUnitComponent
   ],
   imports: [
     BrowserModule,

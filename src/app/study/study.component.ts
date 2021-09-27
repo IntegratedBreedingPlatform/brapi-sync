@@ -84,7 +84,7 @@ export class StudyComponent implements OnInit {
   }
 
   async next(): Promise<void> {
-    this.router.navigate(['observation']);
+    this.router.navigate(['observation-unit']);
   }
 
   cancel(): void {

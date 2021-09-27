@@ -8,11 +8,11 @@ import { EntityEnum, ExternalReferenceService } from '../shared/external-referen
 declare const BrAPI: any;
 
 @Component({
-  selector: 'app-observation',
-  templateUrl: './observation.component.html',
-  styleUrls: ['./observation.component.css']
+  selector: 'app-observation-unit',
+  templateUrl: './observation-unit.component.html',
+  styleUrls: ['./observation-unit.component.css']
 })
-export class ObservationComponent implements OnInit {
+export class ObservationUnitComponent implements OnInit {
 
   brapiSource: any;
   brapiDestination: any;
@@ -45,10 +45,6 @@ export class ObservationComponent implements OnInit {
     // Get the observation units of the study from source
     this.loadObservationUnits();
     this.checkObservationAlreadyExists();
-  }
-
-  async next(): Promise<void> {
-    this.router.navigate(['observation']);
   }
 
   cancel(): void {
