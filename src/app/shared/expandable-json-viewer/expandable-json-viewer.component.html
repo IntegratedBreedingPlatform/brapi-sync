@@ -3,4 +3,6 @@
     <fa-icon [icon]="['fas', 'plus']"></fa-icon>
   </button>
 </div>
-<ngx-json-viewer *ngIf="showJson" [json]="json"></ngx-json-viewer>
+<div *ngIf="showJson" style="max-height: 300px; max-width: 100%; overflow: auto;">
+  <ngx-json-viewer *ngIf="showJson" [json]="json"></ngx-json-viewer>
+</div>

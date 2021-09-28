@@ -1,0 +1,77 @@
+<div class="modal-header">
+    <h1 class="modal-title">Studies</h1>
+  </div>
+  <div class="modal-body">
+    <div class="row">
+      <div class="col">
+        <app-collapsible heading="Connection Info">
+          <div class="card">
+            <div class="card-body">
+              <h5><span class="badge badge-pill badge-primary">{{context.sourceStudy.studyName}}</span></h5>
+            </div>
+          </div>
+        </app-collapsible>
+        <app-collapsible heading="Variables">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <caption></caption>
+              <thead class="thead-light">
+              <tr>
+                <th scope="col">Source Observation Variable Name</th>
+                <th scope="col">Source Variable Synonyms</th>
+                <th scope="col">Source Variable Metadata</th>
+                <th scope="col">Target Observation Variable Name</th>
+                <th scope="col">Target Synonyms</th>
+                <th scope="col">Status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let sourceVariable of sourceVariables">
+                <td>{{sourceVariable.observationVariableName}}</td>
+                <td>{{sourceVariable.synonyms}}</td>
+                <td><app-expandable-json-viewer [json]="sourceVariable"></app-expandable-json-viewer></td>
+                <td>{{targetVariablesByName[sourceVariable.observationVariableName]?.observationVariableName}}</td>
+                <td>{{targetVariablesByName[sourceVariable.observationVariableName]?.synonyms}}</td>
+                <td>
+                    <span *ngIf="isValidMapping(sourceVariable)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!isValidMapping(sourceVariable)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </app-collapsible>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="alert alert-danger" *ngIf="errors.length">
+          <ul>
+            <li *ngFor="let error of errors">{{error.message}}</li>
+          </ul>
+        </div>
+        <div class="alert alert-success" *ngIf="info.length && !errors.length">
+          <ul>
+            <li *ngFor="let i of info">{{i.message}}</li>
+          </ul>
+        </div>
+        <div class="alert alert-info" *ngIf="variablesSaved">
+          Variables already exists in the destination server.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
+      <span class="throbber throbber-btn" *ngIf="isSaving"></span>
+      Import Variables
+    </button>
+    <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
+        Next
+      </button>
+  </div>
+  
+  
+  
+  

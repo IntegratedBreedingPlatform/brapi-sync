@@ -116,6 +116,9 @@
     <span class="throbber throbber-btn" *ngIf="isSaving"></span>
     Import Observation Units
   </button>
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
+    Next
+  </button>
 </div>
 
 

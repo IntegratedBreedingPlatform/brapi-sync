@@ -83,7 +83,7 @@ export class ObservationUnitComponent implements OnInit {
       if (!this.errors.length) {
         this.observationsSaved = true;
       }
-    } catch (error) {
+    } catch (error: any) {
       this.errors.push({ message: error.message });
     }
     this.isSaving = false;
@@ -239,6 +239,14 @@ export class ObservationUnitComponent implements OnInit {
   isValid(): boolean {
     return !this.loading && !this.isSaving && !this.observationsAlreadyExist && !this.observationsSaved
       && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
+  }
+
+  async next() {
+    this.router.navigate(['variable']);
+  }
+
+  canProceed() {
+    return this.observationsAlreadyExist;
   }
 
 }
