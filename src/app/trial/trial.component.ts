@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from '../context.service';
-import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient } from '@angular/common/http';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
@@ -16,8 +14,6 @@ declare const BrAPI: any;
 })
 export class TrialComponent implements OnInit {
 
-  searchOptions: any[] = [{ id: 1, name: 'Study' }];
-  searchSelected: number = 1;
   loading = false;
   info: any = [];
   errors: any = [];
@@ -29,22 +25,12 @@ export class TrialComponent implements OnInit {
   constructor(private router: Router,
               private http: HttpClient,
               private externalReferenceService: ExternalReferenceService,
-              public context: ContextService,
-              public modalService: NgbModal) {
+              public context: ContextService) {
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
     this.checkTrialAlreadyExists();
-  }
-
-  openSearchModal() {
-    this.modalService.open(StudyFilterComponent).result.then(() => {
-      if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
-        this.reset();
-        this.checkTrialAlreadyExists();
-      }
-    });
   }
 
   async next(): Promise<void> {
@@ -53,6 +39,11 @@ export class TrialComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['entity-selector']);
+  }
+
+  onStudySelect(): void {
+    this.reset();
+    this.checkTrialAlreadyExists();
   }
 
   async post() {

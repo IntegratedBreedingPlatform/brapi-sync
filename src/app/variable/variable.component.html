@@ -3,7 +3,17 @@
   </div>
   <div class="modal-body">
     <div class="row">
+      <div class="col-10">
+        <app-study-selector (onSelect)="onStudySelect()" [trialDisabled]="!isStudySelectable" [locationDisabled]="!isStudySelectable" [studyDisabled]="!isStudySelectable"></app-study-selector>
+      </div>
+    </div>
+    <div class="row" *ngIf="isLoading">
       <div class="col">
+        <span class="throbber"></span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col" *ngIf="hasVariableMatches()">
         <app-collapsible heading="Connection Info">
           <div class="card">
             <div class="card-body">
@@ -26,15 +36,15 @@
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let sourceVariable of sourceVariables">
-                <td>{{sourceVariable.observationVariableName}}</td>
-                <td>{{sourceVariable.synonyms}}</td>
-                <td><app-expandable-json-viewer [json]="sourceVariable"></app-expandable-json-viewer></td>
-                <td>{{targetVariables[sourceVariable.observationVariableName]?.observationVariableName}}</td>
-                <td>{{targetVariables[sourceVariable.observationVariableName]?.synonyms}}</td>
+              <tr *ngFor="let key of sourceVariables | objectKeys">
+                <td>{{sourceVariables[key].observationVariableName}}</td>
+                <td>{{sourceVariables[key].synonyms}}</td>
+                <td><app-expandable-json-viewer [json]="sourceVariables[key]"></app-expandable-json-viewer></td>
+                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.observationVariableName}}</td>
+                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.synonyms}}</td>
                 <td>
-                    <span *ngIf="isValidMapping(sourceVariable)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidMapping(sourceVariable)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                    <span *ngIf="isValidMapping(sourceVariables[key])" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!isValidMapping(sourceVariables[key])" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
                 </td>
               </tr>
               </tbody>

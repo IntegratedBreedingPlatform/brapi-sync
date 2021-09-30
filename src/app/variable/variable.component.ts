@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
-import { ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
 
@@ -15,13 +16,15 @@ export class VariableComponent implements OnInit {
 
   brapiSource: any;
   brapiDestination: any;
+  sourceVariables: any = {};
+  targetVariables: any = {};
+  variablesMap: any = {};
   info: any = [];
   errors: any = [];
-  loading = false;
+  isLoading = false;
   isSaving = false;
   variablesSaved = false;
-  sourceVariables: any [] = [];
-  targetVariables: any = {};
+  isStudySelectable: boolean = false;
 
   constructor(private router: Router,
     private http: HttpClient,
@@ -32,38 +35,78 @@ export class VariableComponent implements OnInit {
 }
 
   ngOnInit(): void {
-    this.loadVariables();
+    if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+      this.load();
+    } else {
+      this.isStudySelectable = true;
+    }
   }
 
-  async loadVariables() : Promise<void> {
-    // Get the variables from source study
-    this.brapiSource.search_variables({
-      studyDbIds: [this.context.sourceStudy.studyDbId]
+  onStudySelect(): void {
+    this.load();
+  }
+
+  async load() {
+    this.isLoading = true;
+    this.context.targetStudy = await this.getStudyFromTargetServer(this.context.sourceStudy.studyDbId);
+    if (this.context.targetStudy) {
+      this.sourceVariables = await this.loadVariablesFromSource();
+      this.targetVariables = await this.loadVariablesFromTarget(this.sourceVariables);
+      this.mapVariables(this.sourceVariables, this.targetVariables);
+    } else {
+      this.errors.push({ message: `${this.context.sourceStudy.studyName} is not present in the destination server.` });
     }
-    ).all((result: any) => {
-      this.sourceVariables = result;
-      // Search variables in target source, match by name or alias
-      this.searchInTarget(this.sourceVariables);
+    this.isLoading = false;
+  }
+
+  mapVariables(sourceVariables: any, targetVariables: any) {
+    // Map the source observation variables to the target observation variables
+    Object.entries(sourceVariables).forEach(([key, value]) => {
+      if (targetVariables[key]) {
+        this.variablesMap[key] = targetVariables[key];
+      }
     });
-
   }
 
-  async searchInTarget(sourceVariables: any[]): Promise<void> {
+  hasVariableMatches(): boolean {
+    return Object.entries(this.variablesMap).length > 0;
+  }
 
-    const observationVariableNames: any[] = sourceVariables.map(variable => variable.observationVariableName);
+  loadVariablesFromSource() : Promise<any> {
+    // Get the variables from source study
+    return new Promise<any>(resolve => { 
+      const variables: any = {};
+      this.brapiSource.search_variables({
+        studyDbId: [this.context.sourceStudy.studyDbId]
+      }
+      ).all((result: any[]) => {
+        result.forEach((observationVariable) => {
+          variables[observationVariable.observationVariableName] = observationVariable;
+        });
+        resolve(variables);
+      });
+    });
+  }
 
-    this.brapiSource.search_variables({
-      observationVariableNames: observationVariableNames
-    }
-    ).all((result: any[]) => {
-       result.forEach((targetVariable) => {
-        this.targetVariables[targetVariable.observationVariableName] = targetVariable;
-       });
+  loadVariablesFromTarget(sourceVariables: any): Promise<any> {
+    // Get the variables from target system
+    const variables: any = {};
+    const sourceObservationVariableNames: any[] = Object.entries<any>(this.sourceVariables).map(([key, value]) => value.observationVariableName);
+    return new Promise<any>(resolve => { 
+      this.brapiDestination.search_variables({
+        observationVariableNames: sourceObservationVariableNames
+      }
+      ).all((result: any[]) => {
+         result.forEach((observationVariable) => {
+          variables[observationVariable.observationVariableName] = observationVariable;
+         });
+         resolve(variables);
+      });
     });
   }
 
   async post(): Promise<void> {
-    const allVariableHasAMatch = this.sourceVariables.every((sourceVariable) => this.isValidMapping(sourceVariable));
+    const allVariableHasAMatch = Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
     if (allVariableHasAMatch) {
         // Add Observation Variable to the study
         //this.updateObservationVariable(Object.values(this.targetVariablesByName));
@@ -81,16 +124,35 @@ export class VariableComponent implements OnInit {
     
   }
 
+  getStudyFromTargetServer(studyDbId: any): Promise<any> {
+    return new Promise<any>(resolve => { 
+      if (studyDbId && studyDbId) {
+        this.brapiDestination.studies({
+          externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.STUDIES, studyDbId),
+          externalReferenceSource: EXTERNAL_REFERENCE_SOURCE
+        }).all((result: any) => {
+          if (result.length) {
+            resolve(result[0]);
+          } else {
+            resolve(null);
+          }
+        });
+      }
+    });
+  }
+
   cancel(): void {
     this.router.navigate(['entity-selector']);
   }
 
   isValid(): boolean {
-    return this.sourceVariables.every((sourceVariable) => this.isValidMapping(sourceVariable));
+    return Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
   }
 
   isValidMapping(sourceVariable: any): boolean {
-    const targetVariable = this.targetVariables[sourceVariable.observationVariableName];
+    const targetVariable = this.variablesMap[sourceVariable.observationVariableName];
+    // Source variable should have a match in the target server
+    // Source and target variable should have the same datatype.
     return targetVariable && targetVariable.scale.dataType === sourceVariable.scale.dataType;
   }
 
@@ -99,7 +161,7 @@ export class VariableComponent implements OnInit {
   }
 
   async next() {
-    this.context.targetVariables = this.targetVariables;
+    this.context.variablesMap = this.variablesMap;
     this.router.navigate(['observation']);
   }
 

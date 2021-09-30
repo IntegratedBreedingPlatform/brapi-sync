@@ -23,12 +23,11 @@ export class ObservationComponent implements OnInit {
   isSaving = false;
   sourceObservations: any[] = [];
   sourceObservationsByVariable: any = {};
-
   targetObservations: any[] = [];
+  targetObservationsByVariable: any = {};
   targetObservationUnitsByReferenceId: any = {};
   
   observationsSaved = false;
-
 
   constructor(private router: Router,
     private http: HttpClient,
@@ -39,37 +38,59 @@ export class ObservationComponent implements OnInit {
 }
 
   ngOnInit(): void {
-    this.loadSourceObservations();
-    this.loadTargetObservationUnits();
+    this.load();
   }
 
-  loadTargetObservationUnits() {
-    // Get the observation units from target study
-    this.brapiSource.search_observationunits({
-        studyDbIds: [this.context.targetStudy.studyDbId]
+  async load() {
+    // Load the target observation units so that we can map them from the source
+    const observationUnits = await this.loadTargetObservationUnits();
+    this.targetObservationUnitsByReferenceId = this.createObservationUnitsByReferenceId(observationUnits);
+
+    if (observationUnits.length > 0) {
+      this.sourceObservations = await this.loadSourceObservations();
+      this.sourceObservationsByVariable = this.groupObservationsByVariable(this.sourceObservations);
+      
+      this.targetObservations = await this.loadTargetObservations();
+      this.targetObservationsByVariable = this.groupObservationsByVariable(this.targetObservations);
+    } else {
+      this.errors.push({ message: `There are no observation units in the target server.` });
+    }
+  }
+
+  async loadSourceObservations(): Promise<any[]> {
+    // Get the observations from source study
+    return new Promise<any>(resolve => { 
+      this.brapiSource.observations({
+        studyDbId: [this.context.sourceStudy.studyDbId]
       }
-    ).all((result: any[]) => {
-      result.forEach((observationUnit) => {
-        //const externalReference = observationUnit.externalReferences.filter((externalReference: any) => { externalReference.referenceSource === EXTERNAL_REFERENCE_SOURCE})[0];
-        const externalReference = observationUnit.externalReferences[0];
-        this.targetObservationUnitsByReferenceId[externalReference.referenceID] = observationUnit;
+      ).all((result: any[]) => {
+        resolve(result);
       });
     });
   }
 
-  async loadSourceObservations() : Promise<void> {
-    // Get the observations from source study
-    this.brapiSource.observations({
-      studyDbId: [this.context.sourceStudy.studyDbId]
-    }
-    ).all((result: any) => {
-      this.sourceObservations = result;
-      // Group the source observations per observation variable.
-      for (const [k, v] of Object.entries(this.context.targetVariables)) {
-        this.sourceObservationsByVariable[k] = this.sourceObservations.filter((sourceObservation) => sourceObservation.observationVariableName === k);
+  async loadTargetObservations(): Promise<any[]> {
+    // Get the observations from target study
+    return new Promise<any>(resolve => { 
+      this.brapiDestination.observations({
+        studyDbId: [this.context.targetStudy.studyDbId]
       }
+      ).all((result: any[]) => {
+        resolve(result);
+      });
     });
+  }
 
+  async loadTargetObservationUnits(): Promise<any[]> {
+    return new Promise<any>(resolve => {
+      // Get the observation units from target study
+      this.brapiDestination.search_observationunits({
+        studyDbIds: [this.context.targetStudy.studyDbId]
+      }
+      ).all((result: any[]) => {
+        resolve(result);
+      });
+    });
   }
 
   async post(): Promise<void> {
@@ -101,12 +122,31 @@ export class ObservationComponent implements OnInit {
     return sourceObservations.map(observation => {
       return {
         observationUnitDbId: this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)].observationUnitDbId,
-        observationVariableDbId: this.context.targetVariables[observation.observationVariableName].observationVariableDbId,
-        observationVariableName: this.context.targetVariables[observation.observationVariableName].observationVariableName,
+        observationVariableDbId: this.context.variablesMap[observation.observationVariableName].observationVariableDbId,
+        observationVariableName: this.context.variablesMap[observation.observationVariableName].observationVariableName,
         studyDbId: this.context.targetStudy.studyDbId,
         value: observation.value
       };
     });
+  }
+
+  groupObservationsByVariable(observations: any[]) {
+    const observationsCountByVariable: any = {};
+    // Count observations per observation variable.
+    for (const [k, v] of Object.entries(this.context.variablesMap)) {
+      observationsCountByVariable[k] = observations.filter((observation) => observation.observationVariableName === k);
+    }
+    return observationsCountByVariable;
+  }
+
+  createObservationUnitsByReferenceId(observationUnits: any[]) {
+    const observationUnitsByReferenceId: any = {};
+    observationUnits.forEach((observationUnit) => {
+      //const externalReference = observationUnit.externalReferences.filter((externalReference: any) => { externalReference.referenceSource === EXTERNAL_REFERENCE_SOURCE})[0];
+      const externalReference = observationUnit.externalReferences[0];
+      observationUnitsByReferenceId[externalReference.referenceID] = observationUnit;
+    });
+    return observationUnitsByReferenceId;
   }
 
   cancel(): void {
@@ -115,6 +155,12 @@ export class ObservationComponent implements OnInit {
 
   isValid(): boolean {
     return true;
+  }
+
+  isValidForImport(variableName: string): boolean {
+    // Check if the variable already has existing observation in the target server
+    const observationsByVariable: any[] = this.targetObservationsByVariable[variableName];
+    return observationsByVariable && observationsByVariable.length <= 0;
   }
 
   canProceed() : boolean {

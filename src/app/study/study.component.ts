@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
-import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { brapiAll } from '../util/brapi-all';
@@ -17,8 +16,6 @@ declare const BrAPI: any;
 })
 export class StudyComponent implements OnInit {
 
-  searchOptions: any[] = [{ id: 1, name: 'Study' }];
-  searchSelected: number = 1;
   loading = false;
   isSaving = false;
   studyDetail: any = {};
@@ -68,19 +65,12 @@ export class StudyComponent implements OnInit {
     });
   }
 
-  openSearchModal() {
-    const modalReference = this.modalService.open(StudyFilterComponent)
-    modalReference.componentInstance.trialSelected = this.context.sourceTrial;
-    modalReference.componentInstance.studySelected = this.context.sourceStudy;
-    modalReference.componentInstance.locationSelected = this.context.sourceLocation;
-    modalReference.componentInstance.isTrialDisabled = true;
-    modalReference.result.then(() => {
-      if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
-        this.reset();
-        this.loadStudyDetail();
-        this.loadTrialFromDestination();
-      }
-    });
+  onStudySelect(): void {
+    if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+      this.reset();
+      this.loadStudyDetail();
+      this.loadTrialFromDestination();
+    }
   }
 
   async next(): Promise<void> {

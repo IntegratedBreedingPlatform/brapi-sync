@@ -2,10 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { StudyFilterComponent } from '../study-filter/study-filter.component';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
+import { StudyFilterComponent } from '../shared/study-selector/study-filter.component';
 
 declare const BrAPI: any;
 
@@ -207,7 +207,7 @@ export class GermplasmComponent implements OnInit {
           this.breedingMethodsDestById[bm.breedingMethodDbId] = bm;
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       this.onError(error);
     }
     this.isLoading = false;

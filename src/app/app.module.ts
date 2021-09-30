@@ -8,7 +8,6 @@ import { ConnectionsComponent } from './connections/connections.component';
 import { routes } from './app.route';
 import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
-import { StudyFilterComponent } from './study-filter/study-filter.component';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthInterceptor } from './auth.interceptor';
@@ -25,6 +24,8 @@ import { ObservationUnitComponent } from './observation-unit/observation-unit.co
 import { VariableComponent } from './variable/variable.component';
 import { ObservationComponent } from './observation/observation.component';
 import { ObjectKeysPipe } from './shared/pipes/object-keys.pipe';
+import { StudySelectorComponent } from './shared/study-selector/study-selector.component';
+import { StudyFilterComponent } from './shared/study-selector/study-filter.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { ObjectKeysPipe } from './shared/pipes/object-keys.pipe';
     ObservationUnitComponent,
     VariableComponent,
     ObservationComponent,
-    ObjectKeysPipe
+    ObjectKeysPipe,
+    StudySelectorComponent
   ],
   imports: [
     BrowserModule,

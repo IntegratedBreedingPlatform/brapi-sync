@@ -25,14 +25,14 @@
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let key of context.targetVariables | objectKeys">
+              <tr *ngFor="let key of context.variablesMap | objectKeys">
                 <td>{{key}}</td>
-                <td>{{context.targetVariables[key]?.observationVariableName}}</td>
+                <td>{{context.variablesMap[key]?.observationVariableName}}</td>
                 <td>{{sourceObservationsByVariable[key]?.length}}</td>
                 <td><app-expandable-json-viewer [json]="sourceObservationsByVariable[key]"></app-expandable-json-viewer></td>
                 <td>
-                    <span style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="false" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                    <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
                 </td>
               </tr>
               </tbody>
