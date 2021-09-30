@@ -21,7 +21,7 @@ export class VariableComponent implements OnInit {
   isSaving = false;
   variablesSaved = false;
   sourceVariables: any [] = [];
-  targetVariablesByName: any = {};
+  targetVariables: any = {};
 
   constructor(private router: Router,
     private http: HttpClient,
@@ -57,7 +57,7 @@ export class VariableComponent implements OnInit {
     }
     ).all((result: any[]) => {
        result.forEach((targetVariable) => {
-        this.targetVariablesByName[targetVariable.observationVariableName] = targetVariable;
+        this.targetVariables[targetVariable.observationVariableName] = targetVariable;
        });
     });
   }
@@ -70,11 +70,11 @@ export class VariableComponent implements OnInit {
     }
   }
 
-  async updateObservationVariable(targetVariables: any[]) {
-    targetVariables.forEach(async (targetVariable) => {
-      targetVariable.studyDbId = this.context.targetStudy.studyDbId;
+  async updateObservationVariables(observationVariables: any[]) {
+    observationVariables.forEach(async (observationVariable) => {
+      observationVariable.studyDbId = this.context.targetStudy.studyDbId;
       // Use v2.1 PUT /variables to associate observation variable to a study.
-      const postRes: any = await this.http.put(this.context.destination + '/variable', targetVariable
+      const postRes: any = await this.http.put(this.context.destination + '/variable', observationVariable
       ).toPromise();
     });
     this.variablesSaved = true;
@@ -90,15 +90,16 @@ export class VariableComponent implements OnInit {
   }
 
   isValidMapping(sourceVariable: any): boolean {
-    const targetVariable = this.targetVariablesByName[sourceVariable.observationVariableName];
+    const targetVariable = this.targetVariables[sourceVariable.observationVariableName];
     return targetVariable && targetVariable.scale.dataType === sourceVariable.scale.dataType;
   }
 
   canProceed() : boolean {
-    return this.variablesSaved;
+    return true; //this.variablesSaved;
   }
 
   async next() {
+    this.context.targetVariables = this.targetVariables;
     this.router.navigate(['observation']);
   }
 

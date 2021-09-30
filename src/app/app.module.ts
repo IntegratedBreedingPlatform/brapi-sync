@@ -23,6 +23,8 @@ import { ExpandableJsonViewerComponent } from './shared/expandable-json-viewer/e
 import { StudyComponent } from './study/study.component';
 import { ObservationUnitComponent } from './observation-unit/observation-unit.component';
 import { VariableComponent } from './variable/variable.component';
+import { ObservationComponent } from './observation/observation.component';
+import { ObjectKeysPipe } from './shared/pipes/object-keys.pipe';
 
 @NgModule({
   declarations: [
@@ -37,7 +39,9 @@ import { VariableComponent } from './variable/variable.component';
     ExpandableJsonViewerComponent,
     StudyComponent,
     ObservationUnitComponent,
-    VariableComponent
+    VariableComponent,
+    ObservationComponent,
+    ObjectKeysPipe
   ],
   imports: [
     BrowserModule,

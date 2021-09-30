@@ -11,30 +11,28 @@
             </div>
           </div>
         </app-collapsible>
-        <app-collapsible heading="Variables">
+        <app-collapsible heading="Observations">
           <div class="table-responsive">
             <table class="table table-bordered">
               <caption></caption>
               <thead class="thead-light">
               <tr>
                 <th scope="col">Source Observation Variable Name</th>
-                <th scope="col">Source Variable Synonyms</th>
-                <th scope="col">Source Variable Metadata</th>
                 <th scope="col">Target Observation Variable Name</th>
-                <th scope="col">Target Synonyms</th>
+                <th scope="col"># Of Source Observations</th>
+                <th scope="col">Source Observations</th>
                 <th scope="col">Status</th>
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let sourceVariable of sourceVariables">
-                <td>{{sourceVariable.observationVariableName}}</td>
-                <td>{{sourceVariable.synonyms}}</td>
-                <td><app-expandable-json-viewer [json]="sourceVariable"></app-expandable-json-viewer></td>
-                <td>{{targetVariables[sourceVariable.observationVariableName]?.observationVariableName}}</td>
-                <td>{{targetVariables[sourceVariable.observationVariableName]?.synonyms}}</td>
+              <tr *ngFor="let key of context.targetVariables | objectKeys">
+                <td>{{key}}</td>
+                <td>{{context.targetVariables[key]?.observationVariableName}}</td>
+                <td>{{sourceObservationsByVariable[key]?.length}}</td>
+                <td><app-expandable-json-viewer [json]="sourceObservationsByVariable[key]"></app-expandable-json-viewer></td>
                 <td>
-                    <span *ngIf="isValidMapping(sourceVariable)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidMapping(sourceVariable)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                    <span style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="false" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
                 </td>
               </tr>
               </tbody>
@@ -55,9 +53,6 @@
             <li *ngFor="let i of info">{{i.message}}</li>
           </ul>
         </div>
-        <div class="alert alert-info" *ngIf="variablesSaved">
-          Variables already exists in the destination server.
-        </div>
       </div>
     </div>
   </div>
@@ -65,11 +60,8 @@
     <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">Cancel</button>
     <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
       <span class="throbber throbber-btn" *ngIf="isSaving"></span>
-      Import Variables
+      Import Observations
     </button>
-    <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
-        Next
-      </button>
   </div>
   
   

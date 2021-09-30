@@ -79,7 +79,7 @@ export class GermplasmComponent implements OnInit {
       const request = germplasm.map((g) => this.transformForSave(g));
       const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
       this.onSuccess(res);
-    } catch (error) {
+    } catch (error: any) {
       this.onError(error);
     }
     this.isSaving = false;

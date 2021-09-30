@@ -31,6 +31,10 @@
               <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_STUDY" [(ngModel)]="entitySelected"/></div></th>
               <td>Studies</td>
             </tr>
+            <tr (click)="entitySelected = ENTITY_OBSERVATION">
+              <th scope="row"><div class="form-check"><input type="radio" class="form-check-input" name="entityType" [value]="ENTITY_OBSERVATION" [(ngModel)]="entitySelected"/></div></th>
+              <td>Observations</td>
+            </tr>
             </tbody>
           </table>
         </div>

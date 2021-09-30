@@ -7,6 +7,7 @@ import { TrialComponent } from './trial/trial.component';
 import { StudyComponent } from './study/study.component';
 import { ObservationUnitComponent } from './observation-unit/observation-unit.component';
 import { VariableComponent } from './variable/variable.component';
+import { ObservationComponent } from './observation/observation.component';
 
 export const routes: Route[] = [
   {
@@ -45,6 +46,10 @@ export const routes: Route[] = [
   {
     path: 'variable',
     component: VariableComponent
+  },
+  {
+    path: 'observation',
+    component: ObservationComponent
   }
 
 ];
