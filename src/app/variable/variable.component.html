@@ -44,7 +44,7 @@
                 <td>{{targetVariables[sourceVariables[key].observationVariableName]?.synonyms}}</td>
                 <td>
                     <span *ngIf="isValidMapping(sourceVariables[key])" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidMapping(sourceVariables[key])" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                    <span *ngIf="!isValidMapping(sourceVariables[key])" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon> No variable found or the data type is not compatible</span>
                 </td>
               </tr>
               </tbody>
@@ -65,7 +65,7 @@
             <li *ngFor="let i of info">{{i.message}}</li>
           </ul>
         </div>
-        <div class="alert alert-info" *ngIf="variablesSaved">
+        <div class="alert alert-info" *ngIf="false">
           Variables already exists in the destination server.
         </div>
       </div>

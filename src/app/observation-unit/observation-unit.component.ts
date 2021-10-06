@@ -87,7 +87,6 @@ export class ObservationUnitComponent implements OnInit {
       this.errors.push({ message: error.message });
     }
     this.isSaving = false;
-    this.observationsAlreadyExist = true;
   }
 
   loadObservationUnits() {

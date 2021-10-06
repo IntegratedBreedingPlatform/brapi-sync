@@ -32,7 +32,7 @@
                 <td><app-expandable-json-viewer [json]="sourceObservationsByVariable[key]"></app-expandable-json-viewer></td>
                 <td>
                     <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                    <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon> Observation(s) already exists for this variable.</span>
                 </td>
               </tr>
               </tbody>

@@ -24,6 +24,7 @@ export class VariableComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   variablesSaved = false;
+  variablesAlreadyExist = false;
   isStudySelectable: boolean = false;
 
   constructor(private router: Router,
@@ -109,17 +110,49 @@ export class VariableComponent implements OnInit {
     const allVariableHasAMatch = Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
     if (allVariableHasAMatch) {
         // Add Observation Variable to the study
-        //this.updateObservationVariable(Object.values(this.targetVariablesByName));
+        this.updateObservationVariables(Object.values(this.variablesMap));
     }
   }
 
   async updateObservationVariables(observationVariables: any[]) {
     observationVariables.forEach(async (observationVariable) => {
-      observationVariable.studyDbId = this.context.targetStudy.studyDbId;
-      // Use v2.1 PUT /variables to associate observation variable to a study.
-      const postRes: any = await this.http.put(this.context.destination + '/variable', observationVariable
+
+      const observationVariableNewRequest = {
+
+        additionalInfo: observationVariable.additionalInfo,
+        commonCropName: observationVariable.commonCropName,
+        contextOfUse: observationVariable.contextOfUse,
+        defaultValue: observationVariable.defaultValue,
+        documentationURL: observationVariable.documentationURL,
+        externalReferences: observationVariable.externalReferences,
+        growthStage: observationVariable.growthStage,
+        institution: observationVariable.institution,
+        language: observationVariable.language,
+        observationVariableDbId: observationVariable.observationVariableDbId,
+        observationVariableName: observationVariable.observationVariableName,
+        ontologyDbId: observationVariable.ontologyDbId,
+        ontologyName: observationVariable.ontologyName,
+        ontologyReference: observationVariable.ontologyReference,
+        trait: observationVariable.trait,
+        method: observationVariable.method,
+        scale: observationVariable.scale,
+        scientist: observationVariable.scientist,
+        status: observationVariable.status,
+        submissionTimestamp: observationVariable.submissionTimestamp,
+        synonyms: observationVariable.synonyms,
+        studyDbIds: [this.context.targetStudy.studyDbId]
+
+      };
+
+      // Use v2.1 PUT /variables to update and associate observation variable to a study.
+      const postRes: any = await this.http.put(this.context.destination + '/variables/' + observationVariable.observationVariableDbId, observationVariableNewRequest
       ).toPromise();
+
+      this.errors = this.errors.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR'));
+      this.info = this.info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
+      
     });
+    console.log(this.info);
     this.variablesSaved = true;
     
   }
@@ -146,7 +179,7 @@ export class VariableComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
+    return !this.variablesSaved && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
   }
 
   isValidMapping(sourceVariable: any): boolean {
@@ -157,7 +190,7 @@ export class VariableComponent implements OnInit {
   }
 
   canProceed() : boolean {
-    return true; //this.variablesSaved;
+    return this.variablesSaved;
   }
 
   async next() {

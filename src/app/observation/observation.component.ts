@@ -119,15 +119,21 @@ export class ObservationComponent implements OnInit {
   }
 
   transform(sourceObservations: any[]) {
-    return sourceObservations.map(observation => {
-      return {
-        observationUnitDbId: this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)].observationUnitDbId,
-        observationVariableDbId: this.context.variablesMap[observation.observationVariableName].observationVariableDbId,
-        observationVariableName: this.context.variablesMap[observation.observationVariableName].observationVariableName,
-        studyDbId: this.context.targetStudy.studyDbId,
-        value: observation.value
-      };
+    const observations:any = [];
+    sourceObservations.forEach((observation) => {
+      const targetObservationUnit = this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)];
+      if (this.isValidForImport(observation.observationVariableName)) {
+        observations.push({
+          germplasmDbId: targetObservationUnit.germplasmDbId,
+          observationUnitDbId: targetObservationUnit.observationUnitDbId,
+          observationVariableDbId: this.context.variablesMap[observation.observationVariableName].observationVariableDbId,
+          observationVariableName: this.context.variablesMap[observation.observationVariableName].observationVariableName,
+          studyDbId: this.context.targetStudy.studyDbId,
+          value: observation.value
+        });
+      }
     });
+    return observations;
   }
 
   groupObservationsByVariable(observations: any[]) {
