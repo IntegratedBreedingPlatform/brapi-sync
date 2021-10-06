@@ -42,6 +42,7 @@ export class ObservationComponent implements OnInit {
   }
 
   async load() {
+    this.loading = true;
     // Load the target observation units so that we can map them from the source
     const observationUnits = await this.loadTargetObservationUnits();
     this.targetObservationUnitsByReferenceId = this.createObservationUnitsByReferenceId(observationUnits);
@@ -55,6 +56,7 @@ export class ObservationComponent implements OnInit {
     } else {
       this.errors.push({ message: `There are no observation units in the target server.` });
     }
+    this.loading = false;
   }
 
   async loadSourceObservations(): Promise<any[]> {
@@ -93,18 +95,9 @@ export class ObservationComponent implements OnInit {
     });
   }
 
-  async post(): Promise<void> {
-
-    let data: any;
+  async post(): Promise<void> {   
     try {
-      data = this.transform(this.sourceObservations);
-    } catch (message) {
-      this.errors.push({ message: message });
-      this.isSaving = false;
-      return;
-    }
-    try {
-      const postRes: any = await this.http.post(this.context.destination + '/observations', data
+      const postRes: any = await this.http.post(this.context.destination + '/observations', this.transform(this.sourceObservations)
       ).toPromise();
       this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
       this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
@@ -160,7 +153,7 @@ export class ObservationComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return true;
+    return !this.observationsSaved && !this.loading;
   }
 
   isValidForImport(variableName: string): boolean {

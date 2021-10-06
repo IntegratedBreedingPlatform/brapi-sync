@@ -115,6 +115,7 @@ export class VariableComponent implements OnInit {
   }
 
   async updateObservationVariables(observationVariables: any[]) {
+    this.isSaving = true;
     observationVariables.forEach(async (observationVariable) => {
 
       const observationVariableNewRequest = {
@@ -152,8 +153,8 @@ export class VariableComponent implements OnInit {
       this.info = this.info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
       
     });
-    console.log(this.info);
     this.variablesSaved = true;
+    this.isSaving = false;
     
   }
 
@@ -179,7 +180,7 @@ export class VariableComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return !this.variablesSaved && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
+    return !this.variablesSaved && !this.isLoading && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
   }
 
   isValidMapping(sourceVariable: any): boolean {

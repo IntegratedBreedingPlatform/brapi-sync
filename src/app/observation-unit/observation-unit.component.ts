@@ -23,8 +23,8 @@ export class ObservationUnitComponent implements OnInit {
   germplasmTotalCount = 0;
   loading = false;
   isSaving = false;
-  observationsAlreadyExist = false;
-  observationsSaved = false;
+  observationUnitsAlreadyExist = false;
+  observationUnitsSaved = false;
   germplasmByGermplasmDbId: any = {};
   germplasmInDestinationByPUI: any = {};
   germplasmInDestinationByRefId: any = {};
@@ -81,7 +81,7 @@ export class ObservationUnitComponent implements OnInit {
       this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
       this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
       if (!this.errors.length) {
-        this.observationsSaved = true;
+        this.observationUnitsSaved = true;
       }
     } catch (error: any) {
       this.errors.push({ message: error.message });
@@ -231,13 +231,13 @@ export class ObservationUnitComponent implements OnInit {
       }
     ).all((result: any) => {
       if (result.length) {
-        this.observationsAlreadyExist = true;
+        this.observationUnitsAlreadyExist = true;
       }
     });
   }
 
   isValid(): boolean {
-    return !this.loading && !this.isSaving && !this.observationsAlreadyExist && !this.observationsSaved
+    return !this.loading && !this.isSaving && !this.observationUnitsAlreadyExist && !this.observationUnitsSaved
       && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
   }
 
@@ -246,7 +246,7 @@ export class ObservationUnitComponent implements OnInit {
   }
 
   canProceed() {
-    return this.observationsAlreadyExist;
+    return this.observationUnitsAlreadyExist || this.observationUnitsSaved;
   }
 
 }
