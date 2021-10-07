@@ -43,8 +43,8 @@
                 <td>{{targetVariables[sourceVariables[key].observationVariableName]?.observationVariableName}}</td>
                 <td>{{targetVariables[sourceVariables[key].observationVariableName]?.synonyms}}</td>
                 <td>
-                    <span *ngIf="isValidMapping(sourceVariables[key])" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidMapping(sourceVariables[key])" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon> No variable found or the data type is not compatible</span>
+                    <span *ngIf="isValidMapping(sourceVariables[key])"><fa-icon style="color: green" [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!isValidMapping(sourceVariables[key])"><fa-icon style="color: red" [icon]="['fas', 'times']"></fa-icon> No variable found or the data type is not compatible</span>
                 </td>
               </tr>
               </tbody>
