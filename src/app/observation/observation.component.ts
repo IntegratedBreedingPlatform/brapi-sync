@@ -97,6 +97,7 @@ export class ObservationComponent implements OnInit {
 
   async post(): Promise<void> {   
     try {
+
       const postRes: any = await this.http.post(this.context.destination + '/observations', this.transform(this.sourceObservations)
       ).toPromise();
       this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
@@ -153,7 +154,9 @@ export class ObservationComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return !this.observationsSaved && !this.loading;
+    return !this.observationsSaved && !this.loading && Object.entries(this.context.variablesMap).some((([key, value]) => {
+      return this.isValidForImport(key);
+    }));
   }
 
   isValidForImport(variableName: string): boolean {
