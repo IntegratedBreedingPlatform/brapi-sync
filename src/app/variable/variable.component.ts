@@ -187,7 +187,7 @@ export class VariableComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return !this.variablesSaved && !this.isLoading && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
+    return Object.keys(this.sourceVariables).length > 0 && !this.variablesSaved && !this.isLoading && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
   }
 
   isValidMapping(sourceVariable: any): boolean {
