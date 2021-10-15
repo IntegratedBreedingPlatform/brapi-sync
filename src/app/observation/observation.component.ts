@@ -169,4 +169,14 @@ export class ObservationComponent implements OnInit {
     return true; 
   }
 
+  sanitizeObject(observations: any[]) {
+    const copyObservations = observations.map((o: any) => {
+      const copy = Object.assign({}, o);
+      // TODO: check why the code is adding __response automatic to the object.
+      delete copy.__response;
+      return copy;
+    });
+    return copyObservations;
+  }
+
 }

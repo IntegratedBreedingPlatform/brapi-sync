@@ -175,6 +175,13 @@ export class VariableComponent implements OnInit {
     });
   }
 
+  sanitizeObject(variable: any) {
+    const copy = Object.assign({}, variable);
+    // TODO: check why the code is adding __response automatic to the object.
+    delete copy.__response;
+    return copy;
+  }
+  
   cancel(): void {
     this.router.navigate(['entity-selector']);
   }
