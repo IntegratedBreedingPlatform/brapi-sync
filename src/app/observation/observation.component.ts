@@ -98,11 +98,17 @@ export class ObservationComponent implements OnInit {
   async post(): Promise<void> {   
     try {
 
-      const postRes: any = await this.http.post(this.context.destination + '/observations', this.transform(this.sourceObservations)
-      ).toPromise();
-      this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
-      this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
-      if (!this.errors.length) {
+      const observations = this.transform(this.sourceObservations);
+      if (observations.length > 0) {
+        const postRes: any = await this.http.post(this.context.destination + '/observations', observations
+        ).toPromise();
+        this.errors = postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+        this.info = postRes.metadata.status.filter((s: any) => s.messageType === 'INFO');
+        if (!this.errors.length) {
+          this.observationsSaved = true;
+        }
+      } else {
+        this.errors.push({ message: 'No observation to import.' });
         this.observationsSaved = true;
       }
     } catch (error: any) {
