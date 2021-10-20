@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ContextService } from '../context.service';
+import { ContextService } from 'src/app/context.service';
 
 declare const BrAPI: any;
 
@@ -12,6 +12,8 @@ declare const BrAPI: any;
 export class StudyFilterComponent implements OnInit {
 
   isTrialDisabled = false;
+  isStudyDisabled = false;
+  isLocationDisabled = false;
   brapiSource: any;
   trials: any[] = [];
   studies: any[] = [];

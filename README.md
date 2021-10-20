@@ -7,6 +7,8 @@ This tool can be used to synchronize entities via [BrAPI] standard. This include
 * Trial
 * Study
 * Observation Units
+* Observation Variable
+* Observation
 
 This is an alpha version and still under develppment.
 
@@ -21,9 +23,14 @@ This is an alpha version and still under develppment.
 * [GET /studies](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Core/2.0#/Studies/get_studies)
 * [GET /studies/{studyDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Core/2.0#/Studies/get_studies__studyDbId_)
 * [POST /studies](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Core/2.0#/Studies/post_studies)
-* [GET /search/observationunits](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Units/get_search_observationunits__searchResultsDbId_)
+* [GET /search/observationunits/{searchResultsDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Units/get_search_observationunits__searchResultsDbId_)
 * [POST /search/observationunits](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Units/post_search_observationunits)
 * [POST /observationunits](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Units/post_observationunits)
+* [GET /search/variables/{searchResultsDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Variables/get_search_variables__searchResultsDbId_)
+* [POST /search/variables](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Variables/post_search_variables)
+* PUT /variables/{observationVariableDbId} (experimental) This is a preliminary implementation of BrAPI version 2.1 endpoint
+* [GET /observations](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observations/get_observations)
+* [POST /observations](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observations/post_observations)
 
 ![preview](images/preview.png)
 
@@ -61,6 +68,10 @@ To keep track of submitted entities it adds another entry into the externalRefer
 
 - [x] Keep track using external references 
 - [ ] Keep track using PUID
+- [ ] Map variables by alias
+- [ ] Optimize germplasm table
+- [ ] OAuth authentication
+- [ ] Various bug fixes
 
 
 # How to run

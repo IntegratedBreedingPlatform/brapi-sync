@@ -1,0 +1,125 @@
+<div class="modal-header">
+  <h1 class="modal-title">Studies</h1>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col">
+      <app-collapsible heading="Connection Info">
+        <div class="card">
+          <div class="card-body">
+            <h5><span class="badge badge-pill badge-primary">{{context.sourceStudy.studyName}}</span></h5>
+          </div>
+        </div>
+      </app-collapsible>
+      <app-collapsible heading="Observation Units Metadata">
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <caption></caption>
+            <thead class="thead-light">
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <th scope="row"><span class="font-weight-bold">Levels</span></th>
+              <td>
+                <app-expandable-json-viewer *ngIf="context.sourceStudy?.observationLevels" [json]="context.sourceStudy?.observationLevels"></app-expandable-json-viewer>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
+              <td>{{sourceObservationUnits.length}}</td>
+            </tr>
+            <tr>
+              <th scope="row"><span class="font-weight-bold"># of Germplasm</span></th>
+              <td>{{germplasmTotalCount}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-collapsible>
+      <app-collapsible heading="Germplasm Mapping">
+        <div class="row" *ngIf="loading">
+          <div class="col">
+            <span class="throbber"></span>
+          </div>
+        </div>
+        <div class="row" *ngIf="!loading">
+          <div class="col">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <caption></caption>
+                <thead class="thead-light">
+                <tr>
+                  <th scope="col">PUID</th>
+                  <th scope="col">Source germplasmDbId</th>
+                  <th scope="col">Source Name</th>
+                  <th scope="col">Target germplasmDbId</th>
+                  <th scope="col">Target Name</th>
+                  <th scope="col">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let germplasm of sourceGermplasm">
+                  <td>{{germplasm?.germplasmPUI}}</td>
+                  <td>{{germplasm?.germplasmDbId}}</td>
+                  <td>{{germplasm?.germplasmName}}</td>
+                  <td>{{getTargetGermplasm(germplasm)?.germplasmDbId}}</td>
+                  <td>{{getTargetGermplasm(germplasm)?.germplasmName}}</td>
+                  <td>
+                    <span *ngIf="getTargetGermplasm(germplasm)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!getTargetGermplasm(germplasm)" style="color: red"><fa-icon [icon]="['fas', 'times']"></fa-icon></span>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between p-2">
+              <ngb-pagination [collectionSize]="germplasmTotalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="loadGermplasm()">
+              </ngb-pagination>
+
+              <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="loadGermplasm()">
+                <option [ngValue]="5">5</option>
+                <option [ngValue]="20">20</option>
+                <option [ngValue]="50">50</option>
+                <option [ngValue]="100">100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </app-collapsible>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="alert alert-danger" *ngIf="errors.length">
+        <ul>
+          <li *ngFor="let error of errors">{{error.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-success" *ngIf="info.length && !errors.length">
+        <ul>
+          <li *ngFor="let i of info">{{i.message}}</li>
+        </ul>
+      </div>
+      <div class="alert alert-info" *ngIf="observationUnitsAlreadyExist">
+        Observations already exists in the destination server.
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">Cancel</button>
+  <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
+    <span class="throbber throbber-btn" *ngIf="isSaving"></span>
+    Import Observation Units
+  </button>
+  <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
+    Next
+  </button>
+</div>
+
+
+

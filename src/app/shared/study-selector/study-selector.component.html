@@ -1,0 +1,10 @@
+<div class="form-inline">
+    <label for="searchBy">Search By</label>
+    <div class="col-4">
+      <ng-select [items]="searchOptions" name="searchBySelect" bindLabel="name" bindValue="id" [(ngModel)]="searchSelected">
+      </ng-select>
+    </div>
+    <button type="button" class="btn btn-info" (click)="openSearchModal()">
+      <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+    </button>
+  </div>

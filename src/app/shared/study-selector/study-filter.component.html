@@ -15,14 +15,14 @@
         <div class="form-group row">
           <label for="locationSelect" class="col-sm-3 col-form-label">Location</label>
           <div class="col-sm-9">
-            <ng-select name="locationSelect" [items]="locations" bindLabel="locationName" [(ngModel)]="locationSelected" (change)="loadStudies()">
+            <ng-select name="locationSelect" [items]="locations" bindLabel="locationName" [(ngModel)]="locationSelected" (change)="loadStudies()" [disabled]="isLocationDisabled">
             </ng-select>
           </div>
         </div>
         <div class="form-group row">
           <label for="studySelect" class="col-sm-3 col-form-label">Study Name</label>
           <div class="col-sm-9">
-            <ng-select name="studySelect" [items]="studies" bindLabel="studyName" [(ngModel)]="studySelected">
+            <ng-select name="studySelect" [items]="studies" bindLabel="studyName" [(ngModel)]="studySelected" [disabled]="isStudyDisabled">
             </ng-select>
           </div>
         </div>

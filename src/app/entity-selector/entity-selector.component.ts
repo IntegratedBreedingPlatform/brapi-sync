@@ -11,6 +11,7 @@ export class EntitySelectorComponent implements OnInit {
 
   ENTITY_GERMPLASM = 'germplasm';
   ENTITY_STUDY = 'study';
+  ENTITY_OBSERVATION = 'observation';
 
   entitySelected: string = this.ENTITY_GERMPLASM;
   loading = false;
@@ -26,7 +27,9 @@ export class EntitySelectorComponent implements OnInit {
   async next(): Promise<void> {
     if (this.entitySelected == this.ENTITY_GERMPLASM) {
       this.router.navigate(['germplasm']);
-    } else {
+    } else if (this.entitySelected == this.ENTITY_OBSERVATION) {
+      this.router.navigate(['variable']);
+    } else if (this.entitySelected == this.ENTITY_STUDY) {
       this.router.navigate(['trial']);
     }
   }

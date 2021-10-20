@@ -31,5 +31,6 @@ export enum EntityEnum {
   GERMPLASM = 'germplasm',
   STUDIES = 'studies',
   TRIALS = 'trials',
-  OBSERVATIONUNITS = 'observationunits'
+  OBSERVATIONUNITS = 'observationunits',
+  OBSERVATION = 'observation'
 }

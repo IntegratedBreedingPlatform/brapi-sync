@@ -3,7 +3,17 @@
   </div>
   <div class="modal-body">
     <div class="row">
+      <div class="col-10">
+        <app-study-selector (onSelect)="onStudySelect()" [trialDisabled]="!isStudySelectable" [locationDisabled]="!isStudySelectable" [studyDisabled]="!isStudySelectable"></app-study-selector>
+      </div>
+    </div>
+    <div class="row" *ngIf="isLoading">
       <div class="col">
+        <span class="throbber"></span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col" *ngIf="hasVariableMatches()">
         <app-collapsible heading="Connection Info">
           <div class="card">
             <div class="card-body">
@@ -11,28 +21,30 @@
             </div>
           </div>
         </app-collapsible>
-        <app-collapsible heading="Observations">
+        <app-collapsible heading="Variables">
           <div class="table-responsive">
             <table class="table table-bordered">
               <caption></caption>
               <thead class="thead-light">
               <tr>
                 <th scope="col">Source Observation Variable Name</th>
+                <th scope="col">Source Variable Synonyms</th>
+                <th scope="col">Source Variable Metadata</th>
                 <th scope="col">Target Observation Variable Name</th>
-                <th scope="col"># Of Source Observations</th>
-                <th scope="col">Source Observations</th>
+                <th scope="col">Target Synonyms</th>
                 <th scope="col">Status</th>
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let key of context.variablesMap | objectKeys">
-                <td>{{key}}</td>
-                <td>{{context.variablesMap[key]?.observationVariableName}}</td>
-                <td>{{sourceObservationsByVariable[key]?.length}}</td>
-                <td><app-expandable-json-viewer [json]="sanitizeObject(sourceObservationsByVariable[key])"></app-expandable-json-viewer></td>
+              <tr *ngFor="let key of sourceVariables | objectKeys">
+                <td>{{sourceVariables[key].observationVariableName}}</td>
+                <td>{{sourceVariables[key].synonyms}}</td>
+                <td><app-expandable-json-viewer [json]="sanitizeObject(sourceVariables[key])"></app-expandable-json-viewer></td>
+                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.observationVariableName}}</td>
+                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.synonyms}}</td>
                 <td>
-                    <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)"><fa-icon style="color:goldenrod" [icon]="['fas', 'exclamation-triangle']"></fa-icon> Observation(s) already exists for this variable.</span>
+                    <span *ngIf="isValidMapping(sourceVariables[key])"><fa-icon style="color: green" [icon]="['fas', 'check']"></fa-icon></span>
+                    <span *ngIf="!isValidMapping(sourceVariables[key])"><fa-icon style="color: red" [icon]="['fas', 'times']"></fa-icon> No variable found or the data type is not compatible</span>
                 </td>
               </tr>
               </tbody>
@@ -53,6 +65,9 @@
             <li *ngFor="let i of info">{{i.message}}</li>
           </ul>
         </div>
+        <div class="alert alert-info" *ngIf="false">
+          Variables already exists in the destination server.
+        </div>
       </div>
     </div>
   </div>
@@ -60,8 +75,11 @@
     <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">Cancel</button>
     <button type="button" class="btn btn-primary" (click)="post()" [disabled]="!isValid()">
       <span class="throbber throbber-btn" *ngIf="isSaving"></span>
-      Import Observations
+      Import Variables
     </button>
+    <button type="button" class="btn btn-info" (click)="next()" [disabled]="!canProceed()">
+        Next
+      </button>
   </div>
   
   

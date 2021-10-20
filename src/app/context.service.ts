@@ -26,6 +26,7 @@ export class ContextService {
   targetLocation: any = {};
   targetTrial: any = {};
   targetStudy: any = {};
+  variablesMap: any = {};
 
   constructor() {
   }
@@ -37,5 +38,6 @@ export class ContextService {
     this.targetLocation = {};
     this.targetTrial = {};
     this.targetStudy = {};
+    this.variablesMap = {};
   }
 }
