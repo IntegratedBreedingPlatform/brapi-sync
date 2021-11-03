@@ -26,8 +26,9 @@ export class ObservationUnitComponent implements OnInit {
   observationUnitsAlreadyExist = false;
   observationUnitsSaved = false;
   germplasmByGermplasmDbId: any = {};
-  germplasmInDestinationByPUI: any = {};
-  germplasmInDestinationByRefId: any = {};
+  germplasmInDestinationByPUIs: any = {};
+  germplasmInDestinationByRefIds: any = {};
+
   info: any = [];
   errors: any = [];
 
@@ -128,68 +129,39 @@ export class ObservationUnitComponent implements OnInit {
       });
     }
 
-    /**
-     * TODO
-     *  - BMS: /search/germplasm (IBP-4448)
-     */
-    // Search germplasm in destination server by PUI
-    /** TODO: This code will not work because we don't have PUI stored per germplasm in the DB.
-     *  - Verify this once IBP-4662 is resolved.
-     **/
-    const germplasmInDestinationByPUI = await brapiAll(
-      this.brapiDestination.data(germplasm.filter((germplasm) => germplasm.germplasmPUI).map((germplasm: any) => germplasm.germplasmPUI)
-      ).germplasm((germplasmPUI: any) => {
-        return {
-          germplasmPUI: germplasmPUI,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
-
-    if (germplasmInDestinationByPUI && germplasmInDestinationByPUI.length) {
-      germplasmInDestinationByPUI.forEach((g: any) => {
-        this.germplasmInDestinationByPUI[g.germpasmPUI] = g;
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
+    const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
+      germplasmPUIs: germplasmPUIs
+    }));
+    if (germplasmByPUIsResult && germplasmByPUIsResult.length && germplasmByPUIsResult[0].data.length) {
+      germplasmByPUIsResult[0].data.forEach((g: any) => {
+        this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
       });
-    }
-
-    /**
-     * TODO
-     *  - BMS: /search/germplasm (IBP-4448)
-     */
-      // Search germplasm in destination server by PUI
-      // If germplasm is not found via PUI, then search the remaining
-      // germplasm in destination server by external reference id
-    const germplasmInDestination = await brapiAll(
-      this.brapiDestination.data(germplasm.filter(germplasm => !this.germplasmInDestinationByPUI[germplasm.germpasmPUI]).map((germplasm: any) => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId))
-      ).germplasm((id: any) => {
-        return {
-          externalReferenceID: id,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
-
-    if (germplasmInDestination && germplasmInDestination.length) {
-      germplasmInDestination.forEach((g: any) => {
+    };
+    // Find germplasm in destination by external reference ID
+    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+    const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
+      externalReferenceIDs: germplasmRefIds
+    }))
+    if (germplasmByRefIdsResult && germplasmByRefIdsResult.length && germplasmByRefIdsResult[0].data.length) {
+      germplasmByRefIdsResult[0].data.forEach((g: any) => {
         if (g.externalReferences && g.externalReferences.length) {
           g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestinationByRefId[ref.referenceID] = g;
+            this.germplasmInDestinationByRefIds[ref.externalReferenceId] = g;
           });
         }
       });
     }
+  
   }
 
   getTargetGermplasm(germplasm: any) {
-    if (this.germplasmInDestinationByPUI[germplasm.germplasmPUI]) {
-      return this.germplasmInDestinationByPUI[germplasm.germplasmPUI];
+    if (this.germplasmInDestinationByPUIs[germplasm.germplasmPUI]) {
+      return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI];
     } else {
       const referenceId = this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId);
-      return this.germplasmInDestinationByRefId[referenceId];
+      return this.germplasmInDestinationByRefIds[referenceId];
     }
   }
 

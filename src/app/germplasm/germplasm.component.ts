@@ -6,6 +6,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { StudyFilterComponent } from '../shared/study-selector/study-filter.component';
+import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
 
@@ -15,6 +16,8 @@ declare const BrAPI: any;
   styleUrls: ['./germplasm.component.css']
 })
 export class GermplasmComponent implements OnInit {
+
+  brapiDestination: any;
   isSaving = false;
   isLoading = false;
 
@@ -34,16 +37,19 @@ export class GermplasmComponent implements OnInit {
   breedingMethodsDestById: any = {};
   breedingMethodsSourceByName: any = {};
   breedingMethodsSourceById: any = {};
-  germplasmInDestByRefId: any = {};
+  germplasmInDestinationByPUIs: any = {};
+  germplasmInDestinationByRefIds: any = {};
 
   constructor(
     private router: Router,
     public context: ContextService,
     private modalService: NgbModal,
-    private http: HttpClient
+    private http: HttpClient,
+    private externalReferenceService: ExternalReferenceService
   ) {
     // TODO / testing / remove
     // this.load();
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
@@ -72,7 +78,7 @@ export class GermplasmComponent implements OnInit {
   private async post(germplasm: any[]): Promise<void> {
     try {
       this.isSaving = true;
-      germplasm = germplasm.filter((g) => !this.germplasmInDestByRefId[this.getRefId(g.germplasmDbId)]);
+      germplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g));
       if (!germplasm.length) {
         return;
       }
@@ -94,7 +100,7 @@ export class GermplasmComponent implements OnInit {
       copy.externalReferences = [];
     }
     copy.externalReferences.push({
-      referenceID: this.getRefId(germplasm.germplasmDbId),
+      referenceID: this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId),
       referenceSource: EXTERNAL_REFERENCE_SOURCE
     });
 
@@ -220,44 +226,40 @@ export class GermplasmComponent implements OnInit {
     this.breedingMethodsDestById = {};
     this.breedingMethodsSourceByName = {};
     this.breedingMethodsSourceById = {};
-    this.germplasmInDestByRefId = {};
+    this.germplasmInDestinationByPUIs = {};
+    this.germplasmInDestinationByRefIds = {};
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
-    /**
-     * TODO
-     *  - search by PUID, documentationUrl, externalReferences
-     *  - show synchronized sources
-     *  - BMS: /search/germplasm (IBP-4448)
-     *  - search by other fields: e.g PUID
-     */
-    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-    const germplasmInDest = await brapiAll(
-      brapi.data(
-        this.germplasm.map((g: any) => this.getRefId(g.germplasmDbId))
-      ).germplasm((id: any) => {
-        return {
-          externalReferenceID: id,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
-
-    if (germplasmInDest && germplasmInDest.length) {
-      germplasmInDest.forEach((g: any) => {
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
+    const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
+      germplasmPUIs: germplasmPUIs
+    }));
+    if (germplasmByPUIsResult && germplasmByPUIsResult.length && germplasmByPUIsResult[0].data.length) {
+      germplasmByPUIsResult[0].data.forEach((g: any) => {
+        this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
+      });
+    };
+    // Find germplasm in destination by external reference ID
+    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+    const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
+      externalReferenceIDs: germplasmRefIds
+    }))
+    if (germplasmByRefIdsResult && germplasmByRefIdsResult.length && germplasmByRefIdsResult[0].data.length) {
+      germplasmByRefIdsResult[0].data.forEach((g: any) => {
         if (g.externalReferences && g.externalReferences.length) {
           g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestByRefId[ref.referenceID] = g;
+            this.germplasmInDestinationByRefIds[ref.externalReferenceId] = g;
           });
         }
       });
     }
   }
 
-  getRefId(germplasmDbId: string): string {
-    return this.context.source + '/germplasm/' + germplasmDbId;
+  isGermplasmExistsInDestination(germplasm: any) {
+    // Check first if the germplasm has a match by PUI
+    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] || this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
   }
 
   isSelected(row: any): boolean {
