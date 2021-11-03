@@ -17,7 +17,6 @@ export class VariableComponent implements OnInit {
   brapiSource: any;
   brapiDestination: any;
   sourceVariables: any = {};
-  targetVariables: any = {};
   variablesMap: any = {};
   info: any = [];
   errors: any = [];
@@ -52,21 +51,11 @@ export class VariableComponent implements OnInit {
     this.context.targetStudy = await this.getStudyFromTargetServer(this.context.sourceStudy.studyDbId);
     if (this.context.targetStudy) {
       this.sourceVariables = await this.loadVariablesFromSource();
-      this.targetVariables = await this.loadVariablesFromTarget(this.sourceVariables);
-      this.mapVariables(this.sourceVariables, this.targetVariables);
+      this.loadVariablesFromTarget(this.sourceVariables);
     } else {
       this.errors.push({ message: `${this.context.sourceStudy.studyName} is not present in the destination server.` });
     }
     this.isLoading = false;
-  }
-
-  mapVariables(sourceVariables: any, targetVariables: any) {
-    // Map the source observation variables to the target observation variables
-    Object.entries(sourceVariables).forEach(([key, value]) => {
-      if (targetVariables[key]) {
-        this.variablesMap[key] = targetVariables[key];
-      }
-    });
   }
 
   hasVariableMatches(): boolean {
@@ -89,19 +78,29 @@ export class VariableComponent implements OnInit {
     });
   }
 
-  loadVariablesFromTarget(sourceVariables: any): Promise<any> {
+  loadVariablesFromTarget(sourceVariables: any) {
     // Get the variables from target system
     const variables: any = {};
-    const sourceObservationVariableNames: any[] = Object.entries<any>(this.sourceVariables).map(([key, value]) => value.observationVariableName);
+    Object.entries<any>(this.sourceVariables).forEach(async ([key, value]) => {
+      const variableFromTarget = await this.findVariableFromTarget(key);
+      if (variableFromTarget) {
+        this.variablesMap[key] = variableFromTarget;
+      }
+    }); 
+  }
+
+  findVariableFromTarget(observationVariableName: string): Promise<any> {
     return new Promise<any>(resolve => { 
       this.brapiDestination.search_variables({
-        observationVariableNames: sourceObservationVariableNames
+        observationVariableNames: [observationVariableName]
       }
       ).all((result: any[]) => {
-         result.forEach((observationVariable) => {
-          variables[observationVariable.observationVariableName] = observationVariable;
-         });
-         resolve(variables);
+        if (result && result.length > 0) {
+          // Return the first result
+          resolve(result[0]);
+        } else {
+          resolve(null);
+        }
       });
     });
   }

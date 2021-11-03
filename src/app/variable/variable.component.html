@@ -40,8 +40,8 @@
                 <td>{{sourceVariables[key].observationVariableName}}</td>
                 <td>{{sourceVariables[key].synonyms}}</td>
                 <td><app-expandable-json-viewer [json]="sanitizeObject(sourceVariables[key])"></app-expandable-json-viewer></td>
-                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.observationVariableName}}</td>
-                <td>{{targetVariables[sourceVariables[key].observationVariableName]?.synonyms}}</td>
+                <td>{{variablesMap[key]?.observationVariableName}}</td>
+                <td>{{variablesMap[key]?.synonyms}}</td>
                 <td>
                     <span *ngIf="isValidMapping(sourceVariables[key])"><fa-icon style="color: green" [icon]="['fas', 'check']"></fa-icon></span>
                     <span *ngIf="!isValidMapping(sourceVariables[key])"><fa-icon style="color: red" [icon]="['fas', 'times']"></fa-icon> No variable found or the data type is not compatible</span>
