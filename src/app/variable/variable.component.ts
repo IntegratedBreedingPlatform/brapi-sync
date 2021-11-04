@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
+import { AlertService } from '../shared/alert/alert.service';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
@@ -23,18 +24,19 @@ export class VariableComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   variablesSaved = false;
-  variablesAlreadyExist = false;
   isStudySelectable: boolean = false;
 
   constructor(private router: Router,
     private http: HttpClient,
     public externalReferenceService: ExternalReferenceService,
-    public context: ContextService) {
+    public context: ContextService,
+    private alertService: AlertService) {
         this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
         this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
 }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
       this.load();
     } else {
@@ -53,7 +55,7 @@ export class VariableComponent implements OnInit {
       this.sourceVariables = await this.loadVariablesFromSource();
       this.loadVariablesFromTarget(this.sourceVariables);
     } else {
-      this.errors.push({ message: `${this.context.sourceStudy.studyName} is not present in the destination server.` });
+      this.alertService.showDanger(`${this.context.sourceStudy.studyName} is not present in the destination server.`);
     }
     this.isLoading = false;
   }
@@ -152,6 +154,13 @@ export class VariableComponent implements OnInit {
       this.info = this.info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
       
     });
+
+    if (this.errors.length) {
+      this.alertService.showDanger(this.errors);
+    } else if (this.info.length) {
+      this.alertService.showSuccess(this.info);
+    }
+
     this.variablesSaved = true;
     this.isSaving = false;
     
@@ -217,8 +226,5 @@ export class VariableComponent implements OnInit {
     this.router.navigate(['observation']);
   }
 
-}
-function hash(a: any) {
-  throw new Error('Function not implemented.');
 }
 

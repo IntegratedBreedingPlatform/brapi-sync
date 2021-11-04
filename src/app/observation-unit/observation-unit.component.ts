@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -35,12 +36,14 @@ export class ObservationUnitComponent implements OnInit {
   constructor(private router: Router,
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
-              public context: ContextService) {
+              public context: ContextService,
+              private alertService: AlertService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     // Get the germplasm of the study from source
     this.loadGermplasm();
     // Get the observation units of the study from source
@@ -71,7 +74,7 @@ export class ObservationUnitComponent implements OnInit {
     try {
       data = this.transform(this.sourceObservationUnits);
     } catch (message) {
-      this.errors.push({ message: message });
+      this.alertService.showDanger(message);
       this.isSaving = false;
       return;
     }
@@ -84,8 +87,13 @@ export class ObservationUnitComponent implements OnInit {
       if (!this.errors.length) {
         this.observationUnitsSaved = true;
       }
+      if (this.errors.length) {
+        this.alertService.showDanger(this.errors);
+      } else if (this.info.length) {
+        this.alertService.showSuccess(this.info);
+      }
     } catch (error: any) {
-      this.errors.push({ message: error.message });
+      this.alertService.showDanger(error.message);
     }
     this.isSaving = false;
   }
@@ -116,7 +124,7 @@ export class ObservationUnitComponent implements OnInit {
       await this.searchInTarget(this.sourceGermplasm);
 
     } catch (error) {
-      console.log(error);
+      this.alertService.showDanger(error);
     }
     this.loading = false;
   }
@@ -148,7 +156,7 @@ export class ObservationUnitComponent implements OnInit {
       germplasmByRefIdsResult[0].data.forEach((g: any) => {
         if (g.externalReferences && g.externalReferences.length) {
           g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestinationByRefIds[ref.externalReferenceId] = g;
+            this.germplasmInDestinationByRefIds[ref.referenceID] = g;
           });
         }
       });
@@ -204,6 +212,7 @@ export class ObservationUnitComponent implements OnInit {
     ).all((result: any) => {
       if (result.length) {
         this.observationUnitsAlreadyExist = true;
+        this.alertService.showWarning('Observation units already exist in the destination server.');
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { EntityEnum, ExternalReferenceService } from '../shared/external-referen
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { brapiAll } from '../util/brapi-all';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -31,12 +32,14 @@ export class StudyComponent implements OnInit {
               private http: HttpClient,
               private externalReferenceService: ExternalReferenceService,
               public modalService: NgbModal,
-              public context: ContextService) {
+              public context: ContextService,
+              private alertService: AlertService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     // Load the study detail from the source server to make sure we have the properties we need to import it
     this.loadStudyDetail();
     // Get the imported Trial from destination server so that we know its trialDbId
@@ -51,7 +54,7 @@ export class StudyComponent implements OnInit {
       this.searchLocationByName(this.studyDetail.locationName);
       this.checkStudyAlreadyExists();
     }, (error: any) => {
-      this.errors.push({ message: 'Cannot load the study detail due to internal server error.' });
+      this.alertService.showDanger('Cannot load the study detail due to internal server error.');
     });
     this.loading = false;
   }
@@ -90,6 +93,11 @@ export class StudyComponent implements OnInit {
         this.info = response.metadata.status.filter((s: any) => s.messageType === 'INFO');
         this.studySaved = this.errors.length === 0;
         this.context.targetStudy = response.result.data[0];
+        if (this.errors.length) {
+          this.alertService.showDanger(this.errors);
+        } else if (this.info.length) {
+          this.alertService.showSuccess(this.info);
+        }
       }
     });
     this.isSaving = false;
@@ -103,7 +111,7 @@ export class StudyComponent implements OnInit {
         return loc.locationName === locationName;
       });
       if (!this.context.targetLocation) {
-        this.errors.push({ message: `"${locationName}" does not match any location records in the destination server.` });
+        this.alertService.showDanger(`"${locationName}" does not match any location records in the destination server.`);
       }
     });
   }
@@ -138,6 +146,8 @@ export class StudyComponent implements OnInit {
         if (result.length) {
           this.studyAlreadyExists = true;
           this.context.targetStudy = result[0];
+          this.alertService.showWarning(`"${this.context.sourceStudy.studyName}" already exists in the destination server.`);
+         
         }
       });
     }

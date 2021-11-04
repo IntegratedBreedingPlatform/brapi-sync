@@ -14,8 +14,8 @@ export class ContextService {
   destination = 'http://localhost:8080/bmsapi/maize/brapi/v2/';
 
   // TODO clear data for testing
-  sourceToken = '';
-  destinationToken = '';
+  sourceToken = 'admin:1636009767988:b882b3e0b4f31d7555cfa8d2625ef589';
+  destinationToken = 'admin:1636009819299:95f121d017339c7f4b2d5cc0f9b604e2';
 
   sourceProgram: any = {};
   sourceTrial: any = {};

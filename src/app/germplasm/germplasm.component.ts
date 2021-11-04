@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -7,6 +7,7 @@ import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { StudyFilterComponent } from '../shared/study-selector/study-filter.component';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -33,6 +34,9 @@ export class GermplasmComponent implements OnInit {
   selectedItems: { [key: string]: any } = {};
   isSelectAllPages = false;
 
+  errors: any = [];
+  info: any = [];
+
   breedingMethodsDestByName: any = {};
   breedingMethodsDestById: any = {};
   breedingMethodsSourceByName: any = {};
@@ -45,7 +49,8 @@ export class GermplasmComponent implements OnInit {
     public context: ContextService,
     private modalService: NgbModal,
     private http: HttpClient,
-    private externalReferenceService: ExternalReferenceService
+    private externalReferenceService: ExternalReferenceService,
+    private alertService: AlertService
   ) {
     // TODO / testing / remove
     // this.load();
@@ -53,6 +58,7 @@ export class GermplasmComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
   }
 
   back(): void {
@@ -155,10 +161,13 @@ export class GermplasmComponent implements OnInit {
   }
 
   onSuccess(res: any): void {
-    // TODO ng-toast?
-    alert('success');
-    console.log(res);
-
+    this.errors = res.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+    this.info = res.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    if (this.errors.length) {
+      this.alertService.showDanger(this.errors);
+    } else if (this.info.length) {
+      this.alertService.showSuccess(this.info);
+    }
     this.load();
   }
 
@@ -250,7 +259,7 @@ export class GermplasmComponent implements OnInit {
       germplasmByRefIdsResult[0].data.forEach((g: any) => {
         if (g.externalReferences && g.externalReferences.length) {
           g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestinationByRefIds[ref.externalReferenceId] = g;
+            this.germplasmInDestinationByRefIds[ref.referenceID] = g;
           });
         }
       });

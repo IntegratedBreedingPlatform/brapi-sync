@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import * as karmaConf from 'karma.conf';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
+import { AlertService } from '../shared/alert/alert.service';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
@@ -32,12 +33,14 @@ export class ObservationComponent implements OnInit {
   constructor(private router: Router,
     private http: HttpClient,
     public externalReferenceService: ExternalReferenceService,
-    public context: ContextService) {
+    public context: ContextService,
+    private alertService: AlertService) {
         this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
         this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
 }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     this.load();
   }
 
@@ -54,7 +57,7 @@ export class ObservationComponent implements OnInit {
       this.targetObservations = await this.loadTargetObservations();
       this.targetObservationsByVariable = this.groupObservationsByVariable(this.targetObservations);
     } else {
-      this.errors.push({ message: `There are no observation units in the target server.` });
+      this.alertService.showDanger(`There are no observation units in the target server.`);
     }
     this.loading = false;
   }
@@ -107,8 +110,13 @@ export class ObservationComponent implements OnInit {
         if (!this.errors.length) {
           this.observationsSaved = true;
         }
+        if (this.errors.length) {
+          this.alertService.showDanger(this.errors);
+        } else if (this.info.length) {
+          this.alertService.showSuccess(this.info);
+        }
       } else {
-        this.errors.push({ message: 'No observation to import.' });
+        this.alertService.showDanger('No observation to import.');
         this.observationsSaved = true;
       }
     } catch (error: any) {
