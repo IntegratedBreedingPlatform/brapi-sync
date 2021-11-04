@@ -5,7 +5,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
-import { StudyFilterComponent } from '../shared/study-selector/study-filter.component';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
 
@@ -21,13 +20,10 @@ export class GermplasmComponent implements OnInit {
   brapiDestination: any;
   isSaving = false;
   isLoading = false;
-
-  filter = FILTER.STUDY;
-  FILTERS = FILTER;
   germplasm: any = [];
   page = 1;
   // TODO bms /search/germplasm, using many get /germplasm for now
-  pageSize = 5;
+  pageSize = 20;
   totalCount = 0;
 
   // { germplasmDbId: germplasm }
@@ -74,6 +70,7 @@ export class GermplasmComponent implements OnInit {
         pageRange: [0, 1],
       }).all((germplasm: any[]) => {
         this.post(germplasm);
+
       });
     } else {
       const germplasm = Object.values(this.selectedItems);
@@ -101,6 +98,8 @@ export class GermplasmComponent implements OnInit {
     const copy = Object.assign({}, germplasm);
 
     delete copy.germplasmDbId;
+     // TODO: check why the code is adding __response automatic to the object.
+    delete copy.__response;
 
     if (!(copy.externalReferences && copy.externalReferences.length)) {
       copy.externalReferences = [];
@@ -171,13 +170,10 @@ export class GermplasmComponent implements OnInit {
     this.load();
   }
 
-  addFilter(): void {
-    this.modalService.open(StudyFilterComponent).result
-      .then(() => {
-        if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
-          this.load();
-        }
-      });
+  onStudySelect(): void {
+    if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+      this.load();
+    }
   }
 
   async load(): Promise<void> {
@@ -321,9 +317,4 @@ export class GermplasmComponent implements OnInit {
     }
     return synonyms.map((s) => s.synonym).join(', ');
   }
-}
-
-enum FILTER {
-  STUDY = 'STUDY',
-  LIST = 'LIST'
 }

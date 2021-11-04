@@ -18,9 +18,11 @@ import { ToastService } from "./toast.service";
   
         <ng-template [ngIf]="isText(toast)">{{ toast.textOrTplOrArray }}</ng-template>
         <ng-template [ngIf]="isArray(toast)">
-          <ul>
-            <li *ngFor="let m of toast.textOrTplOrArray">{{m.message}}</li>
-          </ul>
+          <div style="max-height: 800px; overflow-y: auto">
+            <ul>
+              <li *ngFor="let m of toast.textOrTplOrArray">{{m.message}}</li>
+            </ul>
+          </div>
         </ng-template>
       </ngb-toast>
     `,
