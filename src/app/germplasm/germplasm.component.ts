@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,7 +22,7 @@ export class GermplasmComponent implements OnInit {
   isLoading = false;
   germplasm: any = [];
   page = 1;
-  
+
   pageSize = 20;
   totalCount = 0;
 
@@ -94,7 +94,7 @@ export class GermplasmComponent implements OnInit {
     const copy = Object.assign({}, germplasm);
 
     delete copy.germplasmDbId;
-     // TODO: check why the code is adding __response automatic to the object.
+    // TODO: check why the code is adding __response automatic to the object.
     delete copy.__response;
 
     if (!(copy.externalReferences && copy.externalReferences.length)) {
@@ -174,11 +174,11 @@ export class GermplasmComponent implements OnInit {
   }
 
   async loadAll() {
-     // Get all germplasm records from source server.
-     const res: any = await this.http.get(this.context.source + '/germplasm', {
+    // Get all germplasm records from source server.
+    const res: any = await this.http.get(this.context.source + '/germplasm', {
       params: {
         studyDbId: this.context.sourceStudy.studyDbId,
-        page:'0',
+        page: '0',
         pageSize: this.totalCount.toString(),
       }
     }).toPromise();
@@ -263,15 +263,16 @@ export class GermplasmComponent implements OnInit {
       }));
       if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
         let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage+1) : 1;
-        totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages-1;
+        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+        totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
         if (germplasmByPUIsResult[0].data.length) {
           germplasmByPUIsResult[0].data.forEach((g: any) => {
             this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
           });
         }
-      };
-    } 
+      }
+      ;
+    }
 
     // Find germplasm in destination by external reference ID
     const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
@@ -287,8 +288,8 @@ export class GermplasmComponent implements OnInit {
       }));
       if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
         let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage+1) : 1;
-        totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages-1;
+        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+        totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
         if (germplasmByRefIdsResult[0].data.length) {
           germplasmByRefIdsResult[0].data.forEach((g: any) => {
             if (g.externalReferences && g.externalReferences.length) {

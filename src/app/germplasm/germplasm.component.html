@@ -60,7 +60,7 @@
             </div>
             <div class="d-flex justify-content-between p-2">
               <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()"
-              [maxSize]="15" [rotate]="true" [boundaryLinks]="true">
+                              [maxSize]="15" [rotate]="true" [boundaryLinks]="true">
               </ngb-pagination>
 
               <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">

@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
@@ -147,7 +147,7 @@ export class StudyComponent implements OnInit {
           this.studyAlreadyExists = true;
           this.context.targetStudy = result[0];
           this.alertService.showWarning(`"${this.context.sourceStudy.studyName}" already exists in the destination server.`);
-         
+
         }
       });
     }

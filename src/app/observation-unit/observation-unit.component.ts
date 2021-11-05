@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
@@ -151,15 +151,16 @@ export class ObservationUnitComponent implements OnInit {
       }));
       if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
         let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage+1) : 1;
-        totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages-1;
+        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+        totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
         if (germplasmByPUIsResult[0].data.length) {
           germplasmByPUIsResult[0].data.forEach((g: any) => {
             this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
           });
         }
-      };
-    } 
+      }
+      ;
+    }
 
     // Find germplasm in destination by external reference ID
     const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
@@ -175,8 +176,8 @@ export class ObservationUnitComponent implements OnInit {
       }));
       if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
         let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage+1) : 1;
-        totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages-1;
+        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+        totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
         if (germplasmByRefIdsResult[0].data.length) {
           germplasmByRefIdsResult[0].data.forEach((g: any) => {
             if (g.externalReferences && g.externalReferences.length) {
@@ -188,7 +189,7 @@ export class ObservationUnitComponent implements OnInit {
         }
       }
     }
-  console.log('Hello World');
+    console.log('Hello World');
   }
 
   getTargetGermplasm(germplasm: any) {
@@ -226,7 +227,7 @@ export class ObservationUnitComponent implements OnInit {
         treatments: observationUnit.treatments,
         trialDbId: this.context.targetTrial.trialDbId,
         trialName: this.context.targetTrial.trialName
-      }
+      };
     });
   }
 

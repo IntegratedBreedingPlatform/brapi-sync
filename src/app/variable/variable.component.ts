@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
@@ -25,13 +25,13 @@ export class VariableComponent implements OnInit {
   isStudySelectable: boolean = false;
 
   constructor(private router: Router,
-    private http: HttpClient,
-    public externalReferenceService: ExternalReferenceService,
-    public context: ContextService,
-    private alertService: AlertService) {
-        this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-        this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-}
+              private http: HttpClient,
+              public externalReferenceService: ExternalReferenceService,
+              public context: ContextService,
+              private alertService: AlertService) {
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+  }
 
   ngOnInit(): void {
     this.alertService.removeAll();
@@ -62,13 +62,13 @@ export class VariableComponent implements OnInit {
     return Object.entries(this.variablesMap).length > 0;
   }
 
-  loadVariablesFromSource() : Promise<any> {
+  loadVariablesFromSource(): Promise<any> {
     // Get the variables from source study
-    return new Promise<any>(resolve => { 
+    return new Promise<any>(resolve => {
       const variables: any = {};
       this.brapiSource.search_variables({
-        studyDbId: [this.context.sourceStudy.studyDbId]
-      }
+          studyDbId: [this.context.sourceStudy.studyDbId]
+        }
       ).all((result: any[]) => {
         result.forEach((observationVariable) => {
           variables[observationVariable.observationVariableName] = observationVariable;
@@ -86,14 +86,14 @@ export class VariableComponent implements OnInit {
       if (variableFromTarget) {
         this.variablesMap[key] = variableFromTarget;
       }
-    }); 
+    });
   }
 
   findVariableFromTarget(observationVariableName: string): Promise<any> {
-    return new Promise<any>(resolve => { 
+    return new Promise<any>(resolve => {
       this.brapiDestination.search_variables({
-        observationVariableNames: [observationVariableName]
-      }
+          observationVariableNames: [observationVariableName]
+        }
       ).all((result: any[]) => {
         if (result && result.length > 0) {
           // Return the first result
@@ -108,8 +108,8 @@ export class VariableComponent implements OnInit {
   async post(): Promise<void> {
     const allVariableHasAMatch = Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
     if (allVariableHasAMatch) {
-        // Add Observation Variable to the study
-        this.updateObservationVariables(Object.values(this.variablesMap));
+      // Add Observation Variable to the study
+      this.updateObservationVariables(Object.values(this.variablesMap));
     }
   }
 
@@ -162,11 +162,11 @@ export class VariableComponent implements OnInit {
 
     this.variablesSaved = true;
     this.isSaving = false;
-    
+
   }
 
   getStudyFromTargetServer(studyDbId: any): Promise<any> {
-    return new Promise<any>(resolve => { 
+    return new Promise<any>(resolve => {
       if (studyDbId && studyDbId) {
         this.brapiDestination.studies({
           externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.STUDIES, studyDbId),
@@ -188,7 +188,7 @@ export class VariableComponent implements OnInit {
     delete copy.__response;
     return copy;
   }
-  
+
   cancel(): void {
     this.router.navigate(['entity-selector']);
   }
@@ -207,16 +207,16 @@ export class VariableComponent implements OnInit {
   isValidCategoricalValues(sourceVariable: any, targetVariable: any) {
     // Check if the source and target variables cagetorical valid values are equal
     if (targetVariable.scale.dataType === sourceVariable.scale.dataType && targetVariable.scale.dataType === 'Nominal') {
-        const sortArray = (array: any[]) => array.sort((a, b) => (a.value > b.value) ? 1 : -1);
-        const objectsEqual = (o1:any, o2:any) => Object.keys(o1).length === Object.keys(o2).length && Object.keys(o1).every(p => o1[p] === o2[p]);
-        const arraysEqual = (a1: any[], a2: any[]) => a1.length === a2.length && a1.every((o: any, idx: any) => objectsEqual(o, a2[idx]));
-        return arraysEqual(sortArray(sourceVariable.scale.validValues.categories), sortArray(targetVariable.scale.validValues.categories));
+      const sortArray = (array: any[]) => array.sort((a, b) => (a.value > b.value) ? 1 : -1);
+      const objectsEqual = (o1: any, o2: any) => Object.keys(o1).length === Object.keys(o2).length && Object.keys(o1).every(p => o1[p] === o2[p]);
+      const arraysEqual = (a1: any[], a2: any[]) => a1.length === a2.length && a1.every((o: any, idx: any) => objectsEqual(o, a2[idx]));
+      return arraysEqual(sortArray(sourceVariable.scale.validValues.categories), sortArray(targetVariable.scale.validValues.categories));
     } else {
       return true;
     }
   }
 
-  canProceed() : boolean {
+  canProceed(): boolean {
     return this.variablesSaved;
   }
 
