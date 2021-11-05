@@ -19,8 +19,6 @@ export class VariableComponent implements OnInit {
   brapiDestination: any;
   sourceVariables: any = {};
   variablesMap: any = {};
-  info: any = [];
-  errors: any = [];
   isLoading = false;
   isSaving = false;
   variablesSaved = false;
@@ -117,8 +115,10 @@ export class VariableComponent implements OnInit {
 
   async updateObservationVariables(observationVariables: any[]) {
     this.isSaving = true;
-    observationVariables.forEach(async (observationVariable) => {
+    let errors: any[] = [];
+    let info: any[] = [];
 
+    for (const observationVariable of observationVariables) {
       const observationVariableNewRequest = {
 
         additionalInfo: observationVariable.additionalInfo,
@@ -150,15 +150,14 @@ export class VariableComponent implements OnInit {
       const postRes: any = await this.http.put(this.context.destination + '/variables/' + observationVariable.observationVariableDbId, observationVariableNewRequest
       ).toPromise();
 
-      this.errors = this.errors.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR'));
-      this.info = this.info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
-      
-    });
+      errors = errors.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR'));
+      info = info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
+    }
 
-    if (this.errors.length) {
-      this.alertService.showDanger(this.errors);
-    } else if (this.info.length) {
-      this.alertService.showSuccess(this.info);
+    if (errors.length) {
+      this.alertService.showDanger(errors);
+    } else if (info.length) {
+      this.alertService.showSuccess(info);
     }
 
     this.variablesSaved = true;
