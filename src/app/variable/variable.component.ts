@@ -83,9 +83,7 @@ export class VariableComponent implements OnInit {
     const variables: any = {};
     Object.entries<any>(this.sourceVariables).forEach(async ([key, value]) => {
       const variableFromTarget = await this.findVariableFromTarget(key);
-      if (variableFromTarget) {
         this.variablesMap[key] = variableFromTarget;
-      }
     });
   }
 
