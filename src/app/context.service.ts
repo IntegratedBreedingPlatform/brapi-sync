@@ -10,12 +10,12 @@ export class ContextService {
   // source = 'https://bms-centos-1.leafnode.io/bmsapi/maize/brapi/v2/';
 
   // breedbase catalyst won't accept double slash //
-  source = 'https://bms-centos-1.leafnode.io/bmsapi/maize/brapi/v2/';
-  destination = 'http://localhost:8080/bmsapi/maize/brapi/v2/';
+  source = '';
+  destination = '';
 
   // TODO clear data for testing
-  sourceToken = 'admin:1636009767988:b882b3e0b4f31d7555cfa8d2625ef589';
-  destinationToken = 'admin:1636009819299:95f121d017339c7f4b2d5cc0f9b604e2';
+  sourceToken = '';
+  destinationToken = '';
 
   sourceProgram: any = {};
   sourceTrial: any = {};
