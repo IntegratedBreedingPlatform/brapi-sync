@@ -144,22 +144,23 @@ export class ObservationUnitComponent implements OnInit {
     // FIXME: This is a workaround to get all the items in all pages.
     // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
     // 1000 records from the first page.
-    while (currentPage <= totalPages) {
-      const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
-        germplasmPUIs: germplasmPUIs,
-        pageRange: [currentPage, 1]
-      }));
-      if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
-        let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-        totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
-        if (germplasmByPUIsResult[0].data.length) {
-          germplasmByPUIsResult[0].data.forEach((g: any) => {
-            this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
-          });
+    if (germplasmPUIs.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          germplasmPUIs: germplasmPUIs,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
+          let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByPUIsResult[0].data.length) {
+            germplasmByPUIsResult[0].data.forEach((g: any) => {
+              this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
+            });
+          }
         }
       }
-      ;
     }
 
     // Find germplasm in destination by external reference ID
@@ -169,27 +170,28 @@ export class ObservationUnitComponent implements OnInit {
     // FIXME: This is a workaround to get all the items in all pages.
     // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
     // 1000 records from the first page.
-    while (currentPage <= totalPages) {
-      const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
-        externalReferenceIDs: germplasmRefIds,
-        pageRange: [currentPage, 1]
-      }));
-      if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
-        let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
-        currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-        totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
-        if (germplasmByRefIdsResult[0].data.length) {
-          germplasmByRefIdsResult[0].data.forEach((g: any) => {
-            if (g.externalReferences && g.externalReferences.length) {
-              g.externalReferences.forEach((ref: any) => {
-                this.germplasmInDestinationByRefIds[ref.referenceID] = g;
-              });
-            }
-          });
+    if (germplasmRefIds.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          externalReferenceIDs: germplasmRefIds,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
+          let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByRefIdsResult[0].data.length) {
+            germplasmByRefIdsResult[0].data.forEach((g: any) => {
+              if (g.externalReferences && g.externalReferences.length) {
+                g.externalReferences.forEach((ref: any) => {
+                  this.germplasmInDestinationByRefIds[ref.referenceID] = g;
+                });
+              }
+            });
+          }
         }
       }
     }
-    console.log('Hello World');
   }
 
   getTargetGermplasm(germplasm: any) {
