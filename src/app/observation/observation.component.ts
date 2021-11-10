@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import * as karmaConf from 'karma.conf';
-import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
+import { AlertService } from '../shared/alert/alert.service';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 
 declare const BrAPI: any;
@@ -26,18 +25,20 @@ export class ObservationComponent implements OnInit {
   targetObservations: any[] = [];
   targetObservationsByVariable: any = {};
   targetObservationUnitsByReferenceId: any = {};
-  
+
   observationsSaved = false;
 
   constructor(private router: Router,
-    private http: HttpClient,
-    public externalReferenceService: ExternalReferenceService,
-    public context: ContextService) {
-        this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-        this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-}
+              private http: HttpClient,
+              public externalReferenceService: ExternalReferenceService,
+              public context: ContextService,
+              private alertService: AlertService) {
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+  }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     this.load();
   }
 
@@ -50,21 +51,21 @@ export class ObservationComponent implements OnInit {
     if (observationUnits.length > 0) {
       this.sourceObservations = await this.loadSourceObservations();
       this.sourceObservationsByVariable = this.groupObservationsByVariable(this.sourceObservations);
-      
+
       this.targetObservations = await this.loadTargetObservations();
       this.targetObservationsByVariable = this.groupObservationsByVariable(this.targetObservations);
     } else {
-      this.errors.push({ message: `There are no observation units in the target server.` });
+      this.alertService.showDanger(`There are no observation units in the target server.`);
     }
     this.loading = false;
   }
 
   async loadSourceObservations(): Promise<any[]> {
     // Get the observations from source study
-    return new Promise<any>(resolve => { 
+    return new Promise<any>(resolve => {
       this.brapiSource.observations({
-        studyDbId: [this.context.sourceStudy.studyDbId]
-      }
+          studyDbId: [this.context.sourceStudy.studyDbId]
+        }
       ).all((result: any[]) => {
         resolve(result);
       });
@@ -73,10 +74,10 @@ export class ObservationComponent implements OnInit {
 
   async loadTargetObservations(): Promise<any[]> {
     // Get the observations from target study
-    return new Promise<any>(resolve => { 
+    return new Promise<any>(resolve => {
       this.brapiDestination.observations({
-        studyDbId: [this.context.targetStudy.studyDbId]
-      }
+          studyDbId: [this.context.targetStudy.studyDbId]
+        }
       ).all((result: any[]) => {
         resolve(result);
       });
@@ -87,15 +88,15 @@ export class ObservationComponent implements OnInit {
     return new Promise<any>(resolve => {
       // Get the observation units from target study
       this.brapiDestination.search_observationunits({
-        studyDbIds: [this.context.targetStudy.studyDbId]
-      }
+          studyDbIds: [this.context.targetStudy.studyDbId]
+        }
       ).all((result: any[]) => {
         resolve(result);
       });
     });
   }
 
-  async post(): Promise<void> {   
+  async post(): Promise<void> {
     try {
 
       const observations = this.transform(this.sourceObservations);
@@ -107,8 +108,13 @@ export class ObservationComponent implements OnInit {
         if (!this.errors.length) {
           this.observationsSaved = true;
         }
+        if (this.errors.length) {
+          this.alertService.showDanger(this.errors);
+        } else if (this.info.length) {
+          this.alertService.showSuccess(this.info);
+        }
       } else {
-        this.errors.push({ message: 'No observation to import.' });
+        this.alertService.showDanger('No observation to import.');
         this.observationsSaved = true;
       }
     } catch (error: any) {
@@ -119,7 +125,7 @@ export class ObservationComponent implements OnInit {
   }
 
   transform(sourceObservations: any[]) {
-    const observations:any = [];
+    const observations: any = [];
     sourceObservations.forEach((observation) => {
       const targetObservationUnit = this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)];
       if (this.isValidForImport(observation.observationVariableName)) {
@@ -148,7 +154,6 @@ export class ObservationComponent implements OnInit {
   createObservationUnitsByReferenceId(observationUnits: any[]) {
     const observationUnitsByReferenceId: any = {};
     observationUnits.forEach((observationUnit) => {
-      //const externalReference = observationUnit.externalReferences.filter((externalReference: any) => { externalReference.referenceSource === EXTERNAL_REFERENCE_SOURCE})[0];
       const externalReference = observationUnit.externalReferences[0];
       observationUnitsByReferenceId[externalReference.referenceID] = observationUnit;
     });
@@ -171,8 +176,8 @@ export class ObservationComponent implements OnInit {
     return observationsByVariable && observationsByVariable.length <= 0;
   }
 
-  canProceed() : boolean {
-    return true; 
+  canProceed(): boolean {
+    return true;
   }
 
   sanitizeObject(observations: any[]) {

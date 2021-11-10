@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { brapiAll } from '../util/brapi-all';
 import { ContextService } from '../context.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -18,7 +19,8 @@ export class ProgramComponent implements OnInit {
 
   constructor(
     private router: Router,
-    public context: ContextService
+    public context: ContextService,
+    private alertService: AlertService
   ) {
     const brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     brapiAll(brapiSource.programs({
@@ -39,6 +41,7 @@ export class ProgramComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
   }
 
   async next(): Promise<void> {
@@ -50,14 +53,6 @@ export class ProgramComponent implements OnInit {
   }
 
   onError(res: HttpErrorResponse): void {
-    // TODO ng-toast?
-    // alert('error');
-    console.error(res);
-  }
-
-  onSuccess(res: any): void {
-    // TODO ng-toast?
-    // alert('success');
-    console.log(res);
+    this.alertService.showDanger('Cannot load programs.');
   }
 }

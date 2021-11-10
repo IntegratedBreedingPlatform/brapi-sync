@@ -4,6 +4,7 @@ import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -26,20 +27,23 @@ export class ObservationUnitComponent implements OnInit {
   observationUnitsAlreadyExist = false;
   observationUnitsSaved = false;
   germplasmByGermplasmDbId: any = {};
-  germplasmInDestinationByPUI: any = {};
-  germplasmInDestinationByRefId: any = {};
+  germplasmInDestinationByPUIs: any = {};
+  germplasmInDestinationByRefIds: any = {};
+
   info: any = [];
   errors: any = [];
 
   constructor(private router: Router,
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
-              public context: ContextService) {
+              public context: ContextService,
+              private alertService: AlertService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     // Get the germplasm of the study from source
     this.loadGermplasm();
     // Get the observation units of the study from source
@@ -70,7 +74,7 @@ export class ObservationUnitComponent implements OnInit {
     try {
       data = this.transform(this.sourceObservationUnits);
     } catch (message) {
-      this.errors.push({ message: message });
+      this.alertService.showDanger(message);
       this.isSaving = false;
       return;
     }
@@ -83,8 +87,13 @@ export class ObservationUnitComponent implements OnInit {
       if (!this.errors.length) {
         this.observationUnitsSaved = true;
       }
+      if (this.errors.length) {
+        this.alertService.showDanger(this.errors);
+      } else if (this.info.length) {
+        this.alertService.showSuccess(this.info);
+      }
     } catch (error: any) {
-      this.errors.push({ message: error.message });
+      this.alertService.showDanger(error.message);
     }
     this.isSaving = false;
   }
@@ -115,7 +124,7 @@ export class ObservationUnitComponent implements OnInit {
       await this.searchInTarget(this.sourceGermplasm);
 
     } catch (error) {
-      console.log(error);
+      this.alertService.showDanger(error);
     }
     this.loading = false;
   }
@@ -128,68 +137,69 @@ export class ObservationUnitComponent implements OnInit {
       });
     }
 
-    /**
-     * TODO
-     *  - BMS: /search/germplasm (IBP-4448)
-     */
-    // Search germplasm in destination server by PUI
-    /** TODO: This code will not work because we don't have PUI stored per germplasm in the DB.
-     *  - Verify this once IBP-4662 is resolved.
-     **/
-    const germplasmInDestinationByPUI = await brapiAll(
-      this.brapiDestination.data(germplasm.filter((germplasm) => germplasm.germplasmPUI).map((germplasm: any) => germplasm.germplasmPUI)
-      ).germplasm((germplasmPUI: any) => {
-        return {
-          germplasmPUI: germplasmPUI,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
-
-    if (germplasmInDestinationByPUI && germplasmInDestinationByPUI.length) {
-      germplasmInDestinationByPUI.forEach((g: any) => {
-        this.germplasmInDestinationByPUI[g.germpasmPUI] = g;
-      });
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
+    let currentPage = 0;
+    let totalPages = 1;
+    // FIXME: This is a workaround to get all the items in all pages.
+    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
+    // 1000 records from the first page.
+    if (germplasmPUIs.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          germplasmPUIs: germplasmPUIs,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
+          let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByPUIsResult[0].data.length) {
+            germplasmByPUIsResult[0].data.forEach((g: any) => {
+              this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
+            });
+          }
+        }
+      }
     }
 
-    /**
-     * TODO
-     *  - BMS: /search/germplasm (IBP-4448)
-     */
-      // Search germplasm in destination server by PUI
-      // If germplasm is not found via PUI, then search the remaining
-      // germplasm in destination server by external reference id
-    const germplasmInDestination = await brapiAll(
-      this.brapiDestination.data(germplasm.filter(germplasm => !this.germplasmInDestinationByPUI[germplasm.germpasmPUI]).map((germplasm: any) => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId))
-      ).germplasm((id: any) => {
-        return {
-          externalReferenceID: id,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
-
-    if (germplasmInDestination && germplasmInDestination.length) {
-      germplasmInDestination.forEach((g: any) => {
-        if (g.externalReferences && g.externalReferences.length) {
-          g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestinationByRefId[ref.referenceID] = g;
-          });
+    // Find germplasm in destination by external reference ID
+    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+    currentPage = 0;
+    totalPages = 1;
+    // FIXME: This is a workaround to get all the items in all pages.
+    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
+    // 1000 records from the first page.
+    if (germplasmRefIds.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          externalReferenceIDs: germplasmRefIds,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
+          let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByRefIdsResult[0].data.length) {
+            germplasmByRefIdsResult[0].data.forEach((g: any) => {
+              if (g.externalReferences && g.externalReferences.length) {
+                g.externalReferences.forEach((ref: any) => {
+                  this.germplasmInDestinationByRefIds[ref.referenceID] = g;
+                });
+              }
+            });
+          }
         }
-      });
+      }
     }
   }
 
   getTargetGermplasm(germplasm: any) {
-    if (this.germplasmInDestinationByPUI[germplasm.germplasmPUI]) {
-      return this.germplasmInDestinationByPUI[germplasm.germplasmPUI];
+    if (this.germplasmInDestinationByPUIs[germplasm.germplasmPUI]) {
+      return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI];
     } else {
       const referenceId = this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId);
-      return this.germplasmInDestinationByRefId[referenceId];
+      return this.germplasmInDestinationByRefIds[referenceId];
     }
   }
 
@@ -219,7 +229,7 @@ export class ObservationUnitComponent implements OnInit {
         treatments: observationUnit.treatments,
         trialDbId: this.context.targetTrial.trialDbId,
         trialName: this.context.targetTrial.trialName
-      }
+      };
     });
   }
 
@@ -232,6 +242,7 @@ export class ObservationUnitComponent implements OnInit {
     ).all((result: any) => {
       if (result.length) {
         this.observationUnitsAlreadyExist = true;
+        this.alertService.showWarning('Observation units already exist in the destination server.');
       }
     });
   }

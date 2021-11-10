@@ -4,6 +4,7 @@ import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -25,11 +26,13 @@ export class TrialComponent implements OnInit {
   constructor(private router: Router,
               private http: HttpClient,
               private externalReferenceService: ExternalReferenceService,
-              public context: ContextService) {
+              public context: ContextService,
+              private alertService: AlertService) {
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
     this.checkTrialAlreadyExists();
   }
 
@@ -55,6 +58,11 @@ export class TrialComponent implements OnInit {
         this.info = response.metadata.status.filter((s: any) => s.messageType === 'INFO');
         this.trialSaved = this.errors.length === 0;
         this.context.targetTrial = response.result.data[0];
+        if (this.errors.length) {
+          this.alertService.showDanger(this.errors);
+        } else if (this.info.length) {
+          this.alertService.showSuccess(this.info);
+        }
       }
     });
     this.loading = false;
@@ -88,6 +96,7 @@ export class TrialComponent implements OnInit {
       }).all((result: any) => {
         if (result.length) {
           this.trialAlreadyExists = true;
+          this.alertService.showWarning(`"${this.context.sourceTrial.trialName}" already exists in the destination server.`);
         }
       });
     }

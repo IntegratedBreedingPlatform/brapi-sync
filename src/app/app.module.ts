@@ -8,7 +8,7 @@ import { ConnectionsComponent } from './connections/connections.component';
 import { routes } from './app.route';
 import { ProgramComponent } from './program/program.component';
 import { GermplasmComponent } from './germplasm/germplasm.component';
-import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthInterceptor } from './auth.interceptor';
 import { EntitySelectorComponent } from './entity-selector/entity-selector.component';
@@ -26,6 +26,9 @@ import { ObservationComponent } from './observation/observation.component';
 import { ObjectKeysPipe } from './shared/pipes/object-keys.pipe';
 import { StudySelectorComponent } from './shared/study-selector/study-selector.component';
 import { StudyFilterComponent } from './shared/study-selector/study-filter.component';
+import { ToastsContainer } from './shared/alert/toast-container.component';
+import { AlertService } from './shared/alert/alert.service';
+import { ToastService } from './shared/alert/toast.service';
 
 @NgModule({
   declarations: [
@@ -43,7 +46,8 @@ import { StudyFilterComponent } from './shared/study-selector/study-filter.compo
     VariableComponent,
     ObservationComponent,
     ObjectKeysPipe,
-    StudySelectorComponent
+    StudySelectorComponent,
+    ToastsContainer
   ],
   imports: [
     BrowserModule,
@@ -54,14 +58,17 @@ import { StudyFilterComponent } from './shared/study-selector/study-filter.compo
     HttpClientModule,
     FontAwesomeModule,
     NgSelectModule,
-    NgxJsonViewerModule
+    NgxJsonViewerModule,
+    NgbToastModule
   ],
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true
-    }
+    },
+    ToastService,
+    AlertService
   ],
   bootstrap: [AppComponent]
 })

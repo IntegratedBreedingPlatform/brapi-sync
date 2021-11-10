@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h1 class="modal-title">Studies</h1>
+  <h1 class="modal-title">Trials</h1>
 </div>
 <div class="modal-body">
   <div class="row">
@@ -66,19 +66,6 @@
         </div>
       </app-collapsible>
     </div>
-  </div>
-  <div class="alert alert-danger" *ngIf="errors.length">
-    <ul>
-      <li *ngFor="let error of errors">{{error.message}}</li>
-    </ul>
-  </div>
-  <div class="alert alert-success" *ngIf="info.length && !errors.length">
-    <ul>
-      <li *ngFor="let i of info">{{i.message}}</li>
-    </ul>
-  </div>
-  <div class="alert alert-info" *ngIf="trialAlreadyExists">
-    "{{this.context.sourceTrial.trialName}}" already exists in the destination server.
   </div>
 </div>
 <div class="modal-footer">

@@ -3,25 +3,12 @@
 </div>
 <div class="modal-body">
   <div class="row">
+    <div class="col-10">
+      <app-study-selector (onSelect)="onStudySelect()"></app-study-selector>
+    </div>
+  </div>
+  <div class="row">
     <div class="col">
-      <form>
-        <div class="form-group row">
-          <label for="programs" class="col-auto col-form-label">Search by</label>
-          <div class="col-5">
-            <div class="input-group">
-              <select class="form-control" id="programs" name="destination" [(ngModel)]="filter">
-                <option [value]="FILTERS.STUDY">Study</option>
-                <option [value]="FILTERS.LIST" disabled>List</option>
-              </select>
-              <div class="input-group-append">
-                <button class="btn btn-info float-right" (click)="addFilter()">
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
       <div class="row" *ngIf="germplasm.length && !isLoading">
         <div class="col">
           <app-collapsible heading="Connection Info">
@@ -53,12 +40,11 @@
                 <th>PEDIGREE</th>
                 <th>BREEDING METHOD NAME</th>
                 </thead>
-
                 <tbody>
                 <tr *ngFor="let row of germplasm">
                   <td *ngIf="!isSelectAllPages">
-                    <input *ngIf="!germplasmInDestByRefId[getRefId(row.germplasmDbId)]" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                    <fa-icon *ngIf="germplasmInDestByRefId[getRefId(row.germplasmDbId)]" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
+                    <input *ngIf="!isGermplasmExistsInDestination(row)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                    <fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
                   </td>
                   <td>{{row.germplasmDbId}}</td>
                   <td>{{row.germplasmName}}</td>
@@ -73,7 +59,8 @@
               </table>
             </div>
             <div class="d-flex justify-content-between p-2">
-              <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()">
+              <ngb-pagination [collectionSize]="totalCount" [(page)]="page" [pageSize]="pageSize" (pageChange)="load()"
+                              [maxSize]="15" [rotate]="true" [boundaryLinks]="true">
               </ngb-pagination>
 
               <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">

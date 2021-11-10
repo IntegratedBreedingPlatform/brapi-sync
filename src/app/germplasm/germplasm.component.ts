@@ -5,7 +5,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
-import { StudyFilterComponent } from '../shared/study-selector/study-filter.component';
+import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { AlertService } from '../shared/alert/alert.service';
 
 declare const BrAPI: any;
 
@@ -15,38 +16,44 @@ declare const BrAPI: any;
   styleUrls: ['./germplasm.component.css']
 })
 export class GermplasmComponent implements OnInit {
+
+  brapiDestination: any;
   isSaving = false;
   isLoading = false;
-
-  filter = FILTER.STUDY;
-  FILTERS = FILTER;
   germplasm: any = [];
   page = 1;
-  // TODO bms /search/germplasm, using many get /germplasm for now
-  pageSize = 5;
+
+  pageSize = 20;
   totalCount = 0;
 
-  // { germplasmDbId: germplasm }
   selectedItems: { [key: string]: any } = {};
   isSelectAllPages = false;
+
+  errors: any = [];
+  info: any = [];
 
   breedingMethodsDestByName: any = {};
   breedingMethodsDestById: any = {};
   breedingMethodsSourceByName: any = {};
   breedingMethodsSourceById: any = {};
-  germplasmInDestByRefId: any = {};
+  germplasmInDestinationByPUIs: any = {};
+  germplasmInDestinationByRefIds: any = {};
 
   constructor(
     private router: Router,
     public context: ContextService,
     private modalService: NgbModal,
-    private http: HttpClient
+    private http: HttpClient,
+    private externalReferenceService: ExternalReferenceService,
+    private alertService: AlertService
   ) {
     // TODO / testing / remove
     // this.load();
+    this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
   ngOnInit(): void {
+    this.alertService.removeAll();
   }
 
   back(): void {
@@ -55,13 +62,9 @@ export class GermplasmComponent implements OnInit {
 
   import(): void {
     if (this.isSelectAllPages) {
-      const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-      brapi.germplasm({
-        studyDbId: this.context.sourceStudy.studyDbId,
-        // put a limit on synchronization (default page=1000). TODO improve
-        pageRange: [0, 1],
-      }).all((germplasm: any[]) => {
-        this.post(germplasm);
+      this.isSaving = true;
+      this.loadAll().then(allGermplasm => {
+        this.post(allGermplasm);
       });
     } else {
       const germplasm = Object.values(this.selectedItems);
@@ -72,8 +75,10 @@ export class GermplasmComponent implements OnInit {
   private async post(germplasm: any[]): Promise<void> {
     try {
       this.isSaving = true;
-      germplasm = germplasm.filter((g) => !this.germplasmInDestByRefId[this.getRefId(g.germplasmDbId)]);
+      germplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g));
       if (!germplasm.length) {
+        this.alertService.showDanger('All germplasm already exists in the destination server.');
+        this.isSaving = false;
         return;
       }
       const request = germplasm.map((g) => this.transformForSave(g));
@@ -89,12 +94,14 @@ export class GermplasmComponent implements OnInit {
     const copy = Object.assign({}, germplasm);
 
     delete copy.germplasmDbId;
+    // TODO: check why the code is adding __response automatic to the object.
+    delete copy.__response;
 
     if (!(copy.externalReferences && copy.externalReferences.length)) {
       copy.externalReferences = [];
     }
     copy.externalReferences.push({
-      referenceID: this.getRefId(germplasm.germplasmDbId),
+      referenceID: this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId),
       referenceSource: EXTERNAL_REFERENCE_SOURCE
     });
 
@@ -149,20 +156,37 @@ export class GermplasmComponent implements OnInit {
   }
 
   onSuccess(res: any): void {
-    // TODO ng-toast?
-    alert('success');
-    console.log(res);
-
+    this.errors = res.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+    this.info = res.metadata.status.filter((s: any) => s.messageType === 'INFO');
+    if (this.errors.length) {
+      this.alertService.showWarning(this.info);
+      this.alertService.showDanger(this.errors);
+    } else if (this.info.length) {
+      this.alertService.showSuccess(this.info);
+    }
     this.load();
   }
 
-  addFilter(): void {
-    this.modalService.open(StudyFilterComponent).result
-      .then(() => {
-        if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
-          this.load();
-        }
-      });
+  onStudySelect(): void {
+    if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+      this.load();
+    }
+  }
+
+  async loadAll() {
+    // Get all germplasm records from source server.
+    const res: any = await this.http.get(this.context.source + '/germplasm', {
+      params: {
+        studyDbId: this.context.sourceStudy.studyDbId,
+        page: '0',
+        pageSize: this.totalCount.toString(),
+      }
+    }).toPromise();
+    const allGermplasm = res.result.data;
+    this.totalCount = res.metadata.pagination.totalCount;
+
+    await this.searchInTarget(allGermplasm);
+    return allGermplasm;
   }
 
   async load(): Promise<void> {
@@ -220,44 +244,73 @@ export class GermplasmComponent implements OnInit {
     this.breedingMethodsDestById = {};
     this.breedingMethodsSourceByName = {};
     this.breedingMethodsSourceById = {};
-    this.germplasmInDestByRefId = {};
+    this.germplasmInDestinationByPUIs = {};
+    this.germplasmInDestinationByRefIds = {};
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
-    /**
-     * TODO
-     *  - search by PUID, documentationUrl, externalReferences
-     *  - show synchronized sources
-     *  - BMS: /search/germplasm (IBP-4448)
-     *  - search by other fields: e.g PUID
-     */
-    const brapi = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
-    const germplasmInDest = await brapiAll(
-      brapi.data(
-        this.germplasm.map((g: any) => this.getRefId(g.germplasmDbId))
-      ).germplasm((id: any) => {
-        return {
-          externalReferenceID: id,
-          // guard against brapjs get-all behaviour
-          pageRange: [0, 1],
-          pageSize: 1
-        };
-      })
-      , 30000);
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
+    let currentPage = 0;
+    let totalPages = 1;
+    // FIXME: This is a workaround to get all the items in all pages.
+    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
+    // 1000 records from the first page.
 
-    if (germplasmInDest && germplasmInDest.length) {
-      germplasmInDest.forEach((g: any) => {
-        if (g.externalReferences && g.externalReferences.length) {
-          g.externalReferences.forEach((ref: any) => {
-            this.germplasmInDestByRefId[ref.referenceID] = g;
-          });
+    if (germplasmPUIs.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          germplasmPUIs: germplasmPUIs,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
+          let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByPUIsResult[0].data.length) {
+            germplasmByPUIsResult[0].data.forEach((g: any) => {
+              this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
+            });
+          }
         }
-      });
+      }
     }
+   
+    // Find germplasm in destination by external reference ID
+    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+    currentPage = 0;
+    totalPages = 1;
+    // FIXME: This is a workaround to get all the items in all pages.
+    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
+    // 1000 records from the first page.
+    if (germplasmRefIds.length) {
+      while (currentPage <= totalPages) {
+        const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
+          externalReferenceIDs: germplasmRefIds,
+          pageRange: [currentPage, 1]
+        }));
+        if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
+          let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
+          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
+          totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
+          if (germplasmByRefIdsResult[0].data.length) {
+            germplasmByRefIdsResult[0].data.forEach((g: any) => {
+              if (g.externalReferences && g.externalReferences.length) {
+                g.externalReferences.forEach((ref: any) => {
+                  this.germplasmInDestinationByRefIds[ref.referenceID] = g;
+                });
+              }
+            });
+          }
+        }
+      }
+    }
+   
   }
 
-  getRefId(germplasmDbId: string): string {
-    return this.context.source + '/germplasm/' + germplasmDbId;
+  isGermplasmExistsInDestination(germplasm: any) {
+    // Check first if the germplasm has a match by PUI
+    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] || this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
   }
 
   isSelected(row: any): boolean {
@@ -310,9 +363,4 @@ export class GermplasmComponent implements OnInit {
     }
     return synonyms.map((s) => s.synonym).join(', ');
   }
-}
-
-enum FILTER {
-  STUDY = 'STUDY',
-  LIST = 'LIST'
 }
