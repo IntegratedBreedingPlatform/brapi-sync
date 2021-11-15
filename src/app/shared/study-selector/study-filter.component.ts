@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from 'src/app/context.service';
+import { brapiAll } from 'src/app/util/brapi-all';
 
 declare const BrAPI: any;
 
@@ -9,7 +10,7 @@ declare const BrAPI: any;
   templateUrl: './study-filter.component.html',
   styleUrls: ['./study-filter.component.css']
 })
-export class StudyFilterComponent implements OnInit {
+export class StudyFilterComponent {
 
   isTrialDisabled = false;
   isStudyDisabled = false;
@@ -28,46 +29,51 @@ export class StudyFilterComponent implements OnInit {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
   }
 
-  ngOnInit(): void {
-    this.loadTrials();
-    this.loadLocations();
-    this.loadStudies();
-  }
-
-  loadTrials(): void {
-    // TODO: Enable virtual scrolling
-    this.brapiSource.trials({
-      programDbId: this.context.sourceProgram.programDbId
-    }).all((result: any[]) => {
-      this.trials = result;
+  brapiTrials = async (page: number) => {
+    return this.brapiSource.trials({
+      programDbId: this.context.sourceProgram.programDbId,
+      pageRange: [page, page + 1]
     });
   }
 
-  loadLocations(): void {
-    // TODO: Enable virtual scrolling
-    this.brapiSource.locations({}).all((result: any[]) => {
-      this.locations = result;
-    });
+  brapiLocations = async (page: number) => {
+    console.log('locations' + this.trialSelected);
+    console.log(this.trialSelected);
+    if (this.trialSelected && this.trialSelected.trialName) {
+      // If a trial is selected, it should list all available location
+      // associated to studies.
+      const result = await brapiAll(this.brapiSource.studies({
+        programDbId: this.context.sourceProgram.programDbId,
+        trialDbId: this.trialSelected.trialDbId,
+        active: true
+      }));
+      if (result && result.length) {
+        return this.brapiSource.data([...new Set(result.map((study: any) => study.locationDbId))]).locations((locationDbId: any) => {
+          return { locationDbId: locationDbId };
+        });
+      }
+    } else {
+      // If no trial is selected, list all locations in the system
+      return this.brapiSource.locations({
+        pageRange: [page, page + 1]
+      });
+    }
   }
 
-  loadStudies(): void {
-    // TODO: Enable virtual scrolling
+  brapiStudies = async (page: number) => {
     const params: any = {};
-    if (this.trialSelected) {
+    if (this.trialSelected && this.trialSelected.trialDbId) {
       params.trialDbId = this.trialSelected.trialDbId;
     }
     if (this.locationSelected && this.locationSelected.locationDbId) {
       params.locationDbId = this.locationSelected.locationDbId;
     }
     this.studySelected = null;
-    this.brapiSource.studies(Object.assign({
+    return this.brapiSource.studies(Object.assign({
       programDbId: this.context.sourceProgram.programDbId,
       active: true,
-      // put a limit for now (default page=1000). TODO paginated dropdown
-      pageRange: [0, 1],
-    }, params)).all((result: any[]) => {
-      this.studies = result;
-    });
+      pageRange: [page, page + 1],
+    }, params));
   }
 
   select(): void {
@@ -81,7 +87,7 @@ export class StudyFilterComponent implements OnInit {
     this.activeModal.close();
   }
 
-  isValid() {
+  isValid(): boolean {
     return !this.loading && this.studySelected;
   }
 

@@ -29,6 +29,7 @@ import { StudyFilterComponent } from './shared/study-selector/study-filter.compo
 import { ToastsContainer } from './shared/alert/toast-container.component';
 import { AlertService } from './shared/alert/alert.service';
 import { ToastService } from './shared/alert/toast.service';
+import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll/dropdown-vritual-scroll.component';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import { ToastService } from './shared/alert/toast.service';
     ObservationComponent,
     ObjectKeysPipe,
     StudySelectorComponent,
-    ToastsContainer
+    ToastsContainer,
+    DropdownVirtualScrollComponent
   ],
   imports: [
     BrowserModule,

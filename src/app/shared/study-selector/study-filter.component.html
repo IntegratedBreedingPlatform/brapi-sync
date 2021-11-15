@@ -8,31 +8,19 @@
         <div class="form-group row">
           <label for="trialSelect" class="col-sm-3 col-form-label">Trial</label>
           <div class="col-sm-9">
-            <ng-select name="trialSelect" [items]="trials" bindLabel="trialName" [(ngModel)]="trialSelected" (change)="loadStudies()" [disabled]="isTrialDisabled">
-              <ng-template ng-option-tmp let-item="item">
-                <div [title]="item.trialName">{{item.trialName}}</div>
-              </ng-template>
-            </ng-select>
+            <app-dropdown-virtual-scroll bindLabel="trialName" [(selectedValue)]="trialSelected" [disabled]="isTrialDisabled" [getBrapi]="brapiTrials"></app-dropdown-virtual-scroll>
           </div>
         </div>
         <div class="form-group row">
           <label for="locationSelect" class="col-sm-3 col-form-label">Location</label>
           <div class="col-sm-9">
-            <ng-select name="locationSelect" [items]="locations" bindLabel="locationName" [(ngModel)]="locationSelected" (change)="loadStudies()" [disabled]="isLocationDisabled">
-              <ng-template ng-option-tmp let-item="item">
-                <div [title]="item.locationName">{{item.locationName}}</div>
-              </ng-template>
-            </ng-select>
+            <app-dropdown-virtual-scroll bindLabel="locationName" [(selectedValue)]="locationSelected" [disabled]="isLocationDisabled" [getBrapi]="brapiLocations"></app-dropdown-virtual-scroll>
           </div>
         </div>
         <div class="form-group row">
           <label for="studySelect" class="col-sm-3 col-form-label">Study Name</label>
           <div class="col-sm-9">
-            <ng-select name="studySelect" [items]="studies" bindLabel="studyName" [(ngModel)]="studySelected" [disabled]="isStudyDisabled">
-              <ng-template ng-option-tmp let-item="item">
-                <div [title]="item.studyName">{{item.studyName}}</div>
-              </ng-template>
-            </ng-select>
+            <app-dropdown-virtual-scroll bindLabel="studyName" [(selectedValue)]="studySelected" [disabled]="isStudyDisabled" [getBrapi]="brapiStudies"></app-dropdown-virtual-scroll>
           </div>
         </div>
       </form>
