@@ -30,6 +30,9 @@ import { ToastsContainer } from './shared/alert/toast-container.component';
 import { AlertService } from './shared/alert/alert.service';
 import { ToastService } from './shared/alert/toast.service';
 import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll/dropdown-vritual-scroll.component';
+import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
+import { SilentRefreshComponent } from './silent-refresh/silent-refresh.component';
+import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 
 @NgModule({
   declarations: [
@@ -49,9 +52,11 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
     ObjectKeysPipe,
     StudySelectorComponent,
     ToastsContainer,
-    DropdownVirtualScrollComponent
+    DropdownVirtualScrollComponent,
+    SilentRefreshComponent
   ],
   imports: [
+    OAuthModule.forRoot(),
     BrowserModule,
     FormsModule,
     RouterModule.forRoot(routes),
@@ -70,7 +75,9 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
       multi: true
     },
     ToastService,
-    AlertService
+    AlertService,
+    OAuthService,
+    DelegatedAuthenticationService
   ],
   bootstrap: [AppComponent]
 })
