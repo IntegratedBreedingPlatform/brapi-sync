@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { BlockUI, NgBlockUI } from 'ng-block-ui';
 
 
 @Component({
@@ -7,6 +8,9 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
+
+  @BlockUI('blockUI') blockUI!: NgBlockUI;
+
   title = 'brapi-sync-angular';
 
 }

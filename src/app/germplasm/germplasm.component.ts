@@ -7,6 +7,7 @@ import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
+import { BlockUIService } from 'ng-block-ui';
 
 declare const BrAPI: any;
 
@@ -45,7 +46,8 @@ export class GermplasmComponent implements OnInit {
     private modalService: NgbModal,
     private http: HttpClient,
     private externalReferenceService: ExternalReferenceService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private blockUIService: BlockUIService
   ) {
     // TODO / testing / remove
     // this.load();
@@ -61,6 +63,7 @@ export class GermplasmComponent implements OnInit {
   }
 
   import(): void {
+    this.blockUIService.start('main'); 
     if (this.isSelectAllPages) {
       this.isSaving = true;
       this.loadAll().then(allGermplasm => {
@@ -88,6 +91,7 @@ export class GermplasmComponent implements OnInit {
       this.onError(error);
     }
     this.isSaving = false;
+    this.blockUIService.stop('main');
   }
 
   transformForSave(germplasm: any): any {

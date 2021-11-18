@@ -5986,6 +5986,13 @@
   "resolved" "https://registry.npmjs.org/next-tick/-/next-tick-1.0.0.tgz"
   "version" "1.0.0"
 
+"ng-block-ui@^3.0.2":
+  "integrity" "sha512-EP3IXP8WSoKQOAwunf/v77aydcBCSLkEm5K8duRMSXFsnrcTdNqUiaLDKCf9U3COHY52IVBJcLb9PGhMBCWVSA=="
+  "resolved" "https://registry.npmjs.org/ng-block-ui/-/ng-block-ui-3.0.2.tgz"
+  "version" "3.0.2"
+  dependencies:
+    "tslib" "^1.10.0"
+
 "ngx-json-viewer@^3.0.2":
   "integrity" "sha512-XBj0DgUDIBOeJuAczlFQIIMCaELJGoEbvjBWIXHIh2QebiB5lY6itslRkbE5TAgFn1bYK+2ToxqwspLgP4DDJg=="
   "resolved" "https://registry.npmjs.org/ngx-json-viewer/-/ngx-json-viewer-3.0.2.tgz"

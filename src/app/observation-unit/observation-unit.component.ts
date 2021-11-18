@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { brapiAll } from '../util/brapi-all';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
+import { BlockUIService } from 'ng-block-ui';
 
 declare const BrAPI: any;
 
@@ -22,7 +23,8 @@ export class ObservationUnitComponent implements OnInit {
   page = 1;
   pageSize = 20;
   germplasmTotalCount = 0;
-  loading = false;
+  germplasmLoading = false;
+  observationUnitLoading = false;
   isSaving = false;
   observationUnitsAlreadyExist = false;
   observationUnitsSaved = false;
@@ -37,7 +39,8 @@ export class ObservationUnitComponent implements OnInit {
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
               public context: ContextService,
-              private alertService: AlertService) {
+              private alertService: AlertService,
+              private blockUIService: BlockUIService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
@@ -59,6 +62,7 @@ export class ObservationUnitComponent implements OnInit {
     this.info = [];
     this.errors = [];
     this.isSaving = true;
+    this.blockUIService.start('main');
     // Load all germplasm from source
     const res: any = await this.http.get(this.context.source + '/germplasm', {
       params: {
@@ -96,19 +100,22 @@ export class ObservationUnitComponent implements OnInit {
       this.alertService.showDanger(error.message);
     }
     this.isSaving = false;
+    this.blockUIService.stop('main');
   }
 
   loadObservationUnits() {
+    this.observationUnitLoading = true;
     this.brapiSource.search_observationunits({
         studyDbIds: [this.context.sourceStudy.studyDbId]
       }
     ).all((result: any) => {
       this.sourceObservationUnits = result;
+      this.observationUnitLoading = false;
     });
   }
 
   async loadGermplasm(): Promise<void> {
-    this.loading = true;
+    this.germplasmLoading = true;
     try {
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
@@ -126,7 +133,7 @@ export class ObservationUnitComponent implements OnInit {
     } catch (error) {
       this.alertService.showDanger(error);
     }
-    this.loading = false;
+    this.germplasmLoading = false;
   }
 
   async searchInTarget(germplasm: any[]): Promise<void> {
@@ -248,7 +255,7 @@ export class ObservationUnitComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return !this.loading && !this.isSaving && !this.observationUnitsAlreadyExist && !this.observationUnitsSaved
+    return !this.germplasmLoading && !this.observationUnitLoading && !this.isSaving && !this.observationUnitsAlreadyExist && !this.observationUnitsSaved
       && this.sourceObservationUnits.length > 0 && this.sourceGermplasm.length > 0;
   }
 

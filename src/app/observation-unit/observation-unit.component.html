@@ -12,41 +12,48 @@
         </div>
       </app-collapsible>
       <app-collapsible heading="Observation Units Metadata">
-        <div class="table-responsive">
-          <table class="table table-bordered">
-            <caption></caption>
-            <thead class="thead-light">
-            <tr>
-              <th scope="col">Key</th>
-              <th scope="col">Value</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <th scope="row"><span class="font-weight-bold">Levels</span></th>
-              <td>
-                <app-expandable-json-viewer *ngIf="context.sourceStudy?.observationLevels" [json]="context.sourceStudy?.observationLevels"></app-expandable-json-viewer>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
-              <td>{{sourceObservationUnits.length}}</td>
-            </tr>
-            <tr>
-              <th scope="row"><span class="font-weight-bold"># of Germplasm</span></th>
-              <td>{{germplasmTotalCount}}</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </app-collapsible>
-      <app-collapsible heading="Germplasm Mapping">
-        <div class="row" *ngIf="loading">
+        <div class="row" *ngIf="observationUnitLoading">
           <div class="col">
             <span class="throbber"></span>
           </div>
         </div>
-        <div class="row" *ngIf="!loading">
+        <div class="row" *ngIf="!observationUnitLoading">
+          <div class="col"><div class="table-responsive">
+            <table class="table table-bordered">
+              <caption></caption>
+              <thead class="thead-light">
+              <tr>
+                <th scope="col">Key</th>
+                <th scope="col">Value</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr>
+                <th scope="row"><span class="font-weight-bold">Levels</span></th>
+                <td>
+                  <app-expandable-json-viewer *ngIf="context.sourceStudy?.observationLevels" [json]="context.sourceStudy?.observationLevels"></app-expandable-json-viewer>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><span class="font-weight-bold"># of Observation Units</span></th>
+                <td>{{sourceObservationUnits.length}}</td>
+              </tr>
+              <tr>
+                <th scope="row"><span class="font-weight-bold"># of Germplasm</span></th>
+                <td>{{germplasmTotalCount}}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div></div>
+        </div>
+      </app-collapsible>
+      <app-collapsible heading="Germplasm Mapping">
+        <div class="row" *ngIf="germplasmLoading">
+          <div class="col">
+            <span class="throbber"></span>
+          </div>
+        </div>
+        <div class="row" *ngIf="!germplasmLoading">
           <div class="col">
             <div class="table-responsive">
               <table class="table table-bordered">

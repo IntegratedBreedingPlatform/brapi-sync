@@ -33,6 +33,7 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
 import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
 import { SilentRefreshComponent } from './silent-refresh/silent-refresh.component';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
+import { BlockUIModule, BlockUIService } from 'ng-block-ui';
 
 @NgModule({
   declarations: [
@@ -57,6 +58,10 @@ import { DelegatedAuthenticationService } from './auth/delegated-authentication.
   ],
   imports: [
     OAuthModule.forRoot(),
+    BlockUIModule.forRoot({
+      delayStart: 3000,
+      delayStop: 500
+    }),
     BrowserModule,
     FormsModule,
     RouterModule.forRoot(routes),
@@ -77,7 +82,8 @@ import { DelegatedAuthenticationService } from './auth/delegated-authentication.
     ToastService,
     AlertService,
     OAuthService,
-    DelegatedAuthenticationService
+    DelegatedAuthenticationService,
+    BlockUIService
   ],
   bootstrap: [AppComponent]
 })
