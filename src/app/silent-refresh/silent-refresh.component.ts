@@ -18,17 +18,8 @@ export class SilentRefreshComponent implements OnInit {
     // Pass the response query string from login popup to the application
     const script = this.renderer2.createElement('script');
     script.text = `
-        var checks = [/[\?|&|#]token=/, /[\?|&|#]id_token=/];
-
-        function isResponse(str) {
-            if (!str) return false;
-            for(var i=0; i<checks.length; i++) {
-                if (str.match(checks[i])) return true;
-            }
-            return false;
-        }
-        var message = isResponse(location.hash) ? location.hash : '#' + location.search;
-        window.opener.postMessage(message, location.origin);
+        window.opener.postMessage(location.search, location.origin);
+        window.close();
         `;
 
     this.renderer2.appendChild(this.document.body, script);
