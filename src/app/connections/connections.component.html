@@ -65,16 +65,16 @@
             <div class="form-group row">
               <div class="col">
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="destinationAuthDelegated" id="delegatedSourceAuth" [value]="authenticationType.DELEGATED" [(ngModel)]="destinationAuth">
-                  <label class="form-check-label" for="destinationAuthDelegated">Delegated</label>
+                  <input class="form-check-input" type="radio" name="destinationAuthDelegated" id="delegatedDestinationAuth" [value]="authenticationType.DELEGATED" [(ngModel)]="destinationAuth">
+                  <label class="form-check-label" for="delegatedDestinationAuth">Delegated</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="destinationAuthToken" id="tokenSourceAuth" [value]="authenticationType.TOKEN" [(ngModel)]="destinationAuth">
-                  <label class="form-check-label" for="destinationAuthToken">Token</label>
+                  <input class="form-check-input" type="radio" name="destinationAuthToken" id="tokenDestinationAuth" [value]="authenticationType.TOKEN" [(ngModel)]="destinationAuth">
+                  <label class="form-check-label" for="tokenDestinationAuth">Token</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="destinationAuthCredentials" id="credentialsSourceAuth" [value]="authenticationType.CREDENTIALS" disabled [(ngModel)]="destinationAuth">
-                  <label class="form-check-label" for="destinationAuthCredentials">Credentials</label>
+                  <label class="form-check-label" for="credentialsSourceAuth">Credentials</label>
                 </div>
               </div>
             </div>
