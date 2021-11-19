@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContextService } from 'src/app/context.service';
 import { brapiAll } from 'src/app/util/brapi-all';
+import { DropdownVirtualScrollResult } from '../dropdown-virtual-scroll/dropdown-vritual-scroll.component';
 
 declare const BrAPI: any;
 
@@ -30,48 +31,81 @@ export class StudyFilterComponent {
   }
 
   brapiTrials = async (page: number) => {
-    return this.brapiSource.trials({
-      programDbId: this.context.sourceProgram.programDbId,
-      pageRange: [page, page + 1]
+    return new Promise<DropdownVirtualScrollResult>(resolve => {
+      this.brapiSource.trials({
+        programDbId: this.context.sourceProgram.programDbId,
+        pageRange: [page, page + 1]
+      }).all((items: any[]) => {
+        if (items.length) {
+          const pageSize = items[0].__response.metadata.pagination.pageSize;
+          const totalCount = items[0].__response.metadata.pagination.totalCount;
+          const totalPages = items[0].__response.metadata.pagination.totalPages;
+          resolve({ items, pageSize, totalCount, totalPages });
+        }
+      });
+    });
+  };
+
+  brapiLocations = async (page: number) => {
+    return new Promise<DropdownVirtualScrollResult>(resolve => {
+      if (this.trialSelected && this.trialSelected.trialName) {
+        // If a trial is selected, it should list all available location
+        // associated to studies.
+        brapiAll(this.brapiSource.studies({
+          programDbId: this.context.sourceProgram.programDbId,
+          trialDbId: this.trialSelected.trialDbId,
+          active: true
+        })).then((result) => {
+          if (result && result.length) {
+            this.brapiSource.data([...new Set(result.map((study: any) => study.locationDbId))]).locations((locationDbId: any) => {
+              return { locationDbId };
+            }).all((items: any[]) => {
+              if (items.length) {
+                resolve(this.createDropdownVirtualScrollResult(items));
+              }
+            });
+          }
+        });
+      } else {
+        // If no trial is selected, list all locations in the system
+        this.brapiSource.locations({
+          pageRange: [page, page + 1]
+        }).all((items: any[]) => {
+          if (items.length) {
+            resolve(this.createDropdownVirtualScrollResult(items));
+          }
+        });
+      }
+    });
+  };
+
+  brapiStudies = async (page: number) => {
+    return new Promise<DropdownVirtualScrollResult>(resolve => {
+      const params: any = {};
+      if (this.trialSelected && this.trialSelected.trialDbId) {
+        params.trialDbId = this.trialSelected.trialDbId;
+      }
+      if (this.locationSelected && this.locationSelected.locationDbId) {
+        params.locationDbId = this.locationSelected.locationDbId;
+      }
+      this.studySelected = null;
+      this.brapiSource.studies(Object.assign({
+        programDbId: this.context.sourceProgram.programDbId,
+        active: true,
+        pageRange: [page, page + 1],
+      }, params)).all((items: any[]) => {
+        if (items.length) {
+          resolve(this.createDropdownVirtualScrollResult(items));
+        }
+      });
     });
   }
 
-  brapiLocations = async (page: number) => {
-    if (this.trialSelected && this.trialSelected.trialName) {
-      // If a trial is selected, it should list all available location
-      // associated to studies.
-      const result = await brapiAll(this.brapiSource.studies({
-        programDbId: this.context.sourceProgram.programDbId,
-        trialDbId: this.trialSelected.trialDbId,
-        active: true
-      }));
-      if (result && result.length) {
-        return this.brapiSource.data([...new Set(result.map((study: any) => study.locationDbId))]).locations((locationDbId: any) => {
-          return { locationDbId: locationDbId };
-        });
-      }
-    } else {
-      // If no trial is selected, list all locations in the system
-      return this.brapiSource.locations({
-        pageRange: [page, page + 1]
-      });
-    }
-  }
-
-  brapiStudies = async (page: number) => {
-    const params: any = {};
-    if (this.trialSelected && this.trialSelected.trialDbId) {
-      params.trialDbId = this.trialSelected.trialDbId;
-    }
-    if (this.locationSelected && this.locationSelected.locationDbId) {
-      params.locationDbId = this.locationSelected.locationDbId;
-    }
-    this.studySelected = null;
-    return this.brapiSource.studies(Object.assign({
-      programDbId: this.context.sourceProgram.programDbId,
-      active: true,
-      pageRange: [page, page + 1],
-    }, params));
+  createDropdownVirtualScrollResult(items: any[]): DropdownVirtualScrollResult {
+    const pageSize = items[0].__response.metadata.pagination.pageSize;
+    const totalCount = items[0].__response.metadata.pagination.totalCount;
+    const totalPages = items[0].__response.metadata.pagination.totalPages;
+    return { items, pageSize, totalCount, totalPages };
   }
 
   select(): void {

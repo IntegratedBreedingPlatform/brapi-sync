@@ -8,19 +8,19 @@
         <div class="form-group row">
           <label for="trialSelect" class="col-sm-3 col-form-label">Trial</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="trialName" [(selectedValue)]="trialSelected" [disabled]="isTrialDisabled" [getBrapi]="brapiTrials"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll bindLabel="trialName" [(selectedValue)]="trialSelected" [disabled]="isTrialDisabled" [fetchMore]="brapiTrials"></app-dropdown-virtual-scroll>
           </div>
         </div>
         <div class="form-group row">
           <label for="locationSelect" class="col-sm-3 col-form-label">Location</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="locationName" [(selectedValue)]="locationSelected" [disabled]="isLocationDisabled" [getBrapi]="brapiLocations"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll bindLabel="locationName" [(selectedValue)]="locationSelected" [disabled]="isLocationDisabled" [fetchMore]="brapiLocations"></app-dropdown-virtual-scroll>
           </div>
         </div>
         <div class="form-group row">
           <label for="studySelect" class="col-sm-3 col-form-label">Study Name</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="studyName" [(selectedValue)]="studySelected" [disabled]="isStudyDisabled" [getBrapi]="brapiStudies"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll bindLabel="studyName" [(selectedValue)]="studySelected" [disabled]="isStudyDisabled" [fetchMore]="brapiStudies"></app-dropdown-virtual-scroll>
           </div>
         </div>
       </form>

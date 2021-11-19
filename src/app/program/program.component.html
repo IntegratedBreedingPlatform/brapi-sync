@@ -9,13 +9,13 @@
         <div class="form-group row">
           <label for="sourceProgram" class="col-2 col-form-label">Source Program</label>
           <div class="col-5">
-            <app-dropdown-virtual-scroll bindLabel="programName" [(selectedValue)]="context.sourceProgram" [getBrapi]="brapiSourcePrograms"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll bindLabel="programName" [(selectedValue)]="context.sourceProgram" [fetchMore]="brapiSourcePrograms"></app-dropdown-virtual-scroll>
           </div>
         </div>
         <div class="form-group row">
           <label for="targetProgram" class="col-2 col-form-label">Destination Program</label>
           <div class="col-5">
-            <app-dropdown-virtual-scroll bindLabel="programName" [(selectedValue)]="context.targetProgram" [getBrapi]="brapiDestinationPrograms"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll bindLabel="programName" [(selectedValue)]="context.targetProgram" [fetchMore]="brapiDestinationPrograms"></app-dropdown-virtual-scroll>
           </div>
         </div>
       </form>

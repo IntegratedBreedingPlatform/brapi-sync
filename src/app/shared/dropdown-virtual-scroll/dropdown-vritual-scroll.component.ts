@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ContextService } from 'src/app/context.service';
 
 declare const BrAPI: any;
 
@@ -14,12 +13,10 @@ export class DropdownVirtualScrollComponent implements OnInit {
   @Output() selectedValueChange = new EventEmitter<any>();
   @Output() change = new EventEmitter<any>();
   @Input() disabled = false;
-  @Input() getBrapi!: (page: number) => Promise<any>;
+  @Input() fetchMore!: (page: number) => Promise<DropdownVirtualScrollResult>;
 
   value: any;
-  brapiSource: any;
   items: any[] = [];
-  numberOfItemsFromEndBeforeFetchingMore = 10;
   loading = false;
 
   // Pagination
@@ -27,10 +24,6 @@ export class DropdownVirtualScrollComponent implements OnInit {
   pageSize = 0;
   totalCount = 0;
   totalPages = 0;
-
-  constructor(public context: ContextService) {
-    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-  }
 
   ngOnInit(): void {
   }
@@ -46,16 +39,14 @@ export class DropdownVirtualScrollComponent implements OnInit {
 
   fetch(page: number): void {
     this.loading = true;
-    this.getBrapi(page).then((brapi: any) => {
-      brapi.all((result: any[]) => {
-        this.items = this.items.concat(result);
-        if (result.length) {
-          this.pageSize = result[0].__response.metadata.pagination.pageSize;
-          this.totalCount = result[0].__response.metadata.pagination.totalCount;
-          this.totalPages = result[0].__response.metadata.pagination.totalPages;
-        }
+    this.fetchMore(page).then((result) => {
+      if (result && result.items.length) {
+        this.items = this.items.concat(result.items);
+        this.pageSize = result.pageSize;
+        this.totalCount = result.totalCount;
+        this.totalPages = result.totalPages;
         this.loading = false;
-      });
+      }
     });
   }
 
@@ -71,4 +62,11 @@ export class DropdownVirtualScrollComponent implements OnInit {
     this.selectedValueChange.emit(this.value);
     this.change.emit();
   }
+}
+
+export class DropdownVirtualScrollResult {
+  items: any[] = [];
+  pageSize = 0;
+  totalCount = 0;
+  totalPages = 0;
 }

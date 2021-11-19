@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from '../shared/alert/alert.service';
+import { DropdownVirtualScrollResult } from '../shared/dropdown-virtual-scroll/dropdown-vritual-scroll.component';
 
 declare const BrAPI: any;
 
@@ -27,17 +28,36 @@ export class ProgramComponent implements OnInit {
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
 
-  brapiSourcePrograms = async (page: number) => {
-    return this.brapiSource.programs({
-      pageRange: [page, page + 1],
+  brapiSourcePrograms = (page: number) => {
+    return new Promise<DropdownVirtualScrollResult>(resolve => {
+      this.brapiSource.programs({
+        pageRange: [page, page + 1],
+      }).all((items: any[]) => {
+        if (items.length) {
+          resolve(this.createDropdownVirtualScrollResult(items));
+        }
+      });
     });
-  };
+  }
 
-  brapiDestinationPrograms = async (page: number) => {
-    return this.brapiDestination.programs({
-      pageRange: [page, page + 1],
+  brapiDestinationPrograms = (page: number) => {
+    return new Promise<DropdownVirtualScrollResult>(resolve => {
+      this.brapiDestination.programs({
+        pageRange: [page, page + 1],
+      }).all((items: any[]) => {
+        if (items.length) {
+          resolve(this.createDropdownVirtualScrollResult(items));
+        }
+      });
     });
-  };
+  }
+
+  createDropdownVirtualScrollResult(items: any[]): DropdownVirtualScrollResult {
+    const pageSize = items[0].__response.metadata.pagination.pageSize;
+    const totalCount = items[0].__response.metadata.pagination.totalCount;
+    const totalPages = items[0].__response.metadata.pagination.totalPages;
+    return { items, pageSize, totalCount, totalPages };
+  }
 
   ngOnInit(): void {
     this.alertService.removeAll();
