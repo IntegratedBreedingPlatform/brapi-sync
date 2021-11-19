@@ -37,8 +37,6 @@ export class StudyFilterComponent {
   }
 
   brapiLocations = async (page: number) => {
-    console.log('locations' + this.trialSelected);
-    console.log(this.trialSelected);
     if (this.trialSelected && this.trialSelected.trialName) {
       // If a trial is selected, it should list all available location
       // associated to studies.
