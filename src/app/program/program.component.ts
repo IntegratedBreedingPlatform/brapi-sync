@@ -29,24 +29,28 @@ export class ProgramComponent implements OnInit {
   }
 
   brapiSourcePrograms = (page: number) => {
-    return new Promise<DropdownVirtualScrollResult>(resolve => {
+    return new Promise<DropdownVirtualScrollResult | null>(resolve => {
       this.brapiSource.programs({
         pageRange: [page, page + 1],
       }).all((items: any[]) => {
         if (items.length) {
           resolve(this.createDropdownVirtualScrollResult(items));
+        } else {
+          resolve(null);
         }
       });
     });
   }
 
   brapiDestinationPrograms = (page: number) => {
-    return new Promise<DropdownVirtualScrollResult>(resolve => {
+    return new Promise<DropdownVirtualScrollResult | null>(resolve => {
       this.brapiDestination.programs({
         pageRange: [page, page + 1],
       }).all((items: any[]) => {
         if (items.length) {
           resolve(this.createDropdownVirtualScrollResult(items));
+        } else {
+          resolve(null);
         }
       });
     });

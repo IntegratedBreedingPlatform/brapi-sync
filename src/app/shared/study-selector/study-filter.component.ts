@@ -31,7 +31,7 @@ export class StudyFilterComponent {
   }
 
   brapiTrials = async (page: number) => {
-    return new Promise<DropdownVirtualScrollResult>(resolve => {
+    return new Promise<DropdownVirtualScrollResult | null>(resolve => {
       this.brapiSource.trials({
         programDbId: this.context.sourceProgram.programDbId,
         pageRange: [page, page + 1]
@@ -41,13 +41,15 @@ export class StudyFilterComponent {
           const totalCount = items[0].__response.metadata.pagination.totalCount;
           const totalPages = items[0].__response.metadata.pagination.totalPages;
           resolve({ items, pageSize, totalCount, totalPages });
+        } else {
+          resolve(null);
         }
       });
     });
   };
 
   brapiLocations = async (page: number) => {
-    return new Promise<DropdownVirtualScrollResult>(resolve => {
+    return new Promise<DropdownVirtualScrollResult | null>(resolve => {
       if (this.trialSelected && this.trialSelected.trialName) {
         // If a trial is selected, it should list all available location
         // associated to studies.
@@ -62,8 +64,12 @@ export class StudyFilterComponent {
             }).all((items: any[]) => {
               if (items.length) {
                 resolve(this.createDropdownVirtualScrollResult(items));
+              } else {
+                resolve(null);
               }
             });
+          } else {
+            resolve(null);
           }
         });
       } else {
@@ -80,7 +86,7 @@ export class StudyFilterComponent {
   };
 
   brapiStudies = async (page: number) => {
-    return new Promise<DropdownVirtualScrollResult>(resolve => {
+    return new Promise<DropdownVirtualScrollResult | null>(resolve => {
       const params: any = {};
       if (this.trialSelected && this.trialSelected.trialDbId) {
         params.trialDbId = this.trialSelected.trialDbId;
@@ -96,6 +102,8 @@ export class StudyFilterComponent {
       }, params)).all((items: any[]) => {
         if (items.length) {
           resolve(this.createDropdownVirtualScrollResult(items));
+        } else {
+          resolve(null);
         }
       });
     });

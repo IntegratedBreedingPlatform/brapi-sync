@@ -13,7 +13,7 @@ export class DropdownVirtualScrollComponent implements OnInit {
   @Output() selectedValueChange = new EventEmitter<any>();
   @Output() change = new EventEmitter<any>();
   @Input() disabled = false;
-  @Input() fetchMore!: (page: number) => Promise<DropdownVirtualScrollResult>;
+  @Input() fetchMore!: (page: number) => Promise<DropdownVirtualScrollResult | null>;
 
   value: any;
   items: any[] = [];
@@ -45,8 +45,8 @@ export class DropdownVirtualScrollComponent implements OnInit {
         this.pageSize = result.pageSize;
         this.totalCount = result.totalCount;
         this.totalPages = result.totalPages;
-        this.loading = false;
       }
+      this.loading = false;
     });
   }
 
