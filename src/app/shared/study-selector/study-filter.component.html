@@ -8,19 +8,22 @@
         <div class="form-group row">
           <label for="trialSelect" class="col-sm-3 col-form-label">Trial</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="trialName" [(selectedValue)]="trialSelected" [disabled]="isTrialDisabled" [fetchMore]="brapiTrials"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll *ngIf="!isTrialDisabled" bindLabel="trialName" [(selectedValue)]="trialSelected" [fetchMore]="brapiTrials"></app-dropdown-virtual-scroll>
+            <span *ngIf="isTrialDisabled">{{trialSelected.trialName}}</span>
           </div>
         </div>
         <div class="form-group row">
           <label for="locationSelect" class="col-sm-3 col-form-label">Location</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="locationName" [(selectedValue)]="locationSelected" [disabled]="isLocationDisabled" [fetchMore]="brapiLocations"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll *ngIf="!isLocationDisabled" bindLabel="locationName" [(selectedValue)]="locationSelected" [fetchMore]="brapiLocations"></app-dropdown-virtual-scroll>
+            <span *ngIf="isLocationDisabled">{{locationSelected.locationName}}</span>
           </div>
         </div>
         <div class="form-group row">
           <label for="studySelect" class="col-sm-3 col-form-label">Study Name</label>
           <div class="col-sm-9">
-            <app-dropdown-virtual-scroll bindLabel="studyName" [(selectedValue)]="studySelected" [disabled]="isStudyDisabled" [fetchMore]="brapiStudies"></app-dropdown-virtual-scroll>
+            <app-dropdown-virtual-scroll *ngIf="!isStudyDisabled" bindLabel="studyName" [(selectedValue)]="studySelected" [fetchMore]="brapiStudies"></app-dropdown-virtual-scroll>
+            <span *ngIf="isStudyDisabled">{{studySelected.studyName}}</span>
           </div>
         </div>
       </form>
