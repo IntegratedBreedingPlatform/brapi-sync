@@ -31,7 +31,6 @@ import { AlertService } from './shared/alert/alert.service';
 import { ToastService } from './shared/alert/toast.service';
 import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll/dropdown-vritual-scroll.component';
 import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
-import { SilentRefreshComponent } from './silent-refresh/silent-refresh.component';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 import { BlockUIModule, BlockUIService } from 'ng-block-ui';
 
@@ -53,8 +52,7 @@ import { BlockUIModule, BlockUIService } from 'ng-block-ui';
     ObjectKeysPipe,
     StudySelectorComponent,
     ToastsContainer,
-    DropdownVirtualScrollComponent,
-    SilentRefreshComponent
+    DropdownVirtualScrollComponent
   ],
   imports: [
     OAuthModule.forRoot(),

@@ -35,7 +35,6 @@ export class ConnectionsComponent implements OnInit {
   ) {
   }
 
-
   ngOnInit(): void {
   }
 
@@ -47,7 +46,7 @@ export class ConnectionsComponent implements OnInit {
   onMessage(e: any): void {
     // To receive the access token from login auth popup
     if (e.origin === window.location.origin && typeof e.data === 'string') {
-      const urlParams = new URLSearchParams(e.data);
+      const urlParams = new URLSearchParams(e.data.split('?')[1]);
       const accessToken = urlParams.get('access_token');
       if (accessToken) {
         if (this.tokenToStore === 'source') {

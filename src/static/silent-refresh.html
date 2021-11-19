@@ -1,0 +1,8 @@
+<html>
+<body>
+    <script>
+        // Pass the response query string from login popup to the application
+        (window.opener || window.parent).postMessage(location.hash || ('#' + location.search), location.origin);
+    </script>
+</body>
+</html>

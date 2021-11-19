@@ -16,8 +16,8 @@ export const authConfig : AuthConfig = {
     // The api scope is a usecase specific one
     scope: 'openid profile email voucher',
 
-    // URL of the SPA to redirect the user after silent refresh
-    silentRefreshRedirectUri: window.location.origin + '/silent-refresh',
+    // URL of the SPA to redirect the user after silent refresh or implicit login popup
+    silentRefreshRedirectUri: window.location.origin + '/static/silent-refresh.html',
 
     strictDiscoveryDocumentValidation: false
     

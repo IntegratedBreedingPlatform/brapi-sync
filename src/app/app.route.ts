@@ -8,7 +8,6 @@ import { StudyComponent } from './study/study.component';
 import { ObservationUnitComponent } from './observation-unit/observation-unit.component';
 import { VariableComponent } from './variable/variable.component';
 import { ObservationComponent } from './observation/observation.component';
-import { SilentRefreshComponent } from './silent-refresh/silent-refresh.component';
 
 export const routes: Route[] = [
   {
@@ -51,10 +50,5 @@ export const routes: Route[] = [
   {
     path: 'observation',
     component: ObservationComponent
-  },
-  {
-    path: 'silent-refresh',
-    component: SilentRefreshComponent
   }
-
 ];
