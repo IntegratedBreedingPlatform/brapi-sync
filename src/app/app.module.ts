@@ -29,6 +29,10 @@ import { StudyFilterComponent } from './shared/study-selector/study-filter.compo
 import { ToastsContainer } from './shared/alert/toast-container.component';
 import { AlertService } from './shared/alert/alert.service';
 import { ToastService } from './shared/alert/toast.service';
+import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll/dropdown-vritual-scroll.component';
+import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
+import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
+import { BlockUIModule, BlockUIService } from 'ng-block-ui';
 
 @NgModule({
   declarations: [
@@ -47,9 +51,15 @@ import { ToastService } from './shared/alert/toast.service';
     ObservationComponent,
     ObjectKeysPipe,
     StudySelectorComponent,
-    ToastsContainer
+    ToastsContainer,
+    DropdownVirtualScrollComponent
   ],
   imports: [
+    OAuthModule.forRoot(),
+    BlockUIModule.forRoot({
+      delayStart: 3000,
+      delayStop: 500
+    }),
     BrowserModule,
     FormsModule,
     RouterModule.forRoot(routes),
@@ -68,7 +78,10 @@ import { ToastService } from './shared/alert/toast.service';
       multi: true
     },
     ToastService,
-    AlertService
+    AlertService,
+    OAuthService,
+    DelegatedAuthenticationService,
+    BlockUIService
   ],
   bootstrap: [AppComponent]
 })

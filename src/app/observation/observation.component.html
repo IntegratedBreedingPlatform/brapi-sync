@@ -12,31 +12,40 @@
           </div>
         </app-collapsible>
         <app-collapsible heading="Observations">
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <caption></caption>
-              <thead class="thead-light">
-              <tr>
-                <th scope="col">Source Observation Variable Name</th>
-                <th scope="col">Target Observation Variable Name</th>
-                <th scope="col"># Of Source Observations</th>
-                <th scope="col">Source Observations</th>
-                <th scope="col">Status</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr *ngFor="let key of context.variablesMap | objectKeys">
-                <td>{{key}}</td>
-                <td>{{context.variablesMap[key]?.observationVariableName}}</td>
-                <td>{{sourceObservationsByVariable[key]?.length}}</td>
-                <td><app-expandable-json-viewer [json]="sanitizeObject(sourceObservationsByVariable[key])"></app-expandable-json-viewer></td>
-                <td>
-                    <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                    <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)"><fa-icon style="color:goldenrod" [icon]="['fas', 'exclamation-triangle']"></fa-icon> Observation(s) already exists for this variable.</span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+          <div class="row" *ngIf="loading">
+            <div class="col">
+              <span class="throbber"></span>
+            </div>
+          </div>
+          <div class="row" *ngIf="!loading">
+            <div class="col">
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <caption></caption>
+                  <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Source Observation Variable Name</th>
+                    <th scope="col">Target Observation Variable Name</th>
+                    <th scope="col"># Of Source Observations</th>
+                    <th scope="col">Source Observations</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let key of context.variablesMap | objectKeys">
+                    <td>{{key}}</td>
+                    <td>{{context.variablesMap[key]?.observationVariableName}}</td>
+                    <td>{{sourceObservationsByVariable[key]?.length}}</td>
+                    <td><app-expandable-json-viewer [json]="sanitizeObject(sourceObservationsByVariable[key])"></app-expandable-json-viewer></td>
+                    <td>
+                        <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                        <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)"><fa-icon style="color:goldenrod" [icon]="['fas', 'exclamation-triangle']"></fa-icon> Observation(s) already exists for this variable.</span>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </app-collapsible>
       </div>

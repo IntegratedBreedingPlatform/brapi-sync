@@ -1,0 +1,15 @@
+<ng-select name="select-paginated"
+           [items]="items"
+           [bindLabel]="bindLabel"
+           [(ngModel)]="value"
+           (change)="onChange()"
+           (scrollToEnd)="onScrollToEnd()"
+           [disabled]="disabled"
+           (open)="open()">
+  <ng-template ng-header-tmp>
+    <small *ngIf="loading"><span class="throbber throbber-btn"></span> Loading...</small>
+    <ng-template ng-option-tmp let-item="item">
+      <div [title]="item[bindLabel]">{{item[bindLabel]}}</div>
+    </ng-template>
+  </ng-template>
+</ng-select>

@@ -1,2 +1,4 @@
-<router-outlet></router-outlet>
+<div *blockUI="'main'; message: 'Processing your request. This may take some time. Please wait ...';">
+    <router-outlet></router-outlet>
+</div>
 <app-toasts aria-live="polite" aria-atomic="true"></app-toasts>

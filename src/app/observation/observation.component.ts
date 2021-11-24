@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BlockUIService } from 'ng-block-ui';
 import { ContextService } from '../context.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
@@ -32,7 +33,8 @@ export class ObservationComponent implements OnInit {
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
               public context: ContextService,
-              private alertService: AlertService) {
+              private alertService: AlertService,
+              private blockUIService: BlockUIService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
@@ -98,7 +100,8 @@ export class ObservationComponent implements OnInit {
 
   async post(): Promise<void> {
     try {
-
+      this.isSaving = true;
+      this.blockUIService.start('main');
       const observations = this.transform(this.sourceObservations);
       if (observations.length > 0) {
         const postRes: any = await this.http.post(this.context.destination + '/observations', observations
@@ -121,6 +124,7 @@ export class ObservationComponent implements OnInit {
       this.errors.push({ message: error.message });
     }
     this.isSaving = false;
+    this.blockUIService.stop('main');
 
   }
 

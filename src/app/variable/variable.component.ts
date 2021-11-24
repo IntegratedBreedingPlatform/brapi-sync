@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BlockUIService } from 'ng-block-ui';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
 import { AlertService } from '../shared/alert/alert.service';
@@ -28,7 +29,8 @@ export class VariableComponent implements OnInit {
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
               public context: ContextService,
-              private alertService: AlertService) {
+              private alertService: AlertService,
+              private blockUIService: BlockUIService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
@@ -115,6 +117,7 @@ export class VariableComponent implements OnInit {
     this.isSaving = true;
     let errors: any[] = [];
     let info: any[] = [];
+    this.blockUIService.start('main');
 
     for (const observationVariable of observationVariables) {
       const observationVariableNewRequest = {
@@ -160,6 +163,7 @@ export class VariableComponent implements OnInit {
 
     this.variablesSaved = true;
     this.isSaving = false;
+    this.blockUIService.stop('main');
 
   }
 

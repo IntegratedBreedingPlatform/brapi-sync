@@ -51,5 +51,4 @@ export const routes: Route[] = [
     path: 'observation',
     component: ObservationComponent
   }
-
 ];
