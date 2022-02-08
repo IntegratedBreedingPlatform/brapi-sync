@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { DelegatedAuthenticationService } from '../auth/delegated-authentication.service';
@@ -26,16 +26,30 @@ export class ConnectionsComponent implements OnInit {
 
   tokenToStore = '';
 
+  isOpenedFromBMS = false;
+
   constructor(
     private router: Router,
     public context: ContextService,
     private http: HttpClient,
     private delegatedAuthenticationService: DelegatedAuthenticationService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private route: ActivatedRoute
   ) {
   }
 
   ngOnInit(): void {
+    if (window.location.href.includes('/workbench')) {
+      this.isOpenedFromBMS = true;
+      this.route.queryParams
+        .subscribe(params => {
+            this.destinationAuth = AuthenticationType.TOKEN;
+            const urlArray = window.location.href.split('/workbench');
+            this.context.destination = urlArray[0] + '/bmsapi/' + params.cropName + '/v2';
+            this.context.destinationToken = JSON.parse(localStorage['bms.xAuthToken']).token;
+          }
+        );
+    }
   }
 
   // FIXME

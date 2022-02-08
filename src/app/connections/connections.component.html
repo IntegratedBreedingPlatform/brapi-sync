@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h1 class="modal-title">BrAPI Synchronization Tool</h1>
+  <h1 class="modal-title">BrAPI Synchronization Tools</h1>
 </div>
 <div class="modal-body">
   <div class="row">
@@ -14,8 +14,8 @@
                 <input type="text" class="form-control" id="source" name="source" [(ngModel)]="context.source">
               </div>
             </div>
-            <h4>Authentication</h4>
-            <div class="form-group row">
+            <h4 *ngIf="!isOpenedFromBMS">Authentication</h4>
+            <div class="form-group row" *ngIf="!isOpenedFromBMS">
               <div class="col">
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="sourceAuthDelegated" id="delegatedSourceAuth" [value]="authenticationType.DELEGATED" [(ngModel)]="sourceAuth">
@@ -49,7 +49,7 @@
 
     </div>
   </div>
-  <div class="row">
+  <div class="row" *ngIf="!isOpenedFromBMS">
     <div class="col">
       <h2>Destination</h2>
       <div class="card">
