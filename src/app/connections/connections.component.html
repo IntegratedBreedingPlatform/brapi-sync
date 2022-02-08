@@ -14,8 +14,8 @@
                 <input type="text" class="form-control" id="source" name="source" [(ngModel)]="context.source">
               </div>
             </div>
-            <h4 *ngIf="!isEmbedded">Authentication</h4>
-            <div class="form-group row" *ngIf="!isEmbedded">
+            <h4 *ngIf="!context.isEmbedded">Authentication</h4>
+            <div class="form-group row" *ngIf="!context.isEmbedded">
               <div class="col">
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="sourceAuthDelegated" id="delegatedSourceAuth" [value]="authenticationType.DELEGATED" [(ngModel)]="sourceAuth">
@@ -49,7 +49,7 @@
 
     </div>
   </div>
-  <div class="row" *ngIf="!isEmbedded">
+  <div class="row" *ngIf="!context.isEmbedded">
     <div class="col">
       <h2>Destination</h2>
       <div class="card">

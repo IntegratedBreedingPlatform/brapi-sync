@@ -27,8 +27,6 @@ export class ConnectionsComponent implements OnInit {
 
   tokenToStore = '';
 
-  isEmbedded = false;
-
   constructor(
     private router: Router,
     public context: ContextService,
@@ -43,7 +41,7 @@ export class ConnectionsComponent implements OnInit {
       this.route.queryParams.subscribe(params => {
         if (params.destinationToken) {
           authConfig.silentRefreshRedirectUri = params.silentRefreshRedirectUri;
-          this.isEmbedded = true;
+          this.context.isEmbedded = true;
           this.destinationAuth = AuthenticationType.TOKEN;
           this.context.destination = params.destination;
           this.context.destinationToken = params.destinationToken;
