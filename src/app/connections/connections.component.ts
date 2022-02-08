@@ -4,6 +4,7 @@ import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { DelegatedAuthenticationService } from '../auth/delegated-authentication.service';
 import { AlertService } from '../shared/alert/alert.service';
+import { authConfig } from '../auth/auth.config';
 
 declare const BrAPI: any;
 
@@ -26,7 +27,7 @@ export class ConnectionsComponent implements OnInit {
 
   tokenToStore = '';
 
-  isOpenedFromBMS = false;
+  isEmbedded = false;
 
   constructor(
     private router: Router,
@@ -39,18 +40,15 @@ export class ConnectionsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log(window.location.href);
-    if (window.location.href.includes('/workbench')) {
-      this.isOpenedFromBMS = true;
-      this.route.queryParams
-        .subscribe(params => {
-            this.destinationAuth = AuthenticationType.TOKEN;
-            const urlArray = window.location.href.split('/workbench');
-            this.context.destination = urlArray[0] + '/bmsapi/' + params.cropName + '/v2';
-            this.context.destinationToken = JSON.parse(localStorage['bms.xAuthToken']).token;
-          }
-        );
-    }
+      this.route.queryParams.subscribe(params => {
+        if (params.destinationToken) {
+          authConfig.silentRefreshRedirectUri = params.silentRefreshRedirectUri;
+          this.isEmbedded = true;
+          this.destinationAuth = AuthenticationType.TOKEN;
+          this.context.destination = params.destination;
+          this.context.destinationToken = params.destinationToken;
+        }
+      });
   }
 
   // FIXME
