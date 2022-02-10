@@ -39,7 +39,7 @@ export class ConnectionsComponent implements OnInit {
 
   ngOnInit(): void {
       this.route.queryParams.subscribe(params => {
-        if (params.destinationToken) {
+        if (params.destinationToken && params.silentRefreshRedirectUri && params.destination) {
           authConfig.silentRefreshRedirectUri = params.silentRefreshRedirectUri;
           this.context.isEmbedded = true;
           this.destinationAuth = AuthenticationType.TOKEN;
