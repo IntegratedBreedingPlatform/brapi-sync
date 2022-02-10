@@ -28,6 +28,8 @@ export class ContextService {
   targetStudy: any = {};
   variablesMap: any = {};
 
+  isEmbedded = false;
+
   constructor() {
   }
 

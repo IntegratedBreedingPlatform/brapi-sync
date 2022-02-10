@@ -1,9 +1,10 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ContextService } from '../context.service';
 import { HttpClient } from '@angular/common/http';
 import { DelegatedAuthenticationService } from '../auth/delegated-authentication.service';
 import { AlertService } from '../shared/alert/alert.service';
+import { authConfig } from '../auth/auth.config';
 
 declare const BrAPI: any;
 
@@ -31,11 +32,21 @@ export class ConnectionsComponent implements OnInit {
     public context: ContextService,
     private http: HttpClient,
     private delegatedAuthenticationService: DelegatedAuthenticationService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private route: ActivatedRoute
   ) {
   }
 
   ngOnInit(): void {
+      this.route.queryParams.subscribe(params => {
+        if (params.destinationToken && params.silentRefreshRedirectUri && params.destination) {
+          authConfig.silentRefreshRedirectUri = params.silentRefreshRedirectUri;
+          this.context.isEmbedded = true;
+          this.destinationAuth = AuthenticationType.TOKEN;
+          this.context.destination = params.destination;
+          this.context.destinationToken = params.destinationToken;
+        }
+      });
   }
 
   // FIXME
