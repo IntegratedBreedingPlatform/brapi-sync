@@ -45,6 +45,9 @@ export class ConnectionsComponent implements OnInit {
           this.destinationAuth = AuthenticationType.TOKEN;
           this.context.destination = params.destination;
           this.context.destinationToken = params.destinationToken;
+          if (params.source) {
+            this.context.source = params.source;
+          }
         }
       });
   }
