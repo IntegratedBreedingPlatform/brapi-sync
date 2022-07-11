@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { DelegatedAuthenticationService } from '../auth/delegated-authentication.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { authConfig } from '../auth/auth.config';
+import { BRAPI_SYNC_BASE_URL_PLACEHOLDER } from '../app.constants';
 
 declare const BrAPI: any;
 
@@ -14,6 +15,8 @@ declare const BrAPI: any;
   styleUrls: ['./connections.component.css']
 })
 export class ConnectionsComponent implements OnInit {
+
+  BRAPI_SYNC_BASE_URL_PLACEHOLDER = BRAPI_SYNC_BASE_URL_PLACEHOLDER;
 
   authenticationType = AuthenticationType;
 
