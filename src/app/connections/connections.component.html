@@ -11,7 +11,7 @@
             <div class="form-group row">
               <label for="source" class="col-auto col-form-label">BrAPI Base URL</label>
               <div class="col-5">
-                <input type="text" class="form-control" id="source" name="source" [(ngModel)]="context.source">
+                <input type="text" class="form-control" id="source" name="source" placeholder="{{BRAPI_SYNC_BASE_URL_PLACEHOLDER}}" [(ngModel)]="context.source">
               </div>
             </div>
             <h4 *ngIf="!context.isEmbedded">Authentication</h4>
@@ -58,7 +58,7 @@
             <div class="form-group row">
               <label for="destination" class="col-auto col-form-label">BrAPI Base URL</label>
               <div class="col-5">
-                <input type="text" class="form-control" id="destination" name="destination" [(ngModel)]="context.destination">
+                <input type="text" class="form-control" id="destination" name="destination" placeholder="{{BRAPI_SYNC_BASE_URL_PLACEHOLDER}}" [(ngModel)]="context.destination">
               </div>
             </div>
             <h4>Authentication</h4>
