@@ -30,6 +30,8 @@ export class ContextService {
 
   isEmbedded = false;
 
+  sourceStudyWasPreviouslyImportedFromTarget = false;
+
   constructor() {
   }
 
@@ -41,5 +43,6 @@ export class ContextService {
     this.targetTrial = {};
     this.targetStudy = {};
     this.variablesMap = {};
+    this.sourceStudyWasPreviouslyImportedFromTarget = false;
   }
 }

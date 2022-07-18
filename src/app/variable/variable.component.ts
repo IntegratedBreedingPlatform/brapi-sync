@@ -50,14 +50,35 @@ export class VariableComponent implements OnInit {
 
   async load() {
     this.isLoading = true;
-    this.context.targetStudy = await this.getStudyFromTargetServer(this.context.sourceStudy.studyDbId);
+    this.setTargetStudyToContext();
+
     if (this.context.targetStudy) {
       this.sourceVariables = await this.loadVariablesFromSource();
       this.loadVariablesFromTarget(this.sourceVariables);
     } else {
-      this.alertService.showDanger(`${this.context.sourceStudy.studyName} is not present in the destination server.`);
+      this.alertService.showDanger(`${this.context.sourceStudy.studyName} is not present in the destination server nor was previously imported from the target server.`);
     }
+    // TODO: review this error message
     this.isLoading = false;
+  }
+
+  async setTargetStudyToContext() {
+    // try to get study from target by external reference
+    this.context.targetStudy = await this.getStudyFromTargetServer({
+      externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.STUDIES, this.context.sourceStudy.studyDbId),
+      externalReferenceSource: EXTERNAL_REFERENCE_SOURCE
+    });
+    // if study is not present in target server searching by external reference,
+    // verify if the study was previously imported from the target server
+    if (!this.context.targetStudy && this.context.sourceTrial && this.context.sourceTrial.externalReferences) {
+      const sourceExternalReferences = this.context.sourceTrial.externalReferences
+        .filter((externalReference: any) => externalReference.referenceID.startsWith(this.context.destination));
+      if (sourceExternalReferences.length === 1) {
+        const targetStudyDbId = sourceExternalReferences[0].referenceID.replace(`${this.context.destination}/${EntityEnum.TRIALS}/`, '');
+        this.context.targetStudy = await this.getStudyFromTargetServer({ trialDbId: targetStudyDbId });
+        this.context.sourceStudyWasPreviouslyImportedFromTarget = true;
+      }
+    }
   }
 
   hasVariableMatches(): boolean {
@@ -167,13 +188,10 @@ export class VariableComponent implements OnInit {
 
   }
 
-  getStudyFromTargetServer(studyDbId: any): Promise<any> {
+  getStudyFromTargetServer(request: any): Promise<any> {
     return new Promise<any>(resolve => {
-      if (studyDbId && studyDbId) {
-        this.brapiDestination.studies({
-          externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.STUDIES, studyDbId),
-          externalReferenceSource: EXTERNAL_REFERENCE_SOURCE
-        }).all((result: any) => {
+      if (request) {
+        this.brapiDestination.studies(request).all((result: any) => {
           if (result.length) {
             resolve(result[0]);
           } else {
