@@ -64,6 +64,12 @@ To keep track of submitted entities it adds another entry into the externalRefer
 }
 ```
 
+## Two-way observations sync
+
+If the user wants to import observations from a target which was previously imported via brapi-sync, the target study won't be found searching by external reference 
+because it's the original study and it doesn't have an external reference set. So, the studyDbId value is extracted from the external reference in the source study and 
+then it is used as parameter to get the target study.
+
 ## TODO
 
 - [x] Keep track using external references 
