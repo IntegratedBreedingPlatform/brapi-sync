@@ -48,9 +48,9 @@ export class ObservationComponent implements OnInit {
     this.loading = true;
     // Load the target observation units so that we can map them from the source
     const observationUnits = await this.loadTargetObservationUnits();
-    this.targetObservationUnitsByReferenceId = this.createObservationUnitsByReferenceId(observationUnits);
-
     if (observationUnits.length > 0) {
+      this.setTargetObservationUnitsByReferenceId(observationUnits);
+
       this.sourceObservations = await this.loadSourceObservations();
       this.sourceObservationsByVariable = this.groupObservationsByVariable(this.sourceObservations);
 
@@ -60,6 +60,39 @@ export class ObservationComponent implements OnInit {
       this.alertService.showDanger(`There are no observation units in the target server.`);
     }
     this.loading = false;
+  }
+
+  async setTargetObservationUnitsByReferenceId(observationUnits: any[]) {
+    if (this.context.sourceStudyWasPreviouslyImportedFromTarget) {
+      // Search in source the previously imported observation units from the target
+      const externalReferenceIDs = observationUnits
+        .map((observationUnit) => `${this.context.destination}/${EntityEnum.OBSERVATIONUNITS}/${observationUnit.observationUnitDbId}`);
+      const previouslyImportedObservationsUnits =
+        await this.loadSourceObservationUnits({ externalReferenceIDs });
+      if (previouslyImportedObservationsUnits.length > 0) {
+        previouslyImportedObservationsUnits
+          .filter((observationUnit) => observationUnit.externalReferences)
+          .forEach((observationUnit) => {
+            const externalReference = observationUnit.externalReferences
+              .filter((er: any) => er.referenceID.startsWith(this.context.destination));
+            if (externalReference.length === 1) {
+              const targetObservationUnitDbId = externalReference[0].referenceID.replace(`${this.context.destination}/${EntityEnum.OBSERVATIONUNITS}/`, '');
+              observationUnits.filter((ou) => ou.observationUnitDbId === targetObservationUnitDbId)
+                .forEach((ou) => {
+                  // Generates a virtual externalReferenceID for the previously imported observation unit
+                  // that later can be used for mapping the source with the target
+                  const generatedExternalReference =
+                    this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS,  observationUnit.observationUnitDbId);
+                  this.targetObservationUnitsByReferenceId[generatedExternalReference] = ou;
+                });
+            }
+          });
+      } else {
+        this.alertService.showDanger(`There are no observation units in the target server.`);
+      }
+    } else {
+      this.targetObservationUnitsByReferenceId = this.createObservationUnitsByReferenceId(observationUnits);
+    }
   }
 
   async loadSourceObservations(): Promise<any[]> {
@@ -81,6 +114,15 @@ export class ObservationComponent implements OnInit {
           studyDbId: [this.context.targetStudy.studyDbId]
         }
       ).all((result: any[]) => {
+        resolve(result);
+      });
+    });
+  }
+
+  async loadSourceObservationUnits(request: any): Promise<any[]> {
+    return new Promise<any>(resolve => {
+      // Get the observation units from target study
+      this.brapiSource.search_observationunits(request).all((result: any[]) => {
         resolve(result);
       });
     });
@@ -132,7 +174,7 @@ export class ObservationComponent implements OnInit {
     const observations: any = [];
     sourceObservations.forEach((observation) => {
       const targetObservationUnit = this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)];
-      if (this.isValidForImport(observation.observationVariableName)) {
+      if (this.isValidForImport(observation.observationVariableName) && targetObservationUnit) {
         observations.push({
           germplasmDbId: targetObservationUnit.germplasmDbId,
           observationUnitDbId: targetObservationUnit.observationUnitDbId,
