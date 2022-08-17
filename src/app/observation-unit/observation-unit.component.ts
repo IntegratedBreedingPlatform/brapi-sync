@@ -106,7 +106,8 @@ export class ObservationUnitComponent implements OnInit {
   loadObservationUnits() {
     this.observationUnitLoading = true;
     this.brapiSource.search_observationunits({
-        studyDbIds: [this.context.sourceStudy.studyDbId]
+        studyDbIds: [this.context.sourceStudy.studyDbId],
+        observationLevel: 'PLOT'
       }
     ).all((result: any) => {
       this.sourceObservationUnits = result;
