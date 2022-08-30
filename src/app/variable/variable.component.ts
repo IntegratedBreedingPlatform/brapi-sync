@@ -24,6 +24,7 @@ export class VariableComponent implements OnInit {
   isSaving = false;
   variablesSaved = false;
   isStudySelectable: boolean = false;
+  sourceVariablesAliasByOntologyNames: any = {};
 
   constructor(private router: Router,
               private http: HttpClient,
@@ -54,7 +55,7 @@ export class VariableComponent implements OnInit {
 
     if (this.context.targetStudy) {
       this.sourceVariables = await this.loadVariablesFromSource();
-      this.loadVariablesFromTarget(this.sourceVariables);
+      this.loadVariablesFromTarget();
     } else {
       this.alertService.showDanger(`${this.context.sourceStudy.studyName} is not present in the destination server nor was previously imported from the target server.`);
     }
@@ -101,27 +102,51 @@ export class VariableComponent implements OnInit {
     });
   }
 
-  loadVariablesFromTarget(sourceVariables: any) {
+  async loadVariablesFromTarget() {
     // Get the variables from target system
-    const variables: any = {};
+    const observationVariableNames: string[] = [];
     Object.entries<any>(this.sourceVariables).forEach(async ([key, value]) => {
-      const variableFromTarget = await this.findVariableFromTarget(key);
-        this.variablesMap[key] = variableFromTarget;
+      const variableName: string = value.observationVariableName;
+      observationVariableNames.push(variableName);
+
+      if (value.ontologyReference && value.ontologyReference.ontologyName !== variableName) {
+        const ontologyName: string = value.ontologyReference.ontologyName;
+
+        observationVariableNames.push(ontologyName);
+        this.sourceVariablesAliasByOntologyNames[ontologyName] = variableName;
+      }
     });
+
+    if (observationVariableNames.length > 0) {
+      const targetVariables: any[] = await this.findVariablesFromTarget(observationVariableNames);
+      targetVariables.forEach((variableFromTarget) => {
+        const variableName: string = variableFromTarget.observationVariableName;
+        if (this.sourceVariables[variableName]) {
+          // variable matches with by the same alias or name in source and target
+          this.variablesMap[variableName] = variableFromTarget;
+        } else if (variableFromTarget.ontologyReference && this.sourceVariables[variableFromTarget.ontologyReference.ontologyName]) {
+          // variable has an alias in target
+          this.variablesMap[variableFromTarget.ontologyReference.ontologyName] = variableFromTarget;
+        } else if (this.sourceVariablesAliasByOntologyNames[variableName]) {
+          // variable has an alias in source
+          const variableAlias: string = this.sourceVariablesAliasByOntologyNames[variableName];
+          this.variablesMap[variableAlias] = variableFromTarget;
+        } else {
+          // variable has alias in both source and target
+          const variableAlias: string = this.sourceVariablesAliasByOntologyNames[variableFromTarget.ontologyReference.ontologyName];
+          this.variablesMap[variableAlias] = variableFromTarget;
+        }
+      });
+    }
   }
 
-  findVariableFromTarget(observationVariableName: string): Promise<any> {
+  findVariablesFromTarget(observationVariableNames: string[]): Promise<any> {
     return new Promise<any>(resolve => {
       this.brapiDestination.search_variables({
-          observationVariableNames: [observationVariableName]
+          observationVariableNames
         }
-      ).all((result: any[]) => {
-        if (result && result.length > 0) {
-          // Return the first result
-          resolve(result[0]);
-        } else {
-          resolve(null);
-        }
+      ).all((results: any[]) => {
+        resolve(results);
       });
     });
   }
@@ -242,6 +267,7 @@ export class VariableComponent implements OnInit {
 
   async next() {
     this.context.variablesMap = this.variablesMap;
+    this.context.sourceVariablesAliasByOntologyNames = this.sourceVariablesAliasByOntologyNames;
     this.router.navigate(['observation']);
   }
 
