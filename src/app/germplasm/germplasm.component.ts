@@ -40,6 +40,12 @@ export class GermplasmComponent implements OnInit {
   germplasmInDestinationByPUIs: any = {};
   germplasmInDestinationByRefIds: any = {};
 
+  // Import Options
+  numberOfGenerations = 1;
+  isImportAncestors = false;
+  isGenerativeStepsOnly = false;
+  isAttemptToConnectTargetAncestors = false;
+
   constructor(
     private router: Router,
     public context: ContextService,
@@ -63,7 +69,7 @@ export class GermplasmComponent implements OnInit {
   }
 
   import(): void {
-    this.blockUIService.start('main'); 
+    this.blockUIService.start('main');
     if (this.isSelectAllPages) {
       this.isSaving = true;
       this.loadAll().then(allGermplasm => {
@@ -87,7 +93,7 @@ export class GermplasmComponent implements OnInit {
       const request = germplasm.map((g) => this.transformForSave(g));
       const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
       this.onSuccess(res);
-    } catch (error: any) {
+    } catch (error) {
       this.onError(error);
     }
     this.isSaving = false;
@@ -264,11 +270,11 @@ export class GermplasmComponent implements OnInit {
     if (germplasmPUIs.length) {
       while (currentPage <= totalPages) {
         const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
-          germplasmPUIs: germplasmPUIs,
+          germplasmPUIs,
           pageRange: [currentPage, 1]
         }));
         if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
-          let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
+          const tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
           currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
           totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
           if (germplasmByPUIsResult[0].data.length) {
@@ -279,7 +285,7 @@ export class GermplasmComponent implements OnInit {
         }
       }
     }
-   
+
     // Find germplasm in destination by external reference ID
     const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
     currentPage = 0;
@@ -294,7 +300,7 @@ export class GermplasmComponent implements OnInit {
           pageRange: [currentPage, 1]
         }));
         if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
-          let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
+          const tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
           currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
           totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
           if (germplasmByRefIdsResult[0].data.length) {
@@ -309,12 +315,13 @@ export class GermplasmComponent implements OnInit {
         }
       }
     }
-   
+
   }
 
   isGermplasmExistsInDestination(germplasm: any) {
     // Check first if the germplasm has a match by PUI
-    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] || this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
+    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] ||
+      this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
   }
 
   isSelected(row: any): boolean {

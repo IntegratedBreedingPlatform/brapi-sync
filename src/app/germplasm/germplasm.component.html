@@ -18,6 +18,32 @@
               </div>
             </div>
           </app-collapsible>
+          <app-collapsible heading="Options">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" name="importAncestorsCheckbox" id="importAncestorsCheckbox" [(ngModel)]="isImportAncestors">
+              <label class="custom-control-label" for="importAncestorsCheckbox">Import Ancestors</label>
+            </div>
+            <div class="card">
+              <div class="card-body">
+                <form>
+                  <div class="form-group row">
+                    <label for="numberOfGenerations" class="col-sm-2 col-form-label">Number of generations</label>
+                    <div class="col-sm-1">
+                      <input type="number" class="form-control" name="numberOfGenerationsText" id="numberOfGenerationsText" [(ngModel)]="numberOfGenerations" [disabled]="!isImportAncestors" min="1" max="10">
+                    </div>
+                  </div>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="generativeStepsOnlyCheckbox" id="generativeStepsOnlyCheckbox" [(ngModel)]="isGenerativeStepsOnly" [disabled]="!isImportAncestors">
+                    <label class="custom-control-label" for="generativeStepsOnlyCheckbox">Generative steps only</label>
+                  </div>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="connectWithTargetAncestorsCheckbox" id="connectWithTargetAncestorsCheckbox" [(ngModel)]="isAttemptToConnectTargetAncestors" [disabled]="!isImportAncestors">
+                    <label class="custom-control-label" for="connectWithTargetAncestorsCheckbox">Attempt to connect with target ancestors</label>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </app-collapsible>
           <app-collapsible heading="Germplasm Mapping">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
