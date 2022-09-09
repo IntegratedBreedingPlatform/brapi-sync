@@ -8,6 +8,14 @@ import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
+import { PedigreeService } from '../shared/brapi/2.1/api/pedigree.service';
+import { PedigreeSearchRequest } from '../shared/brapi/2.1/model/pedigree-search-request';
+import { PedigreeNode } from '../shared/brapi/2.1/model/pedigree-node';
+import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
+import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
+import { GermplasmSearchRequest } from '../shared/brapi/2.0/model/germplasm-search-request';
+import { PedigreeNodeParents } from '../shared/brapi/2.1/model/pedigree-node-parents';
+import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
 
 declare const BrAPI: any;
 
@@ -19,6 +27,8 @@ declare const BrAPI: any;
 export class GermplasmComponent implements OnInit {
 
   brapiDestination: any;
+  brapiSource: any;
+
   isSaving = false;
   isLoading = false;
   germplasm: any = [];
@@ -33,12 +43,12 @@ export class GermplasmComponent implements OnInit {
   errors: any = [];
   info: any = [];
 
-  breedingMethodsDestByName: any = {};
-  breedingMethodsDestById: any = {};
-  breedingMethodsSourceByName: any = {};
-  breedingMethodsSourceById: any = {};
-  germplasmInDestinationByPUIs: any = {};
-  germplasmInDestinationByRefIds: any = {};
+  breedingMethodsDestByName: { [p: string]: BreedingMethod } = {};
+  breedingMethodsDestById: { [p: string]: BreedingMethod } = {};
+  breedingMethodsSourceByName: { [p: string]: BreedingMethod } = {};
+  breedingMethodsSourceById: { [p: string]: BreedingMethod } = {};
+  germplasmInDestinationByPUIs: { [p: string]: Germplasm } = {};
+  germplasmInDestinationByRefIds: { [p: string]: Germplasm } = {};
 
   // Import Options
   numberOfGenerations = 1;
@@ -53,11 +63,14 @@ export class GermplasmComponent implements OnInit {
     private http: HttpClient,
     private externalReferenceService: ExternalReferenceService,
     private alertService: AlertService,
-    private blockUIService: BlockUIService
+    private blockUIService: BlockUIService,
+    private germplasmService: GermplasmService,
+    private pedigreeService: PedigreeService
   ) {
     // TODO / testing / remove
     // this.load();
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.source);
   }
 
   ngOnInit(): void {
@@ -68,31 +81,90 @@ export class GermplasmComponent implements OnInit {
     this.router.navigate(['entity-selector']);
   }
 
-  import(): void {
+  async import(): Promise<void> {
     this.blockUIService.start('main');
+    let selectedGermplasm: Germplasm[] = [];
     if (this.isSelectAllPages) {
       this.isSaving = true;
-      this.loadAll().then(allGermplasm => {
-        this.post(allGermplasm);
-      });
+      // If select all is checked, we should retrieve all germplasm records of the selected study from source server.
+      const res: any = await this.http.get(this.context.source + '/germplasm', {
+        params: {
+          studyDbId: this.context.sourceStudy.studyDbId,
+          page: '0',
+          pageSize: this.totalCount.toString(),
+        }
+      }).toPromise();
+      selectedGermplasm = res.result.data as Germplasm[];
+      this.totalCount = res.metadata.pagination.totalCount;
     } else {
-      const germplasm = Object.values(this.selectedItems);
-      this.post(germplasm);
+      // Process only selected germplasm.
+      selectedGermplasm = Object.values(this.selectedItems) as Germplasm[];
     }
+
+    if (this.isImportAncestors) {
+      // Retrieve the pedigree information
+      const pedigreeMap: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, selectedGermplasm,
+        this.numberOfGenerations);
+      // Retrieve the details of the germplasm and their pedigree (ancestors)
+      const germplasmWithAncestors = await this.searchGermplasm(this.context.source, { germplasmDbIds: Array.from(pedigreeMap.keys()) });
+      this.post(germplasmWithAncestors, pedigreeMap);
+    } else {
+      this.post(selectedGermplasm);
+    }
+
   }
 
-  private async post(germplasm: any[]): Promise<void> {
+  private async post(germplasm: any[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
     try {
       this.isSaving = true;
+
+      await this.searchInTarget(germplasm);
+      // Get the germplasm that do not exist yet in the destination server
       germplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g));
+
+      // If all germplasm already exists in the server, show an error message
       if (!germplasm.length) {
         this.alertService.showDanger('All germplasm already exists in the destination server.');
         this.isSaving = false;
         return;
       }
+
+      // Create the germplasm in the destination server
       const request = germplasm.map((g) => this.transformForSave(g));
       const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
+
+      // Update the pedigree of newly created germplasm
+      if (pedigreeMap) {
+        await this.searchInTarget(germplasm);
+        const pedigreeUpdateRequest: { [p: string]: PedigreeNode } = {};
+        pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
+          const germplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId, germplasmPUI: '' });
+          if (germplasmInDestination) {
+            const pedigreeNodeForUpdate: PedigreeNode = {
+              germplasmDbId: germplasmInDestination.germplasmDbId,
+              breedingMethodDbId: this.getBreedingMethodIdInDest({ breedingMethodDbId: pedigreeNode.breedingMethodDbId })
+            };
+            if (pedigreeNode.parents) {
+              const pedigreeNodesForUpdateParents: PedigreeNodeParents[] = [];
+              pedigreeNode.parents.forEach((pedigreeNodeParent: PedigreeNodeParents) => {
+                const parent = this.getMatchingGermplasmInDestination({
+                  germplasmDbId: pedigreeNodeParent.germplasmDbId || ''
+                });
+                pedigreeNodesForUpdateParents.push({
+                  parentType: pedigreeNodeParent.parentType,
+                  germplasmDbId: parent ? parent.germplasmDbId : null
+                });
+              });
+              pedigreeNodeForUpdate.parents = pedigreeNodesForUpdateParents;
+            }
+            pedigreeUpdateRequest[germplasmInDestination.germplasmDbId] = pedigreeNodeForUpdate;
+          }
+        });
+        await this.pedigreeService.pedigreePut(this.context.destination, pedigreeUpdateRequest).toPromise();
+      }
+
       this.onSuccess(res);
+
     } catch (error) {
       this.onError(error);
     }
@@ -183,37 +255,11 @@ export class GermplasmComponent implements OnInit {
     }
   }
 
-  async loadAll() {
-    // Get all germplasm records from source server.
-    const res: any = await this.http.get(this.context.source + '/germplasm', {
-      params: {
-        studyDbId: this.context.sourceStudy.studyDbId,
-        page: '0',
-        pageSize: this.totalCount.toString(),
-      }
-    }).toPromise();
-    const allGermplasm = res.result.data;
-    this.totalCount = res.metadata.pagination.totalCount;
-
-    await this.searchInTarget(allGermplasm);
-    return allGermplasm;
-  }
-
   async load(): Promise<void> {
     this.reset();
-    /* TODO get page count brapijs?
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.germplasm({
-      studyDbId: this.context.studySelected.studyDbId,
-      // page: this.page,
-      pageSize: this.pageSize,
-      pageRange: [this.page - 1, this.page]
-    }).all((germplasm: any[]) => {
-      this.germplasm = germplasm;
-    });
-     */
     this.isLoading = true;
     try {
+      // TODO: Move this to germplasmService
       const res: any = await this.http.get(this.context.source + '/germplasm', {
         params: {
           studyDbId: this.context.sourceStudy.studyDbId,
@@ -226,22 +272,23 @@ export class GermplasmComponent implements OnInit {
 
       await this.searchInTarget(this.germplasm);
 
-      const bmDestSource: any = await this.http.get(this.context.source + '/breedingmethods').toPromise();
-      if (bmDestSource.result.data && bmDestSource.result.data.length) {
-        bmDestSource.result.data.forEach((bm: any) => {
-          this.breedingMethodsSourceByName[bm.breedingMethodName] = bm;
-          this.breedingMethodsSourceById[bm.breedingMethodDbId] = bm;
+      // Retrieve the breeding methods from source server
+      const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGet(this.context.source).toPromise();
+      if (breedingMethodsFromSource.body && breedingMethodsFromSource.body.result.data) {
+        breedingMethodsFromSource.body.result.data.forEach((breedingMethod) => {
+          this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
+          this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
         });
       }
-
-      const bmDestResp: any = await this.http.get(this.context.destination + '/breedingmethods').toPromise();
-      if (bmDestResp.result.data && bmDestResp.result.data.length) {
-        bmDestResp.result.data.forEach((bm: any) => {
-          this.breedingMethodsDestByName[bm.breedingMethodName] = bm;
-          this.breedingMethodsDestById[bm.breedingMethodDbId] = bm;
+      // Retrive the breeding methods from destination server
+      const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
+      if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
+        breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+          this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
+          this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       this.onError(error);
     }
     this.isLoading = false;
@@ -318,10 +365,20 @@ export class GermplasmComponent implements OnInit {
 
   }
 
-  isGermplasmExistsInDestination(germplasm: any) {
+  isGermplasmExistsInDestination(germplasm: any): boolean {
     // Check first if the germplasm has a match by PUI
-    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] ||
-      this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
+    return this.getMatchingGermplasmInDestination(germplasm) ? true : false;
+  }
+
+  getMatchingGermplasmInDestination(germplasm: Germplasm): Germplasm | undefined {
+    if (germplasm.germplasmPUI && this.germplasmInDestinationByPUIs[germplasm.germplasmPUI]) {
+      return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI];
+    } else if (this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM,
+      germplasm.germplasmDbId)]) {
+      return this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM,
+        germplasm.germplasmDbId)];
+    }
+    return undefined;
   }
 
   isSelected(row: any): boolean {
@@ -373,5 +430,50 @@ export class GermplasmComponent implements OnInit {
       return '';
     }
     return synonyms.map((s) => s.synonym).join(', ');
+  }
+
+  async getPedigreeMap(basePath: string, germplasm: Germplasm[], pedigreeDepth: number): Promise<Map<string, PedigreeNode>> {
+    // Search the pedigree (ancestors) of the germplasm.
+    const pedigreeSearchRequest: PedigreeSearchRequest = {
+      germplasmDbIds: germplasm.map(g => g.germplasmDbId),
+      includeFullTree: true,
+      pedigreeDepth,
+      includeParents: true
+    };
+    // This will return the germplasm as well as their pedigree (ancestors) within the specified level
+    return await this.searchPedigree(basePath, pedigreeSearchRequest);
+  }
+
+  async searchGermplasm(basePath: string, request: GermplasmSearchRequest): Promise<Germplasm[]> {
+    // Search germplasm
+    const searchGermplasmPost = await this.germplasmService.searchGermplasmPost(basePath, request).toPromise();
+    if (searchGermplasmPost.body && searchGermplasmPost.body.result) {
+      // Get the actual search results based ob the searchResultsDbId
+      const searchSearchGetResult = await this.germplasmService.searchGermplasmSearchResultsDbIdGet(basePath,
+        searchGermplasmPost.body.result.searchResultsDbId).toPromise();
+      if (searchSearchGetResult.body && searchSearchGetResult.body.result) {
+        return searchSearchGetResult.body.result.data;
+      }
+    }
+    return [];
+  }
+
+  async searchPedigree(basePath: string, request: PedigreeSearchRequest): Promise<Map<string, PedigreeNode>> {
+    // Search pedigree nodes
+    const searchPedigreePost = await this.pedigreeService.searchPedigreePost(basePath, request).toPromise();
+    if (searchPedigreePost.body && searchPedigreePost.body.result) {
+      // Get the actual search results based ob the searchResultsDbId
+      const searchPedigreeGetResult = await this.pedigreeService.searchPedigreeSearchResultsDbIdGet(basePath,
+        searchPedigreePost.body.result.searchResultsDbId).toPromise();
+      // Convert the array of PedigreeNodes to Map
+      const map = new Map<string, PedigreeNode>();
+      if (searchPedigreeGetResult.body && searchPedigreeGetResult.body.result) {
+        searchPedigreeGetResult.body.result.data.forEach(value => {
+          map.set(value.germplasmDbId, value);
+        });
+      }
+      return map;
+    }
+    return new Map<string, PedigreeNode>();
   }
 }
