@@ -11,7 +11,7 @@ export interface PedigreeNode {
   defaultDisplayName?: string;
   externalReferences?: ExternalReferences;
   familyCode?: string;
-  germplasmDbId: string;
+  germplasmDbId?: string;
   germplasmName?: string;
   germplasmPUI?: string;
   parents?: Array<PedigreeNodeParents>;

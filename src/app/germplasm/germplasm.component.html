@@ -40,6 +40,7 @@
                     <input type="checkbox" class="custom-control-input" name="connectWithTargetAncestorsCheckbox" id="connectWithTargetAncestorsCheckbox" [(ngModel)]="isAttemptToConnectTargetAncestors" [disabled]="!isImportAncestors">
                     <label class="custom-control-label" for="connectWithTargetAncestorsCheckbox">Attempt to connect with target ancestors</label>
                   </div>
+                  <button type="button" class="btn btn-primary" (click)="load()" [disabled]="!isImportAncestors">Apply</button>
                 </form>
               </div>
             </div>
@@ -63,14 +64,15 @@
                 <th>ORIGIN</th>
                 <th>DOCUMENTATION URL</th>
                 <th>ACQUISITION DATE</th>
-                <th>PEDIGREE</th>
+                <th>SOURCE PEDIGREE</th>
+                <th>PREVIEW TARGET PEDIGREE</th>
                 <th>BREEDING METHOD NAME</th>
                 </thead>
                 <tbody>
                 <tr *ngFor="let row of germplasm">
                   <td *ngIf="!isSelectAllPages">
-                    <input *ngIf="!isGermplasmExistsInDestination(row)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                    <fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
+                    <input *ngIf="isAttemptToConnectTargetAncestors || !isGermplasmExistsInDestination(row)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                    <fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green" class="pl-1"></fa-icon>
                   </td>
                   <td>{{row.germplasmDbId}}</td>
                   <td>{{row.germplasmName}}</td>
@@ -78,7 +80,13 @@
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
                   <td>{{row.acquisitionDate}}</td>
-                  <td>{{row.pedigree}}</td>
+                  <td>{{row.germplasmName}}</td>
+                  <td>
+                    <fa-icon *ngIf="isImportAncestors && isPedigreeTreeMatch(row.germplasmDbId)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
+                    <fa-icon *ngIf="isImportAncestors && !isPedigreeTreeMatch(row.germplasmDbId)" [icon]="['fas', 'times']" title="" style="color: green" class="pl-1"></fa-icon>
+                    &nbsp;&nbsp;
+                    {{getMatchingGermplasmInDestination(row)?.germplasmName}}
+                  </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>
                 </tbody>
@@ -109,7 +117,8 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">
+  <!--  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">-->
+  <button type="button" class="btn btn-primary" (click)="import()">
     <span class="throbber throbber-btn" *ngIf="isSaving"></span>
     Import
   </button>

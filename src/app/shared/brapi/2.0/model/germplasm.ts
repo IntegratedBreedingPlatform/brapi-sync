@@ -20,7 +20,7 @@ export interface Germplasm {
   donors?: Array<GermplasmDonors>;
   externalReferences?: Array<CrossExternalReferences>;
   genus?: string;
-  germplasmDbId: string;
+  germplasmDbId?: string;
   germplasmName?: string;
   germplasmOrigin?: Array<GermplasmGermplasmOrigin>;
   germplasmPUI?: string;

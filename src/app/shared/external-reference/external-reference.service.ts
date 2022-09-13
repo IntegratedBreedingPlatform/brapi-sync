@@ -11,7 +11,7 @@ export class ExternalReferenceService {
   }
 
   generateExternalReference(id: string, entity: EntityEnum, externalReferences?: any[]): any[] {
-    let externalReferencesTemp: any[] = [];
+    const externalReferencesTemp: any[] = [];
     if (externalReferences && externalReferences.length) {
       externalReferencesTemp.push(externalReferences);
     }
@@ -22,8 +22,11 @@ export class ExternalReferenceService {
     return externalReferencesTemp;
   }
 
-  getReferenceId(entity: EntityEnum, id: string): string {
-    return `${this.context.source}/${entity}/${id}`;
+  getReferenceId(entity: EntityEnum, id: string | null | undefined): string {
+    if (id) {
+      return `${this.context.source}/${entity}/${id}`;
+    }
+    return '';
   }
 }
 
