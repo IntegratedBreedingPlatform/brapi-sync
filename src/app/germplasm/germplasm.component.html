@@ -82,10 +82,10 @@
                   <td>{{row.acquisitionDate}}</td>
                   <td>{{row.germplasmName}}</td>
                   <td>
-                    <fa-icon *ngIf="isImportAncestors && isPedigreeTreeMatch(row.germplasmDbId)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
-                    <fa-icon *ngIf="isImportAncestors && !isPedigreeTreeMatch(row.germplasmDbId)" [icon]="['fas', 'times']" title="" style="color: green" class="pl-1"></fa-icon>
+                    <fa-icon *ngIf="isImportAncestors && !hasMismatchPedigreeNodes(row.germplasmDbId)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
+                    <fa-icon *ngIf="isImportAncestors && hasMismatchPedigreeNodes(row.germplasmDbId)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
                     &nbsp;&nbsp;
-                    {{getMatchingGermplasmInDestination(row)?.germplasmName}}
+                    {{getMatchingGermplasmInDestination(row)?.germplasmName || row.germplasmName}}
                   </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>
@@ -118,7 +118,7 @@
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
   <!--  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">-->
-  <button type="button" class="btn btn-primary" (click)="import()">
+  <button type="button" class="btn btn-primary" (click)="importSelectedGermplasm()">
     <span class="throbber throbber-btn" *ngIf="isSaving"></span>
     Import
   </button>

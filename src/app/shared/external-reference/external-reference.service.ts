@@ -22,7 +22,7 @@ export class ExternalReferenceService {
     return externalReferencesTemp;
   }
 
-  getReferenceId(entity: EntityEnum, id: string | null | undefined): string {
+  getReferenceId(entity: EntityEnum, id: string | undefined): string {
     if (id) {
       return `${this.context.source}/${entity}/${id}`;
     }
