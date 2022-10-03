@@ -98,7 +98,9 @@ export class VariableComponent implements OnInit {
         }
       ).all((result: any[]) => {
         result.forEach((observationVariable) => {
-          variables[observationVariable.observationVariableName] = observationVariable;
+          if (observationVariable.contextOfUse?.includes('PLOT')) {
+            variables[observationVariable.observationVariableName] = observationVariable;
+          }
         });
         resolve(variables);
       });
