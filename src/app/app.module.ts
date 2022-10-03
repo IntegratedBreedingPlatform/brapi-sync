@@ -33,6 +33,7 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
 import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 import { BlockUIModule, BlockUIService } from 'ng-block-ui';
+import { StudiesService } from './shared/brapi/2.1/api/studies.service';
 
 @NgModule({
   declarations: [
@@ -81,7 +82,8 @@ import { BlockUIModule, BlockUIService } from 'ng-block-ui';
     AlertService,
     OAuthService,
     DelegatedAuthenticationService,
-    BlockUIService
+    BlockUIService,
+    StudiesService
   ],
   bootstrap: [AppComponent]
 })
