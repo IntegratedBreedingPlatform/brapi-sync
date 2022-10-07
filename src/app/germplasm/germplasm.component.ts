@@ -50,7 +50,7 @@ export class GermplasmComponent implements OnInit {
   breedingMethodsSourceById: { [p: string]: BreedingMethod } = {};
   germplasmInDestinationByPUIs: { [p: string]: Germplasm } = {};
   germplasmInDestinationByRefIds: { [p: string]: Germplasm } = {};
-  invalidPedigreeNodes: { [key: string]: Array<PedigreeNode> } = {};
+  invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
 
   // Import Ancestor Options
   numberOfGenerations = 1;
@@ -109,41 +109,20 @@ export class GermplasmComponent implements OnInit {
     }
 
     if (this.isImportAncestors) {
-      // Retrieve the pedigree of selected germplasm
+
+      const validSelectedGermplasmForImport = await this.filterValidGermplasm(selectedGermplasm);
+
+      // Retrieve the pedigree of the selected germplasm
       // This will return the pedigree nodes of the germplasm including all their ancestors
-      const pedigreeMapSource: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, selectedGermplasm,
+      const pedigreeMapSource: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, validSelectedGermplasmForImport,
         this.numberOfGenerations);
 
       // Retrieve the details of the germplasm and of their pedigree (ancestors)
       const germplasmWithAncestors = await this.searchGermplasm(this.context.source,
         { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
-      // Retrieve the germplasm from target server to see if they exist
       await this.searchInTarget(germplasmWithAncestors);
-
-      // Get the existing germplasm from the target server
-      const existingGermplasmFromDestination: Germplasm[] = [];
-      germplasmWithAncestors.forEach(o => {
-        const existingGermplasm = this.getMatchingGermplasmInDestination(o);
-        if (existingGermplasm) {
-          existingGermplasmFromDestination.push(existingGermplasm);
-        }
-      });
-
-      let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
-      if (existingGermplasmFromDestination) {
-        // Get the pedigree information of the existing germplasm from the target server, we will use
-        // this to compare the pedigree of the source to the pedigree of the target.
-        pedigreeMapDestination = await this.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
-          this.numberOfGenerations);
-      }
-
-      // Create a map that contains a list of mismatched pedigree nodes per germplasm if there's any.
-      const invalidPedigreeNodes = this.comparePedigreeTree(selectedGermplasm, pedigreeMapSource, pedigreeMapDestination);
-      // Create a map that contains the root germplasmDbIds of each germplasm and ancestors.
-      const pedigreeNodeRootIdsMap = this.getPedigreeNodeRootIdsMap(selectedGermplasm, pedigreeMapSource);
-
-      this.post(germplasmWithAncestors, pedigreeMapSource, invalidPedigreeNodes);
+      this.post(germplasmWithAncestors, pedigreeMapSource);
 
     } else {
 
@@ -153,15 +132,18 @@ export class GermplasmComponent implements OnInit {
 
   }
 
-  private async post(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>,
-                     invalidPedigreeNodes?: { [key: string]: Array<PedigreeNode> }): Promise<void> {
+  async filterValidGermplasm(selectedGermplasm: Germplasm[]): Promise<Germplasm[]> {
+    // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with matched tree (ancestors).
+    const invalidPedigreeNodes = await this.comparePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm);
+    return selectedGermplasm.filter((g) => g.germplasmDbId && !invalidPedigreeNodes.has(g.germplasmDbId));
+  }
+
+  private async post(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
     try {
       this.isSaving = true;
 
       // Get the germplasm that do not exist yet in the destination server
-      // and exclude germplasm that has mismatch pedigree tree.
-      const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g) &&
-        !this.hasMismatchPedigreeNodes(g?.germplasmDbId, invalidPedigreeNodes));
+      const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g));
 
       // If all germplasm already exists in the server, show an error message
       if (!filteredGermplasm.length) {
@@ -171,10 +153,11 @@ export class GermplasmComponent implements OnInit {
         return;
       }
 
-      // Create the germplasm in the destination server
+      // Import the germplasm into the destination server
       const createNewGermplasmRequest = filteredGermplasm.map((g) => this.transformForSave(g));
       const res = await this.http.post(this.context.destination + '/germplasm', createNewGermplasmRequest).toPromise();
 
+      // Update the pedigree of newly created germplasm
       await this.updatePedigreeTree(germplasm, pedigreeMap);
 
       this.onSuccess(res);
@@ -187,7 +170,6 @@ export class GermplasmComponent implements OnInit {
   }
 
   async updatePedigreeTree(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
-    // Update the pedigree of newly created germplasm
     if (pedigreeMap) {
       await this.searchInTarget(germplasm);
       const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
@@ -465,18 +447,26 @@ export class GermplasmComponent implements OnInit {
       return;
     }
 
-    this.invalidPedigreeNodes = {};
+    this.invalidPedigreeNodes = await this.comparePedigreeTree(this.numberOfGenerations - 1, this.germplasm);
 
-    // Retrieve the pedigree of germplasm in the current page
+  }
+
+  async comparePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[]): Promise<Map<string, Array<PedigreeNode>>> {
+
+    // Create a map that contains a list of mismatched pedigree nodes per germplasm if there's any.
+    const invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
+
+    // Retrieve the pedigree of the selected germplasm
     // This will return the pedigree nodes of the germplasm including all their ancestors
-    this.pedigreeMapSource = await this.getPedigreeMap(this.context.source, germplasm,
+    const pedigreeMapSource: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, germplasm,
       this.numberOfGenerations);
 
     // Retrieve the details of the germplasm and of their pedigree (ancestors)
     const germplasmWithAncestors = await this.searchGermplasm(this.context.source,
-      { germplasmDbIds: Array.from(this.pedigreeMapSource.keys()) });
+      { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
-    // Retrieve the germplasm from target server to see if they exist
+    // Retrieve the germplasm from target server to see if they exist. This will build the germplasmInDestinationByPUIs
+    // and germplasmInDestinationByRefIfs maps.
     await this.searchInTarget(germplasmWithAncestors);
 
     // Get the existing germplasm from the target server
@@ -488,26 +478,22 @@ export class GermplasmComponent implements OnInit {
       }
     });
 
+    let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
     if (existingGermplasmFromDestination) {
       // Get the pedigree information of the existing germplasm from the target server, we will use
       // this to compare the pedigree of the source to the pedigree of the target.
-      this.pedigreeMapDestination = await this.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
+      pedigreeMapDestination = await this.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
         this.numberOfGenerations);
     }
 
-    this.invalidPedigreeNodes = this.comparePedigreeTree(this.germplasm, this.pedigreeMapSource, this.pedigreeMapDestination);
-  }
-
-  comparePedigreeTree(germplasm: Germplasm[],
-                      pedigreeMapSource?: Map<string, PedigreeNode>,
-                      pedigreeMapDestination?: Map<string, PedigreeNode>): { [key: string]: Array<PedigreeNode> } {
-    const invalidPedigreeNodes: { [key: string]: Array<PedigreeNode> } = {};
     // Compare pedigree tree of the source and destination
     germplasm.forEach((g: Germplasm) => {
       if (g.germplasmDbId) {
         const pedigreeNode = pedigreeMapSource?.get(g.germplasmDbId);
         if (pedigreeNode && pedigreeNode.germplasmDbId) {
-          this.validatePedigreeNode(pedigreeNode?.germplasmDbId, invalidPedigreeNodes, pedigreeNode, pedigreeMapSource,
+          const level = 1;
+          this.validatePedigreeNode(level, maximumLevelOfRecursion, pedigreeNode?.germplasmDbId, invalidPedigreeNodes, pedigreeNode,
+            pedigreeMapSource,
             pedigreeMapDestination);
         }
       }
@@ -515,14 +501,15 @@ export class GermplasmComponent implements OnInit {
     return invalidPedigreeNodes;
   }
 
-  // Recursive function to compare the pedigree tree of source germplasm to the existing germplasm.
+  // Recursive function to compare the pedigree tree of source germplasm to the target germplasm.
   // Mismatched pedigree node will be added to the invalidPedigreeNodes map.
-  validatePedigreeNode(rootGermplasmDbId: string, invalidPedigreeNodes: { [key: string]: Array<PedigreeNode> },
+  validatePedigreeNode(level: number, maximumLevelOfRecursion: number, rootGermplasmDbId: string,
+                       invalidPedigreeNodes: Map<string, Array<PedigreeNode>>,
                        sourcePedigreeNode?: PedigreeNode,
                        pedigreeMapSource?: Map<string, PedigreeNode>,
                        pedigreeMapDestination?: Map<string, PedigreeNode>): void {
 
-    // Extract the parents of the source pedigree
+    // Extract the parents of the source germplasm
     const sourcePedigreeNodeParent1 = this.getParent1(sourcePedigreeNode);
     const sourcePedigreeNodeParent2 = this.getParent2(sourcePedigreeNode);
     const sourcePedigreeOtherMaleParents = this.getOtherMaleParents(sourcePedigreeNode);
@@ -530,58 +517,98 @@ export class GermplasmComponent implements OnInit {
     // Check if source germplasm (pedigree node) already exists in the destination server
     const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId });
     if (sourcePedigreeNode?.germplasmDbId && existingGermplasmInDestination) {
-      // Get the existing germplasm for the source parents
+      // Get the existing germplasm of the source germplasm's parents
       const existingSourceGermplasmParent1 =
         this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent1?.germplasmDbId });
       const existingSourceGermplasmParent2 =
         this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent2?.germplasmDbId });
+      const existingSourceGermplasmOtherParents: Map<string, Germplasm> = new Map<string, Germplasm>();
+      sourcePedigreeOtherMaleParents?.forEach(p => {
+        const existingSourceGermplasmOtherParent = this.getMatchingGermplasmInDestination({ germplasmDbId: p?.germplasmDbId });
+        if (existingSourceGermplasmOtherParent && existingSourceGermplasmOtherParent.germplasmDbId) {
+          existingSourceGermplasmOtherParents.set(existingSourceGermplasmOtherParent.germplasmDbId, existingSourceGermplasmOtherParent);
+        }
+      });
+
+      if (!existingSourceGermplasmParent1 && !existingSourceGermplasmParent2 && existingSourceGermplasmOtherParents.size === 0) {
+        return;
+      }
 
       // Extract the parents of the existing germplasm from the target
       const destinationPedigreeNode = pedigreeMapDestination?.get(existingGermplasmInDestination?.germplasmDbId ?
         existingGermplasmInDestination.germplasmDbId : '');
       const destinationPedigreeNodeParent1 = this.getParent1(destinationPedigreeNode);
       const destinationPedigreeNodeParent2 = this.getParent2(destinationPedigreeNode);
+      const destinationPedigreeNodeOtherParents = this.getOtherMaleParents(destinationPedigreeNode);
 
-      // Check if the parents of the source germplasm and parents of existing germplasm in the destination are equal
+      /*** Check if the parents of the source germplasm and parents of target germplasm are equal ***/
+
+      // Check if source germplasm's parent 1 doesn't match the target germplasm's parent 1
       if (existingSourceGermplasmParent1?.germplasmDbId && destinationPedigreeNodeParent1?.germplasmDbId
         && existingSourceGermplasmParent1?.germplasmDbId !== destinationPedigreeNodeParent1?.germplasmDbId) {
         this.addToInvalidPedigreeNodes(invalidPedigreeNodes, rootGermplasmDbId, destinationPedigreeNodeParent1);
       }
+      // Check if source germplasm's parent 1 does not exist and the target germplasm's parent 1 is already assigned
+      if (!existingSourceGermplasmParent1?.germplasmDbId && destinationPedigreeNodeParent1?.germplasmDbId) {
+        this.addToInvalidPedigreeNodes(invalidPedigreeNodes, rootGermplasmDbId, destinationPedigreeNodeParent1);
+      }
+      // Check if source germlasm's parent 2 doesn't match the target germplasm's parent 2
       if (existingSourceGermplasmParent2?.germplasmDbId && destinationPedigreeNodeParent2?.germplasmDbId
         && existingSourceGermplasmParent2?.germplasmDbId !== destinationPedigreeNodeParent2?.germplasmDbId) {
         this.addToInvalidPedigreeNodes(invalidPedigreeNodes, rootGermplasmDbId, destinationPedigreeNodeParent2);
       }
-      // TODO: Compare other male parents
+      // Check if source germplasm's parent 2 does not exist and the target germplasm's parent 2 is already assigned
+      if (!existingSourceGermplasmParent2?.germplasmDbId && destinationPedigreeNodeParent2?.germplasmDbId) {
+        this.addToInvalidPedigreeNodes(invalidPedigreeNodes, rootGermplasmDbId, destinationPedigreeNodeParent2);
+      }
+      // Check if source germplasm's other male parents match the target germplasm's other male parents
+      destinationPedigreeNodeOtherParents?.forEach(destinationOtherMaleParent => {
+        if (destinationOtherMaleParent.germplasmDbId &&
+          !existingSourceGermplasmOtherParents.has(destinationOtherMaleParent.germplasmDbId)) {
+          this.addToInvalidPedigreeNodes(invalidPedigreeNodes, rootGermplasmDbId, destinationOtherMaleParent);
+        }
+      });
+    }
+
+    // Immediately terminate the function once max level is reached.
+    if (level === maximumLevelOfRecursion) {
+      return;
     }
 
     if (sourcePedigreeNodeParent1?.germplasmDbId) {
-      // console.log('recursive parent 1:' + sourcePedigreeNodeParent1?.germplasmDbId);
-      this.validatePedigreeNode(rootGermplasmDbId, invalidPedigreeNodes, pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
+      this.validatePedigreeNode(level++, maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
+        pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
         pedigreeMapSource, pedigreeMapDestination);
     }
     if (sourcePedigreeNodeParent2?.germplasmDbId) {
-      // console.log('recursive parent 2:' + sourcePedigreeNodeParent2?.germplasmDbId);
-      this.validatePedigreeNode(rootGermplasmDbId, invalidPedigreeNodes, pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
+      this.validatePedigreeNode(level++, maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
+        pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
         pedigreeMapSource, pedigreeMapDestination);
     }
-    // TODO: validated other male parents
+    sourcePedigreeOtherMaleParents?.forEach(sourcePedigreeOtherParent => {
+      if (sourcePedigreeOtherParent?.germplasmDbId) {
+        this.validatePedigreeNode(level++, maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
+          pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId),
+          pedigreeMapSource, pedigreeMapDestination);
+      }
+    });
 
   }
 
-  hasMismatchPedigreeNodes(germplasmDbId?: string, invalidPedigreeNodes?: { [key: string]: Array<PedigreeNode> }): boolean {
+  hasMismatchPedigreeNodes(germplasmDbId: string, invalidPedigreeNodes: Map<string, Array<PedigreeNode>>): boolean {
     if (!germplasmDbId) {
       return false;
     }
-    return this.isImportAncestors && this.invalidPedigreeNodes[germplasmDbId] && this.invalidPedigreeNodes[germplasmDbId].length > 0;
+    return this.isImportAncestors && invalidPedigreeNodes?.has(germplasmDbId);
   }
 
-  addToInvalidPedigreeNodes(invalidPedigreeNodes: { [key: string]: Array<PedigreeNode> }, sourceGermplasmDbId: string,
+  addToInvalidPedigreeNodes(invalidPedigreeNodes: Map<string, Array<PedigreeNode>>, sourceGermplasmDbId: string,
                             pedigreeNode: PedigreeNode): void {
     // Initialize array if still undefined
-    if (!invalidPedigreeNodes[sourceGermplasmDbId]) {
-      invalidPedigreeNodes[sourceGermplasmDbId] = new Array<PedigreeNode>();
+    if (!invalidPedigreeNodes.has(sourceGermplasmDbId)) {
+      invalidPedigreeNodes.set(sourceGermplasmDbId, new Array<PedigreeNode>());
     }
-    invalidPedigreeNodes[sourceGermplasmDbId].push(pedigreeNode);
+    invalidPedigreeNodes.get(sourceGermplasmDbId)?.push(pedigreeNode);
   }
 
   async getPedigreeMap(basePath: string, germplasm: Germplasm[], pedigreeDepth: number): Promise<Map<string, PedigreeNode>> {
@@ -664,18 +691,6 @@ export class GermplasmComponent implements OnInit {
       return map;
     }
     return new Map<string, PedigreeNode>();
-  }
-
-  private getPedigreeNodeRootIdsMap(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Map<string, Set<string>> {
-    // Filter the germplasm to be created
-    const map: Map<string, Set<string>> = new Map<string, Set<string>>();
-    germplasm?.forEach(g => {
-      if (g.germplasmDbId) {
-        const pedigreeNode = pedigreeMap?.get(g?.germplasmDbId);
-        this.addRootGermplasmDbIdToMap(map, pedigreeNode?.germplasmDbId, pedigreeNode, pedigreeMap);
-      }
-    });
-    return map;
   }
 
   private addRootGermplasmDbIdToMap(map: Map<string, Set<string>>, rootGermplasmDbId?: string, pedigreeNode?: PedigreeNode,
