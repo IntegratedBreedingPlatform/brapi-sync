@@ -1,0 +1,10 @@
+.pedigree-graph {
+    height: 80vh;
+    width: 100%;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+}
+
+svg g.node {
+    cursor: pointer;
+}

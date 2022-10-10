@@ -64,15 +64,15 @@
                 <th>ORIGIN</th>
                 <th>DOCUMENTATION URL</th>
                 <th>ACQUISITION DATE</th>
-                <th>SOURCE PEDIGREE</th>
-                <th>PREVIEW TARGET PEDIGREE</th>
+                <th *ngIf="this.isImportAncestors">SOURCE PEDIGREE</th>
+                <th *ngIf="this.isImportAncestors">PREVIEW TARGET PEDIGREE</th>
                 <th>BREEDING METHOD NAME</th>
                 </thead>
                 <tbody>
                 <tr *ngFor="let row of germplasm">
                   <td *ngIf="!isSelectAllPages">
-                    <input *ngIf="(isAttemptToConnectTargetAncestors && !hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)) || !isGermplasmExistsInDestination(row)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                    &nbsp;<fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green" class="pl-1"></fa-icon>
+                    <input *ngIf="!isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp) || (isAttemptToConnectTargetAncestors && !hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes))" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
+                    &nbsp;<fa-icon *ngIf="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)" [icon]="['fas', 'check']" title="already in target" style="color: green" class="pl-1"></fa-icon>
                   </td>
                   <td>{{row.germplasmDbId}}</td>
                   <td>{{row.germplasmName}}</td>
@@ -80,12 +80,12 @@
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
                   <td>{{row.acquisitionDate}}</td>
-                  <td>{{row.germplasmName}}</td>
-                  <td>
-                    <fa-icon *ngIf="isImportAncestors && !hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
-                    <fa-icon *ngIf="isImportAncestors && hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
+                  <td *ngIf="this.isImportAncestors">{{row.germplasmName}}</td>
+                  <td *ngIf="this.isImportAncestors">
+                    <fa-icon *ngIf="!hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
+                    <fa-icon *ngIf="hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
                     &nbsp;&nbsp;
-                    {{getMatchingGermplasmInDestination(row)?.germplasmName || row.germplasmName}}
+                    <a (click)="showPedigreeGraph(row)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)?.germplasmName || row.germplasmName}}</a>
                   </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>
