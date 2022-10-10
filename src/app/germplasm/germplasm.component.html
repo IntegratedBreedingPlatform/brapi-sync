@@ -117,8 +117,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <!--  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">-->
-  <button type="button" class="btn btn-primary" (click)="importSelectedGermplasm()">
+  <button type="button" class="btn btn-primary" (click)="importSelectedGermplasm()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">
     <span class="throbber throbber-btn" *ngIf="isSaving"></span>
     Import
   </button>
