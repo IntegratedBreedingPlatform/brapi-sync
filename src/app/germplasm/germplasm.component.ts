@@ -148,23 +148,18 @@ export class GermplasmComponent implements OnInit {
       const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g,
         germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds));
 
-      // If all germplasm already exists in the server, show an error message
       if (!filteredGermplasm.length) {
-        this.alertService.showDanger('No new germplasm can be imported.');
-        this.isSaving = false;
-        this.blockUIService.stop('main');
-        return;
+        await this.updatePedigreeTree(germplasm, pedigreeMap);
+        // If all germplasm already exists in the server, show an error message
+        this.alertService.showSuccess('No new germplasm can be imported.');
+      } else {
+        // Import the germplasm into the destination server
+        const createNewGermplasmRequest = filteredGermplasm.map((g) => this.transformForSave(g));
+        const res = await this.http.post(this.context.destination + '/germplasm', createNewGermplasmRequest).toPromise();
+        // Update the pedigree of newly created germplasm
+        await this.updatePedigreeTree(germplasm, pedigreeMap);
+        this.onSuccess(res);
       }
-
-      // Import the germplasm into the destination server
-      const createNewGermplasmRequest = filteredGermplasm.map((g) => this.transformForSave(g));
-      const res = await this.http.post(this.context.destination + '/germplasm', createNewGermplasmRequest).toPromise();
-
-      // Update the pedigree of newly created germplasm
-      await this.updatePedigreeTree(germplasm, pedigreeMap, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
-
-      this.onSuccess(res);
-
     } catch (error) {
       this.onError(error);
     }
@@ -172,9 +167,14 @@ export class GermplasmComponent implements OnInit {
     this.blockUIService.stop('main');
   }
 
-  async updatePedigreeTree(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>,
-                           germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
-                           germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): Promise<void> {
+  async updatePedigreeTree(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
+
+    // Once the germplasm are saved, check search again for germplasm that exist in the destination
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
+    // Find germplasm in destination by referenceId (germplasmDbId)
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
+
     if (pedigreeMap) {
       const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
       pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
