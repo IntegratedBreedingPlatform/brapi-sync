@@ -9,7 +9,7 @@ export class GraphNode {
     public otherProgenitors: GraphNode[] = [],
     public isDerivative: boolean = false,
     public isExistingInTarget: boolean = false,
-    public isParentMismatched: boolean = false
+    public isMismatched: boolean = false
   ) {
   }
 }

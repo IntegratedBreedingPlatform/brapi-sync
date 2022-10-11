@@ -16,6 +16,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
 
   sourceGermplasm: Germplasm = {};
   numberOfGenerations = 1;
+  isPreviewTarget = true;
 
   constructor(private activeModal: NgbActiveModal,
               private context: ContextService,
@@ -65,8 +66,14 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
     }
 
     if (this.sourceGermplasm?.germplasmDbId) {
-      return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
-        pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+      if (this.isPreviewTarget) {
+        return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
+          pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+      } else {
+        return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
+          pedigreeMapSource);
+      }
+
     }
     return;
   }

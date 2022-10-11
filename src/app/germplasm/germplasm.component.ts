@@ -377,10 +377,11 @@ export class GermplasmComponent implements OnInit {
     return synonyms.map((s) => s.synonym).join(', ');
   }
 
-  showPedigreeGraph(sourceGermplasm: Germplasm): void {
+  showPedigreeGraph(sourceGermplasm: Germplasm, isPreviewTarget: boolean): void {
     const modalReference = this.modalService.open(GermplasmPedigreeGraphModalComponent, { size: 'xl', backdrop: 'static' });
     modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
     modalReference.componentInstance.numberOfGenerations = this.numberOfGenerations;
+    modalReference.componentInstance.isPreviewTarget = isPreviewTarget;
   }
 
   async applyImportAncestorsSettings(germplasm: Germplasm[]): Promise<void> {
@@ -389,7 +390,7 @@ export class GermplasmComponent implements OnInit {
       return;
     }
 
-    const invalid = await this.comparePedigreeTree(this.numberOfGenerations - 1, this.germplasm);
+    const invalid = await this.comparePedigreeTree(this.numberOfGenerations, this.germplasm);
     this.invalidPedigreeNodes = invalid;
   }
 

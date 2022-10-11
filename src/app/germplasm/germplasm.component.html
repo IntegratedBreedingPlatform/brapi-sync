@@ -76,12 +76,12 @@
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
                   <td>{{row.acquisitionDate}}</td>
-                  <td *ngIf="this.isImportAncestors"><a (click)="showPedigreeGraph(row)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
+                  <td *ngIf="this.isImportAncestors"><a (click)="showPedigreeGraph(row, false)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
                   <td *ngIf="this.isImportAncestors">
                     <fa-icon *ngIf="!hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
                     <fa-icon *ngIf="hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
                     &nbsp;&nbsp;
-                    <a (click)="showPedigreeGraph(row)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)?.germplasmName || row.germplasmName}}</a>
+                    <a (click)="showPedigreeGraph(row, true)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)?.germplasmName || row.germplasmName}}</a>
                   </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>

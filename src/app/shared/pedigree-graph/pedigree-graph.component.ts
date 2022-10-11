@@ -12,6 +12,7 @@ import { GraphNode } from './graph-node';
 export class PedigreeGraphComponent implements OnInit {
 
   @Input() getGermplasmTreeNode: (() => Promise<GraphNode | undefined>) | undefined;
+  @Input() colorizeNodes = false;
 
   includeDerivativeLines = false;
   includeBreedingMethod = true;
@@ -133,7 +134,7 @@ export class PedigreeGraphComponent implements OnInit {
       dot.push(graphNode.germplasmDbId + ' [shape=box, style=dashed];\n');
     } else {
       name.push('ID: ' + graphNode.germplasmDbId);
-      dot.push(`${graphNode.germplasmDbId} [shape="box" color="${this.getNodeColor(graphNode)}" style="filled"];\n`);
+      dot.push(`${graphNode.germplasmDbId} [shape="box" ${this.getNodeColor(graphNode)}];\n`);
       if (this.includeBreedingMethod && graphNode.methodName) {
         name.push(`\n\n${graphNode.methodName}`);
       }
@@ -145,13 +146,16 @@ export class PedigreeGraphComponent implements OnInit {
   }
 
   getNodeColor(graphNode: GraphNode): string {
-    if (graphNode.isParentMismatched) {
-      return 'Red';
-    } else if (graphNode.isExistingInTarget) {
-      return 'Gold';
-    } else {
-      return 'LimeGreen';
+    if (this.colorizeNodes) {
+      if (graphNode.isMismatched) {
+        return `color="Red" style="filled"`;
+      } else if (graphNode.isExistingInTarget) {
+        return `color="Gold" style="filled"`;
+      } else {
+        return `color="LimeGreen" style="filled"`;
+      }
     }
+    return '';
   }
 
 }
