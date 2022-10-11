@@ -1,7 +1,8 @@
 <div class="container-fluid pl-0 pr-0">
   <div class="modal-header">
     <div class="col-xs-11 col-md-11">
-      <h4 class="modal-title font-weight-bold word-wrap"><span>Pedigree Graph</span></h4>
+      <h4 class="modal-title font-weight-bold word-wrap"><span>Pedigree Tree</span></h4>
+      <span>{{sourceGermplasm.germplasmName}} (ID: {{sourceGermplasm.germplasmDbId}})</span>
     </div>
     <div class="col-xs-1 col-md-1">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
@@ -10,6 +11,19 @@
     </div>
   </div>
   <div class="modal-body">
+    <div class='node-legend'>
+      <div class='legend-title'>Legend</div>
+      <div class='legend-scale'>
+        <ul class='legend-labels'>
+          <li><span style='background:Gold;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm already existing in the destination server</li>
+          <li><span style='background:LimeGreen;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>New germplasm will be created/imported</li>
+          <li><span style='background:Red;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm already exists in the destination server but the parents do not match</li>
+          <li><span style='color:Red; font-weight: bold'>&#8212;&#8212;&#8212;</span>Female Parent</li>
+          <li><span style='color:Blue; font-weight: bold'>&#8212;&#8212;&#8212;</span>Male Parent</li>
+          <li><span style='color:Black; font-weight: bold'>&#8212;&#8212;&#8212;</span>Self (Derivative)</li>
+        </ul>
+      </div>
+    </div>
     <app-pedigree-graph [getGermplasmTreeNode]="getGermplasmTreeNode.bind(this)"></app-pedigree-graph>
   </div>
 </div>

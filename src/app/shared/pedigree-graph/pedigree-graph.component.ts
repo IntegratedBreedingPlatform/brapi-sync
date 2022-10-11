@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Graphviz, graphviz } from 'd3-graphviz';
 import * as d3 from 'd3';
-import { GermplasmTreeNode } from './germplasm-tree-node';
+import { GraphNode } from './graph-node';
 
 @Component({
   selector: 'app-pedigree-graph',
@@ -11,7 +11,7 @@ import { GermplasmTreeNode } from './germplasm-tree-node';
 })
 export class PedigreeGraphComponent implements OnInit {
 
-  @Input() getGermplasmTreeNode: (() => Promise<GermplasmTreeNode | undefined>) | undefined;
+  @Input() getGermplasmTreeNode: (() => Promise<GraphNode | undefined>) | undefined;
 
   includeDerivativeLines = false;
   includeBreedingMethod = true;
@@ -33,11 +33,9 @@ export class PedigreeGraphComponent implements OnInit {
     }
   }
 
-  render(germplasmTreeNode?: GermplasmTreeNode): void {
-    if (this.graphviz && germplasmTreeNode) {
-      this.graphviz.renderDot(this.createDot(germplasmTreeNode), () => {
-        this.initializeNodes();
-      });
+  render(graphNode?: GraphNode): void {
+    if (this.graphviz && graphNode) {
+      this.graphviz.renderDot(this.createDot(graphNode));
     }
   }
 
@@ -57,28 +55,6 @@ export class PedigreeGraphComponent implements OnInit {
       });
   }
 
-  initializeNodes(): void {
-    const nodes = d3.selectAll('.node');
-    nodes.on('mouseover', (datum: any, i: any, group: any) => {
-      this.stopPropagation();
-      if (!this.isUnknownGermplasm(datum)) {
-        const node = group[i];
-        const selection = d3.select(node);
-        selection.selectAll('polygon').attr('fill', '#337ab7');
-        selection.selectAll('text').attr('fill', 'white');
-      }
-    });
-    nodes.on('mouseout', (datum: any, i: any, group: any) => {
-      this.stopPropagation();
-      if (!this.isUnknownGermplasm(datum)) {
-        const node = group[i];
-        const selection = d3.select(node);
-        selection.selectAll('polygon').attr('fill', 'none');
-        selection.selectAll('text').attr('fill', '#000000');
-      }
-    });
-  }
-
   isUnknownGermplasm(datum: any):
     boolean {
     return datum.key === '0';
@@ -90,47 +66,46 @@ export class PedigreeGraphComponent implements OnInit {
     event.stopPropagation();
   }
 
-  createDot(germplasmTreeNode: GermplasmTreeNode): string {
+  createDot(graphNode: GraphNode): string {
 
     const dot: string[] = [];
     dot.push('strict digraph G {');
-    this.addNode(dot, germplasmTreeNode);
+    this.addNode(dot, graphNode);
     dot.push('}');
 
     return dot.join('');
   }
 
-  addNode(dot: string[], germplasmTreeNode: GermplasmTreeNode): void {
+  addNode(dot: string[], graphNode: GraphNode): void {
 
-    dot.push(this.createNodeTextWithFormatting(dot, germplasmTreeNode) + ';\n');
+    dot.push(this.createNodeTextWithFormatting(dot, graphNode) + ';\n');
 
-    if (this.isUnknownImmediateSource(germplasmTreeNode)) {
-      if (germplasmTreeNode.maleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, germplasmTreeNode.maleParentNode) + '->'
-          + germplasmTreeNode.germplasmDbId + ';\n');
-        this.addNode(dot, germplasmTreeNode.maleParentNode);
+    if (this.isUnknownImmediateSource(graphNode)) {
+      if (graphNode.maleParentNode) {
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + '->'
+          + graphNode.germplasmDbId + ';\n');
+        this.addNode(dot, graphNode.maleParentNode);
       }
-      if (germplasmTreeNode.femaleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, germplasmTreeNode.femaleParentNode) + '->'
-          + germplasmTreeNode.maleParentNode?.germplasmDbId + ';\n');
-        this.addNode(dot, germplasmTreeNode.femaleParentNode);
+      if (graphNode.femaleParentNode) {
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + '->'
+          + graphNode.maleParentNode?.germplasmDbId + ';\n');
+        this.addNode(dot, graphNode.femaleParentNode);
       }
     } else {
-      if (germplasmTreeNode.femaleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, germplasmTreeNode.femaleParentNode) + '->'
-          + germplasmTreeNode.germplasmDbId + ((germplasmTreeNode.isDerivative && !germplasmTreeNode.maleParentNode) ? ';\n' :
+      if (!graphNode.isDerivative && graphNode.femaleParentNode) {
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + '->'
+          + graphNode.germplasmDbId + ((graphNode.isDerivative && !graphNode.maleParentNode) ? ';\n' :
             ' [color=\"RED\", arrowhead=\"odottee\"];\n'));
-        this.addNode(dot, germplasmTreeNode.femaleParentNode);
+        this.addNode(dot, graphNode.femaleParentNode);
       }
-      if (germplasmTreeNode.maleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, germplasmTreeNode.maleParentNode) + '->'
-          + germplasmTreeNode.germplasmDbId + ((germplasmTreeNode.isDerivative
-            && !germplasmTreeNode.femaleParentNode) ? ';\n' : ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n'));
-        this.addNode(dot, germplasmTreeNode.maleParentNode);
+      if (graphNode.maleParentNode) {
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + '->'
+          + graphNode.germplasmDbId + ((graphNode.isDerivative) ? ';\n' : ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n'));
+        this.addNode(dot, graphNode.maleParentNode);
       }
-      if (germplasmTreeNode.otherProgenitors && germplasmTreeNode.otherProgenitors.length > 0) {
-        germplasmTreeNode.otherProgenitors.forEach((otherProgenitorGermplasmTreeNode: any) => {
-          dot.push(this.createNodeTextWithFormatting(dot, otherProgenitorGermplasmTreeNode) + '->' + germplasmTreeNode.germplasmDbId
+      if (graphNode.otherProgenitors && graphNode.otherProgenitors.length > 0) {
+        graphNode.otherProgenitors.forEach((otherProgenitorGermplasmTreeNode: any) => {
+          dot.push(this.createNodeTextWithFormatting(dot, otherProgenitorGermplasmTreeNode) + '->' + graphNode.germplasmDbId
             + ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n');
           this.addNode(dot, otherProgenitorGermplasmTreeNode);
         });
@@ -139,34 +114,44 @@ export class PedigreeGraphComponent implements OnInit {
 
   }
 
-  isUnknownImmediateSource(germplasmTreeNode: GermplasmTreeNode): boolean {
-    return germplasmTreeNode.isDerivative &&
-      germplasmTreeNode.femaleParentNode?.germplasmDbId !== '0' &&
-      germplasmTreeNode.maleParentNode?.germplasmDbId === '0';
+  isUnknownImmediateSource(graphNode: GraphNode): boolean {
+    return graphNode.isDerivative &&
+      graphNode.femaleParentNode?.germplasmDbId !== '0' &&
+      graphNode.maleParentNode?.germplasmDbId === '0';
   }
 
-  createNodeTextWithFormatting(dot: string[], germplasmTreeNode: GermplasmTreeNode): string {
+  createNodeTextWithFormatting(dot: string[], graphNode: GraphNode): string {
 
     const name: string[] = [];
 
-    if (germplasmTreeNode.preferredName) {
-      const preferredName = germplasmTreeNode.preferredName.length > this.MAX_NAME_DISPLAY_SIZE
-        ? germplasmTreeNode.preferredName.substring(0, this.MAX_NAME_DISPLAY_SIZE) + '...' : germplasmTreeNode.preferredName;
+    if (graphNode.preferredName) {
+      const preferredName = graphNode.preferredName.length > this.MAX_NAME_DISPLAY_SIZE
+        ? graphNode.preferredName.substring(0, this.MAX_NAME_DISPLAY_SIZE) + '...' : graphNode.preferredName;
       name.push(preferredName + '\n');
     }
-    if (germplasmTreeNode.germplasmDbId === '0') {
-      dot.push(germplasmTreeNode.germplasmDbId + ' [shape=box, style=dashed];\n');
+    if (graphNode.germplasmDbId === '0') {
+      dot.push(graphNode.germplasmDbId + ' [shape=box, style=dashed];\n');
     } else {
-      name.push('ID: ' + germplasmTreeNode.germplasmDbId);
-      dot.push(`${germplasmTreeNode.germplasmDbId} [shape=box];\n`);
-      if (this.includeBreedingMethod && germplasmTreeNode.methodName && germplasmTreeNode.methodCode) {
-        name.push(`\n\n${germplasmTreeNode.methodCode}: ${germplasmTreeNode.methodName}`);
+      name.push('ID: ' + graphNode.germplasmDbId);
+      dot.push(`${graphNode.germplasmDbId} [shape="box" color="${this.getNodeColor(graphNode)}" style="filled"];\n`);
+      if (this.includeBreedingMethod && graphNode.methodName) {
+        name.push(`\n\n${graphNode.methodName}`);
       }
     }
-    dot.push(germplasmTreeNode.germplasmDbId + ' [label=\"' + name.join('') + '\", tooltip=\"' + germplasmTreeNode.preferredName
-      + '\", fontname=\"Helvetica\", fontsize=12.0, ordering=\"in\"];\n');
+    dot.push(graphNode.germplasmDbId + ` [label="${name.join('')}", tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0,` +
+      ` ordering="in"];\n`);
 
-    return germplasmTreeNode.germplasmDbId;
+    return graphNode.germplasmDbId;
+  }
+
+  getNodeColor(graphNode: GraphNode): string {
+    if (graphNode.isParentMismatched) {
+      return 'Red';
+    } else if (graphNode.isExistingInTarget) {
+      return 'Gold';
+    } else {
+      return 'LimeGreen';
+    }
   }
 
 }

@@ -33,10 +33,6 @@
                     </div>
                   </div>
                   <div class="custom-control custom-switch">
-                    <input type="checkbox" class="custom-control-input" name="generativeStepsOnlyCheckbox" id="generativeStepsOnlyCheckbox" [(ngModel)]="isGenerativeStepsOnly" [disabled]="!isImportAncestors">
-                    <label class="custom-control-label" for="generativeStepsOnlyCheckbox">Generative steps only</label>
-                  </div>
-                  <div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" name="connectWithTargetAncestorsCheckbox" id="connectWithTargetAncestorsCheckbox" [(ngModel)]="isAttemptToConnectTargetAncestors" [disabled]="!isImportAncestors">
                     <label class="custom-control-label" for="connectWithTargetAncestorsCheckbox">Attempt to connect with target ancestors</label>
                   </div>
@@ -80,7 +76,7 @@
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
                   <td>{{row.acquisitionDate}}</td>
-                  <td *ngIf="this.isImportAncestors">{{row.germplasmName}}</td>
+                  <td *ngIf="this.isImportAncestors"><a (click)="showPedigreeGraph(row)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
                   <td *ngIf="this.isImportAncestors">
                     <fa-icon *ngIf="!hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
                     <fa-icon *ngIf="hasMismatchPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>

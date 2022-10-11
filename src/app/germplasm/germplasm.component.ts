@@ -8,11 +8,9 @@ import { EntityEnum, ExternalReferenceService } from '../shared/external-referen
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
 import { PedigreeService } from '../shared/brapi/2.1/api/pedigree.service';
-import { PedigreeSearchRequest } from '../shared/brapi/2.1/model/pedigree-search-request';
 import { PedigreeNode } from '../shared/brapi/2.1/model/pedigree-node';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
-import { GermplasmSearchRequest } from '../shared/brapi/2.0/model/germplasm-search-request';
 import { PedigreeNodeParents } from '../shared/brapi/2.1/model/pedigree-node-parents';
 import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
 import { GermplasmPedigreeGraphModalComponent } from './germplasm-pedigree-graph-modal.component';
@@ -53,7 +51,6 @@ export class GermplasmComponent implements OnInit {
   // Import Ancestor Options
   numberOfGenerations = 1;
   isImportAncestors = false;
-  isGenerativeStepsOnly = false;
   isAttemptToConnectTargetAncestors = false;
 
   // Map of existing germplasm matched by PUI,
@@ -115,11 +112,11 @@ export class GermplasmComponent implements OnInit {
 
       // Retrieve the pedigree of the selected germplasm
       // This will return the pedigree nodes of the germplasm including all their ancestors
-      const pedigreeMapSource: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, validSelectedGermplasmForImport,
-        this.numberOfGenerations);
+      const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
+        validSelectedGermplasmForImport, this.numberOfGenerations);
 
       // Retrieve the details of the germplasm and of their pedigree (ancestors)
-      const germplasmWithAncestors = await this.searchGermplasm(this.context.source,
+      const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
         { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
       this.post(germplasmWithAncestors, pedigreeMapSource);
@@ -401,11 +398,11 @@ export class GermplasmComponent implements OnInit {
 
     // Retrieve the pedigree of the selected germplasm
     // This will return the pedigree nodes of the germplasm including all their ancestors
-    const pedigreeMapSource: Map<string, PedigreeNode> = await this.getPedigreeMap(this.context.source, germplasm,
+    const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source, germplasm,
       this.numberOfGenerations);
 
     // Retrieve the details of the germplasm and of their pedigree (ancestors)
-    const germplasmWithAncestors = await this.searchGermplasm(this.context.source,
+    const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
       { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
@@ -427,7 +424,7 @@ export class GermplasmComponent implements OnInit {
     if (existingGermplasmFromDestination) {
       // Get the pedigree information of the existing germplasm from the target server, we will use
       // this to compare the pedigree of the source to the pedigree of the target.
-      pedigreeMapDestination = await this.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
+      pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
         this.numberOfGenerations);
     }
 
@@ -442,65 +439,6 @@ export class GermplasmComponent implements OnInit {
       return false;
     }
     return this.isImportAncestors && invalidPedigreeNodes?.has(germplasmDbId);
-  }
-
-  async getPedigreeMap(basePath: string, germplasm: Germplasm[], pedigreeDepth: number): Promise<Map<string, PedigreeNode>> {
-
-    if (!germplasm) {
-      return new Map<string, PedigreeNode>();
-    }
-
-    // Search the pedigree (ancestors) of the germplasm.
-    const germplasmDbIds: string[] = [];
-    germplasm.forEach(g => {
-      if (g.germplasmDbId) {
-        germplasmDbIds.push(g.germplasmDbId);
-      }
-    });
-    const pedigreeSearchRequest: PedigreeSearchRequest = {
-      germplasmDbIds,
-      includeFullTree: true,
-      pedigreeDepth,
-      includeParents: true
-    };
-    // This will return the germplasm as well as their pedigree (ancestors) within the specified level
-    // TODO: Find a way to filter Generative lines
-    return await this.searchPedigree(basePath, pedigreeSearchRequest);
-  }
-
-  async searchGermplasm(basePath: string, request: GermplasmSearchRequest): Promise<Germplasm[]> {
-    // Search germplasm
-    const searchGermplasmPost = await this.germplasmService.searchGermplasmPost(basePath, request).toPromise();
-    if (searchGermplasmPost.body && searchGermplasmPost.body.result) {
-      // Get the actual search results based ob the searchResultsDbId
-      const searchSearchGetResult = await this.germplasmService.searchGermplasmSearchResultsDbIdGet(basePath,
-        searchGermplasmPost.body.result.searchResultsDbId).toPromise();
-      if (searchSearchGetResult.body && searchSearchGetResult.body.result) {
-        return searchSearchGetResult.body.result.data;
-      }
-    }
-    return [];
-  }
-
-  async searchPedigree(basePath: string, request: PedigreeSearchRequest): Promise<Map<string, PedigreeNode>> {
-    // Search pedigree nodes
-    const searchPedigreePost = await this.pedigreeService.searchPedigreePost(basePath, request).toPromise();
-    if (searchPedigreePost.body && searchPedigreePost.body.result) {
-      // Get the actual search results based ob the searchResultsDbId
-      const searchPedigreeGetResult = await this.pedigreeService.searchPedigreeSearchResultsDbIdGet(basePath,
-        searchPedigreePost.body.result.searchResultsDbId).toPromise();
-      // Convert the array of PedigreeNodes to Map
-      const map = new Map<string, PedigreeNode>();
-      if (searchPedigreeGetResult.body && searchPedigreeGetResult.body.result) {
-        searchPedigreeGetResult.body.result.data.forEach(value => {
-          if (value.germplasmDbId) {
-            map.set(value.germplasmDbId, value);
-          }
-        });
-      }
-      return map;
-    }
-    return new Map<string, PedigreeNode>();
   }
 
   private addRootGermplasmDbIdToMap(map: Map<string, Set<string>>, rootGermplasmDbId?: string, pedigreeNode?: PedigreeNode,
