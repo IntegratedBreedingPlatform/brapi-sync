@@ -257,16 +257,16 @@ export class PedigreeUtilService {
       return;
     }
 
-    // Immediately terminate the function once max level is reached.
-    if (level === maximumLevelOfRecursion) {
-      return;
-    }
-
     // Check if source germplasm (pedigree node) already exists in the destination server
     const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId },
       germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
     if (existingGermplasmInDestination) {
       graphNode.isExistingInTarget = true;
+    }
+
+    // Immediately terminate the function once max level is reached.
+    if (level === maximumLevelOfRecursion) {
+      return;
     }
 
     // Extract the parents
@@ -293,9 +293,9 @@ export class PedigreeUtilService {
         }
       });
 
-      if (!existingSourceGermplasmParent1 && !existingSourceGermplasmParent2 && existingSourceGermplasmOtherParents.size === 0) {
-        return;
-      }
+      // if (!existingSourceGermplasmParent1 && !existingSourceGermplasmParent2 && existingSourceGermplasmOtherParents.size === 0) {
+      //   return;
+      // }
 
       // Extract the parents of the existing germplasm from the target
       const destinationPedigreeNode = pedigreeMapDestination?.get(existingGermplasmInDestination?.germplasmDbId ?
