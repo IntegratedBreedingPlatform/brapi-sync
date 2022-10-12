@@ -405,14 +405,12 @@ export class PedigreeUtilService {
       if (g.germplasmDbId) {
         const pedigreeNode = pedigreeMapSource?.get(g.germplasmDbId);
         if (pedigreeNode && pedigreeNode.germplasmDbId) {
-          if (pedigreeNode.germplasmDbId === 'I7Z4GbJeS4zTZ') {
           const level = 1;
           this.validatePedigreeNode(level, maximumLevelOfRecursion, pedigreeNode?.germplasmDbId, invalidPedigreeNodes, pedigreeNode,
             pedigreeMapSource,
             pedigreeMapDestination,
             germplasmInDestinationByPUIs,
             germplasmInDestinationByReferenceIds);
-          }
         }
       }
     });
