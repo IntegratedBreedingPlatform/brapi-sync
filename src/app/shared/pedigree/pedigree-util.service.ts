@@ -210,7 +210,8 @@ export class PedigreeUtilService {
                                  germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): GraphNode | undefined {
 
     const pedigreeNode = pedigreeMapSource?.get(rootGermplasmDbId);
-    const graphNode = this.convertToGermplasmTreeGraphNode(pedigreeNode);
+    const graphNode = this.convertToGermplasmTreeGraphNode(pedigreeNode, false, germplasmInDestinationByPUIs,
+      germplasmInDestinationByReferenceIds);
     if (graphNode) {
       const level = 1;
       this.addParentNodes(level, maximumLevelOfRecursion, graphNode, pedigreeNode, pedigreeMapSource, pedigreeMapDestination,
@@ -322,11 +323,11 @@ export class PedigreeUtilService {
         // If source's parent 1 doesn't match the target's parent 1
         // Then show the parent 1 of the target germplasm and mark it as "mismatched"
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(destinationPedigreeNodeParent1?.germplasmDbId),
-          parent1Mismatch);
+          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         graphNode.femaleParentNode = parentNode;
       } else {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
-          parent1Mismatch);
+          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId);
         graphNode.femaleParentNode = parentNode;
         if (!this.isDerivative(sourcePedigreeNode)) {
@@ -346,11 +347,12 @@ export class PedigreeUtilService {
         // In case germplasm is derivative, if the group and/or immediate source do not match, then mark the germplasn as "mismatched"
         const isMismatch = parent2Mismatch || (this.isDerivative(sourcePedigreeNode) && parent1Mismatch);
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(destinationPedigreeNodeParent2?.germplasmDbId),
-          isMismatch);
+          isMismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         graphNode.maleParentNode = parentNode;
       } else {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
-          parent2Mismatch);
+          parent2Mismatch, germplasmInDestinationByPUIs,
+          germplasmInDestinationByReferenceIds);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId);
         graphNode.maleParentNode = parentNode;
         this.addParentNodes((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapSource, pedigreeMapDestination,
@@ -363,7 +365,8 @@ export class PedigreeUtilService {
 
     sourcePedigreeOtherMaleParents?.forEach(sourcePedigreeOtherParent => {
       if (sourcePedigreeOtherParent?.germplasmDbId && sourcePedigreeOtherParent?.germplasmName) {
-        const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId));
+        const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId),
+          false, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId);
         if (parentNode) {
           graphNode.otherProgenitors?.push(parentNode);
@@ -375,7 +378,8 @@ export class PedigreeUtilService {
     if (otherMaleParentsMismatch?.length) {
       otherMaleParentsMismatch.forEach(o => {
         if (o.germplasmDbId) {
-          const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(o.germplasmDbId), true);
+          const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(o.germplasmDbId), true,
+            germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
           if (parentNode) {
             graphNode.otherProgenitors?.push(parentNode);
           }
@@ -384,13 +388,25 @@ export class PedigreeUtilService {
     }
   }
 
-  convertToGermplasmTreeGraphNode(pedigreeNode?: PedigreeNode, isMismatched: boolean = false): GraphNode | undefined {
+  convertToGermplasmTreeGraphNode(pedigreeNode?: PedigreeNode, isMismatched: boolean = false,
+                                  germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
+                                  germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): GraphNode | undefined {
     let germplasmTreeNode;
     if (pedigreeNode && pedigreeNode.germplasmDbId && pedigreeNode.germplasmName) {
+
+      const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: pedigreeNode?.germplasmDbId },
+        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
       germplasmTreeNode = new GraphNode(pedigreeNode?.germplasmDbId, pedigreeNode?.germplasmName);
       germplasmTreeNode.isDerivative = this.isDerivative(pedigreeNode);
       germplasmTreeNode.isMismatched = isMismatched;
       germplasmTreeNode.methodName = pedigreeNode.breedingMethodName;
+      if (existingGermplasmInDestination && existingGermplasmInDestination?.germplasmDbId
+        && existingGermplasmInDestination?.germplasmName) {
+        // If the germplasm already exists, show the germplasmDbId and germplasm name of the existing germplasm in destination
+        germplasmTreeNode.isExistingInTarget = true;
+        germplasmTreeNode.germplasmDbId = existingGermplasmInDestination?.germplasmDbId;
+        germplasmTreeNode.preferredName = existingGermplasmInDestination?.germplasmName;
+      }
     }
     return germplasmTreeNode;
   }
