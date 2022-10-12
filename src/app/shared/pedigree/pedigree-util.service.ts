@@ -246,8 +246,6 @@ export class PedigreeUtilService {
       return;
     }
 
-    // console.log(`max: ${maximumLevelOfRecursion}, Level: ${level}, currentNode: ${sourcePedigreeNode?.germplasmDbId}`);
-
     // Extract the parents of the source germplasm
     const sourcePedigreeNodeParent1 = this.getParent1(sourcePedigreeNode);
     const sourcePedigreeNodeParent2 = this.getParent2(sourcePedigreeNode);
@@ -331,19 +329,24 @@ export class PedigreeUtilService {
           parent1Mismatch);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId);
         graphNode.femaleParentNode = parentNode;
-        this.addParentNodes((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapSource, pedigreeMapDestination,
-          germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        if (!this.isDerivative(sourcePedigreeNode)) {
+          // This is to avoid multiple processing of the same group source in a derivative line.
+          this.addParentNodes((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapSource, pedigreeMapDestination,
+            germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        }
       }
     } else {
       // If germplasmDbId and germplasm are null, it means the parent is unknown.
       graphNode.femaleParentNode = this.createUnknownGraphNode();
     }
     if (sourcePedigreeNodeParent2?.germplasmDbId && sourcePedigreeNodeParent2?.germplasmName) {
-      if (parent2Mismatch && destinationPedigreeNodeParent2?.germplasmDbId) {
+      if ((parent2Mismatch || parent1Mismatch) && destinationPedigreeNodeParent2?.germplasmDbId) {
         // If source's parent 2 doesn't match the target's parent 2
         // Then show the parent 2 of the target germplasm and mark it as "mismatched"
+        // In case germplasm is derivative, if the group and/or immediate source do not match, then mark the germplasn as "mismatched"
+        const isMismatch = parent2Mismatch || (this.isDerivative(sourcePedigreeNode) && parent1Mismatch);
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(destinationPedigreeNodeParent2?.germplasmDbId),
-          parent2Mismatch);
+          isMismatch);
         graphNode.maleParentNode = parentNode;
       } else {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
@@ -414,7 +417,8 @@ export class PedigreeUtilService {
         }
       }
     });
-    return pedigreeMap;
+    return invalidPedigreeNodes;
+
   }
 
   // Recursive function to compare the pedigree nodes (parents) of source germplasm to the target germplasm.
@@ -432,6 +436,7 @@ export class PedigreeUtilService {
     if (level >= maximumLevelOfRecursion) {
       return;
     }
+
     // Extract the parents of the source germplasm
     const sourcePedigreeNodeParent1 = this.getParent1(sourcePedigreeNode);
     const sourcePedigreeNodeParent2 = this.getParent2(sourcePedigreeNode);
@@ -498,7 +503,8 @@ export class PedigreeUtilService {
     }
 
     if (sourcePedigreeNodeParent1?.germplasmDbId && !this.isDerivative(sourcePedigreeNode)) {
-      // Only validate parent 1 if the germplasm is generative
+      // Only validate parent 1 if the germplasm is generative.
+      // So that if germplasm is derivative, we can avoid multiple validations of the same group source in derivatine line.
       this.validatePedigreeNode((level + 1), maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
         pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
         pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
