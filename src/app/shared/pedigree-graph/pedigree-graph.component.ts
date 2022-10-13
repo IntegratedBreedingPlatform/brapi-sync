@@ -148,7 +148,7 @@ export class PedigreeGraphComponent implements OnInit {
   getNodeColor(graphNode: GraphNode): string {
     if (this.colorizeNodes) {
       if (graphNode.isMismatched) {
-        return `color="Red" style="filled"`;
+        return `color="Red" style="filled" fontcolor="white"`;
       } else if (graphNode.isExistingInTarget) {
         return `color="Gold" style="filled"`;
       } else {
