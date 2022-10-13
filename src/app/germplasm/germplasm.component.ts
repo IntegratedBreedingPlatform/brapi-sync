@@ -146,7 +146,7 @@ export class GermplasmComponent implements OnInit {
         germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds));
 
       if (!filteredGermplasm.length) {
-        await this.updatePedigreeTree(germplasm, pedigreeMap);
+        // await this.updatePedigreeTree(germplasm, pedigreeMap);
         // If all germplasm already exists in the server, show an error message
         this.alertService.showWarning('No new germplasm can be imported.');
       } else {

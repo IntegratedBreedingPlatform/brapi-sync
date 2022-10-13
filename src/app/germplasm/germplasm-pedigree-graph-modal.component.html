@@ -14,19 +14,44 @@
     </div>
   </div>
   <div class="modal-body">
-    <div class="node-legend">
-      <div class="legend-title">Legend</div>
-      <div class="legend-scale">
-        <ul class="legend-labels">
-          <li *ngIf="isPreviewTarget"><span style='background:Gold;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm already exists in the destination server</li>
-          <li *ngIf="isPreviewTarget"><span style='background:LimeGreen;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm without existing record in the destination server</li>
-          <li *ngIf="isPreviewTarget"><span style='background:Red;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm parent does not match the source</li>
-          <li><span style="color:Red; font-weight: bold">&#8212;&#8212;&#8212;</span>Female Parent</li>
-          <li><span style="color:Blue; font-weight: bold">&#8212;&#8212;&#8212;</span>Male Parent</li>
-          <li><span style="color:Black; font-weight: bold">&#8212;&#8212;&#8212;</span>Derivative Self</li>
-        </ul>
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col">
+                <div class="legend-title">Legend</div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-2">
+                <div class="node-legend">
+                  <div class="legend-scale">
+                    <ul class="legend-labels">
+                      <li><span style="color:Red; font-weight: bold; border: 0">&#8212;&#8212;&#8212;</span>Female Parent</li>
+                      <li><span style="color:Blue; font-weight: bold; border: 0">&#8212;&#8212;&#8212;</span>Male Parent</li>
+                      <li><span style="color:Black; font-weight: bold; border: 0">&#8212;&#8212;&#8212;</span>Derivative Self</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="isPreviewTarget" class="col-5">
+                <div class="node-legend">
+                  <div class="legend-scale">
+                    <ul class="legend-labels">
+                      <li><span style='background:Gold;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm already exists in the destination server</li>
+                      <li><span style='background:LimeGreen;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm without existing record in the destination server</li>
+                      <li><span style='background:Red;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Germplasm parent does not match the source</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    <br>
     <app-pedigree-graph [getGermplasmTreeNode]="getGermplasmTreeNode.bind(this)" [colorizeNodes]="isPreviewTarget"></app-pedigree-graph>
   </div>
 </div>
