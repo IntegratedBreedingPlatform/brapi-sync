@@ -174,12 +174,14 @@ export class ObservationComponent implements OnInit {
     const observations: any = [];
     sourceObservations.forEach((observation) => {
       const targetObservationUnit = this.targetObservationUnitsByReferenceId[this.externalReferenceService.getReferenceId(EntityEnum.OBSERVATIONUNITS, observation.observationUnitDbId)];
-      if (this.isValidForImport(observation.observationVariableName) && targetObservationUnit) {
+      if (this.isValidForImport(observation) && targetObservationUnit) {
+        const sourceVariableAlias = this.context.sourceVariablesAliasByOntologyNames[observation.observationVariableName];
+        const key: string = (sourceVariableAlias) ? sourceVariableAlias : observation.observationVariableName;
         observations.push({
           germplasmDbId: targetObservationUnit.germplasmDbId,
           observationUnitDbId: targetObservationUnit.observationUnitDbId,
-          observationVariableDbId: this.context.variablesMap[observation.observationVariableName].observationVariableDbId,
-          observationVariableName: this.context.variablesMap[observation.observationVariableName].observationVariableName,
+          observationVariableDbId: this.context.variablesMap[key].observationVariableDbId,
+          observationVariableName: this.context.variablesMap[key].observationVariableName,
           studyDbId: this.context.targetStudy.studyDbId,
           value: observation.value
         });
@@ -192,7 +194,8 @@ export class ObservationComponent implements OnInit {
     const observationsCountByVariable: any = {};
     // Count observations per observation variable.
     for (const [k, v] of Object.entries(this.context.variablesMap)) {
-      observationsCountByVariable[k] = observations.filter((observation) => observation.observationVariableName === k);
+      observationsCountByVariable[k] = observations.filter((observation) =>
+        observation.observationVariableName === k || this.context.sourceVariablesAliasByOntologyNames[observation.observationVariableName] === k);
     }
     return observationsCountByVariable;
   }
@@ -212,13 +215,24 @@ export class ObservationComponent implements OnInit {
 
   isValid(): boolean {
     return !this.observationsSaved && !this.loading && Object.entries(this.context.variablesMap).some((([key, value]) => {
-      return this.isValidForImport(key);
+      return this.isValidForImport(value);
     }));
   }
 
-  isValidForImport(variableName: string): boolean {
+  isValidForImport(observation: any): boolean {
+    // check if variable has alias
+    let variableName: string;
+    if (observation.ontologyReference && observation.ontologyReference.ontologyName &&
+      observation.ontologyReference.ontologyName !== observation.observationVariableName) {
+      variableName = observation.ontologyReference.ontologyName;
+    } else {
+      variableName = observation.observationVariableName;
+    }
+
+    const variableAlias = this.context.sourceVariablesAliasByOntologyNames[variableName];
+    const key: string = variableAlias ? variableAlias : variableName;
     // Check if the variable already has existing observation in the target server
-    const observationsByVariable: any[] = this.targetObservationsByVariable[variableName];
+    const observationsByVariable: any[] = this.targetObservationsByVariable[key];
     return observationsByVariable && observationsByVariable.length <= 0;
   }
 
