@@ -108,7 +108,8 @@ export class GermplasmComponent implements OnInit {
 
     if (this.isImportAncestors) {
 
-      const validSelectedGermplasmForImport = await this.filterValidGermplasm(selectedGermplasm);
+      const validSelectedGermplasmForImport = this.isAttemptToConnectTargetAncestors ?
+        await this.filterValidGermplasm(selectedGermplasm) : selectedGermplasm;
 
       // Retrieve the pedigree of the selected germplasm
       // This will return the pedigree nodes of the germplasm including all their ancestors
@@ -127,8 +128,8 @@ export class GermplasmComponent implements OnInit {
   }
 
   async filterValidGermplasm(selectedGermplasm: Germplasm[]): Promise<Germplasm[]> {
-    // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with matched tree (ancestors).
-    const invalidPedigreeNodes = await this.comparePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm);
+    // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with valid tree.
+    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm);
     return selectedGermplasm.filter((g) => g.germplasmDbId && !invalidPedigreeNodes.has(g.germplasmDbId));
   }
 
@@ -382,6 +383,7 @@ export class GermplasmComponent implements OnInit {
     modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
     modalReference.componentInstance.numberOfGenerations = this.numberOfGenerations;
     modalReference.componentInstance.isPreviewTarget = isPreviewTarget;
+    modalReference.componentInstance.isAttemptToConnectTargetAncestors = this.isAttemptToConnectTargetAncestors;
   }
 
   async applyImportAncestorsSettings(germplasm: Germplasm[]): Promise<void> {
@@ -390,11 +392,11 @@ export class GermplasmComponent implements OnInit {
       return;
     }
 
-    const invalid = await this.comparePedigreeTree(this.numberOfGenerations, this.germplasm);
+    const invalid = await this.validatePedigreeTree(this.numberOfGenerations, this.germplasm);
     this.invalidPedigreeNodes = invalid;
   }
 
-  async comparePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[]): Promise<Map<string, Array<PedigreeNode>>> {
+  async validatePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[]): Promise<Map<string, Array<PedigreeNode>>> {
 
 
     // Retrieve the pedigree of the selected germplasm
@@ -429,13 +431,13 @@ export class GermplasmComponent implements OnInit {
         this.numberOfGenerations);
     }
 
-    return this.pedigreeUtilService.comparePedigreeTreeNodes(maximumLevelOfRecursion, germplasm, pedigreeMapSource, pedigreeMapDestination,
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+    return this.pedigreeUtilService.validatePedigreeTreeNodes(maximumLevelOfRecursion, germplasm, pedigreeMapSource, pedigreeMapDestination,
+      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, !this.isAttemptToConnectTargetAncestors);
 
   }
 
 
-  hasMismatchPedigreeNodes(germplasmDbId: string, invalidPedigreeNodes: Map<string, Array<PedigreeNode>>): boolean {
+  hasInvalidPedigreeNodes(germplasmDbId: string, invalidPedigreeNodes: Map<string, Array<PedigreeNode>>): boolean {
     if (!germplasmDbId) {
       return false;
     }
@@ -482,5 +484,18 @@ export class GermplasmComponent implements OnInit {
       cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
     }
     return cell;
+  }
+
+  isSelectable(germplasm: Germplasm): boolean {
+    if (germplasm.germplasmDbId) {
+      if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, this.invalidPedigreeNodes)) {
+        return false;
+      } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIsTemp,
+        this.germplasmInDestinationByReferenceIdsTemp)) {
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 }
