@@ -5,3 +5,25 @@ i {
 table {
   white-space: nowrap;
 }
+
+td
+{
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-cell-yellow {
+  background-color: gold;
+}
+
+.table-cell-green {
+  background-color: limegreen;
+}
+
+
+::ng-deep .modal-max-width .modal-dialog {
+  max-width: 90%;
+  width: 90%;
+}

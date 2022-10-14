@@ -1,10 +1,7 @@
 <div class="container-fluid pl-0 pr-0">
   <div class="modal-header">
     <div class="col-xs-11 col-md-11">
-      <h4 class="modal-title font-weight-bold word-wrap">
-        <span *ngIf="isPreviewTarget">Preview Target Pedigree Tree</span>
-        <span *ngIf="!isPreviewTarget">Source Pedigree Tree</span>
-      </h4>
+      <h4 class="modal-title font-weight-bold word-wrap">Pedigree Tree Viewer</h4>
       <span>{{sourceGermplasm.germplasmName}} (ID: {{sourceGermplasm.germplasmDbId}})</span>
     </div>
     <div class="col-xs-1 col-md-1">
@@ -35,7 +32,7 @@
                   </div>
                 </div>
               </div>
-              <div *ngIf="isPreviewTarget" class="col-5">
+              <div *ngIf="showDestinationPreviewTree" class="col-5">
                 <div class="node-legend">
                   <div class="legend-scale">
                     <ul class="legend-labels">
@@ -52,6 +49,29 @@
       </div>
     </div>
     <br>
-    <app-pedigree-graph [getGermplasmTreeNode]="getGermplasmTreeNode.bind(this)" [colorizeNodes]="isPreviewTarget"></app-pedigree-graph>
+    <div class="row" *ngIf="showDestinationPreviewTree">
+      <div class="col">
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" name="showSourcePedigreeTreeCheckbox" id="showSourcePedigreeTreeCheckbox" [(ngModel)]="showSourcePedigreeTree">
+          <label class="custom-control-label" for="showSourcePedigreeTreeCheckbox">Show source pedigree tree</label>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div *ngIf="showSourcePedigreeTree" [ngClass]="showSourcePedigreeTree && !showDestinationPreviewTree ? 'col' : 'col-6'">
+        <p class="text-center font-weight-bold">Source Pedigree Tree</p>
+      </div>
+      <div *ngIf="showDestinationPreviewTree" [ngClass]="!showSourcePedigreeTree && showDestinationPreviewTree ? 'col' : 'col-6'">
+        <p class="text-center font-weight-bold">Preview Destination Pedigree Tree</p>
+      </div>
+    </div>
+    <div class="row">
+      <div *ngIf="showSourcePedigreeTree" [ngClass]="showSourcePedigreeTree && !showDestinationPreviewTree ? 'col' : 'col-6'">
+        <app-pedigree-graph [graphId]="'graphSource'" [isPreviewTarget]="false" [getGermplasmTreeNode]="getGermplasmTreeNode.bind(this)" [colorizeNodes]="false"></app-pedigree-graph>
+      </div>
+      <div *ngIf="showDestinationPreviewTree" [ngClass]="!showSourcePedigreeTree && showDestinationPreviewTree ? 'col' : 'col-6'">
+        <app-pedigree-graph [graphId]="'graphDestination'" [isPreviewTarget]="true" [getGermplasmTreeNode]="getGermplasmTreeNode.bind(this)" [colorizeNodes]="true"></app-pedigree-graph>
+      </div>
+    </div>
   </div>
 </div>

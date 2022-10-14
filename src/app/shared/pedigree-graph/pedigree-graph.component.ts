@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Graphviz, graphviz } from 'd3-graphviz';
 import * as d3 from 'd3';
 import { GraphNode } from './graph-node';
@@ -9,10 +9,12 @@ import { GraphNode } from './graph-node';
   styleUrls: ['./pedigree-graph.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class PedigreeGraphComponent implements OnInit {
+export class PedigreeGraphComponent implements OnInit, AfterViewInit {
 
-  @Input() getGermplasmTreeNode: (() => Promise<GraphNode | undefined>) | undefined;
+  @Input() getGermplasmTreeNode: ((isPreviewTarget: boolean) => Promise<GraphNode | undefined>) | undefined;
+  @Input() isPreviewTarget = false;
   @Input() colorizeNodes = false;
+  @Input() graphId = 'pedigree-graph';
 
   includeDerivativeLines = false;
   includeBreedingMethod = true;
@@ -23,14 +25,18 @@ export class PedigreeGraphComponent implements OnInit {
   constructor() {
   }
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     this.initialize();
+  }
+
+  ngOnInit(): void {
+
   }
 
   initialize(): void {
     this.initializeGraph();
     if (this.getGermplasmTreeNode) {
-      this.getGermplasmTreeNode().then(data => this.render(data));
+      this.getGermplasmTreeNode(this.isPreviewTarget).then(data => this.render(data));
     }
   }
 
@@ -42,7 +48,7 @@ export class PedigreeGraphComponent implements OnInit {
 
   initializeGraph(): void {
 
-    this.graphviz = graphviz('#pedigree-graph', {
+    this.graphviz = graphviz(`#${this.graphId}`, {
       useWorker: false
     }).totalMemory(Math.pow(2, 27)) // Increase memory available to avoid OOM
       .fit(true)

@@ -24,6 +24,7 @@ declare const BrAPI: any;
   styleUrls: ['./germplasm.component.css']
 })
 export class GermplasmComponent implements OnInit {
+  MAX_NAME_DISPLAY_SIZE = 50;
 
   brapiDestination: any;
   brapiSource: any;
@@ -379,10 +380,11 @@ export class GermplasmComponent implements OnInit {
   }
 
   showPedigreeGraph(sourceGermplasm: Germplasm, isPreviewTarget: boolean): void {
-    const modalReference = this.modalService.open(GermplasmPedigreeGraphModalComponent, { size: 'xl', backdrop: 'static' });
+    const modalReference = this.modalService.open(GermplasmPedigreeGraphModalComponent, { size: 'lg', backdrop: 'static', windowClass: 'modal-max-width' });
     modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
     modalReference.componentInstance.numberOfGenerations = this.numberOfGenerations;
-    modalReference.componentInstance.isPreviewTarget = isPreviewTarget;
+    modalReference.componentInstance.showSourcePedigreeTree = !isPreviewTarget;
+    modalReference.componentInstance.showDestinationPreviewTree = isPreviewTarget;
     modalReference.componentInstance.isAttemptToConnectTargetAncestors = this.isAttemptToConnectTargetAncestors;
   }
 

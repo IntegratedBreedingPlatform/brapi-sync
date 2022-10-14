@@ -16,7 +16,8 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
 
   sourceGermplasm: Germplasm = {};
   numberOfGenerations = 1;
-  isPreviewTarget = true;
+  showSourcePedigreeTree = false;
+  showDestinationPreviewTree = false;
   isAttemptToConnectTargetAncestors = false;
 
   constructor(private activeModal: NgbActiveModal,
@@ -32,7 +33,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  async getGermplasmTreeNode(): Promise<GraphNode | undefined> {
+  async getGermplasmTreeNode(isPreviewTarget: boolean): Promise<GraphNode | undefined> {
     // Retrieve the pedigree of the germplasm
     // This will return the pedigree nodes of the germplasm including all their ancestors
     const pedigreeMapSource = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
@@ -67,7 +68,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
     }
 
     if (this.sourceGermplasm?.germplasmDbId) {
-      if (this.isPreviewTarget) {
+      if (isPreviewTarget) {
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
           this.isAttemptToConnectTargetAncestors, pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs,
           germplasmInDestinationByReferenceIds);
