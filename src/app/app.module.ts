@@ -34,6 +34,7 @@ import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 import { BlockUIModule, BlockUIService } from 'ng-block-ui';
 import { GermplasmSourceModalComponent } from './germplasm/germplasm-source-modal.component';
+import { StudiesService } from './shared/brapi/2.1/api/studies.service';
 
 @NgModule({
   declarations: [
@@ -83,7 +84,8 @@ import { GermplasmSourceModalComponent } from './germplasm/germplasm-source-moda
     AlertService,
     OAuthService,
     DelegatedAuthenticationService,
-    BlockUIService
+    BlockUIService,
+    StudiesService
   ],
   bootstrap: [AppComponent]
 })

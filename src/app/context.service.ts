@@ -31,6 +31,7 @@ export class ContextService {
   isEmbedded = false;
 
   sourceStudyWasPreviouslyImportedFromTarget = false;
+  sourceVariablesAliasByOntologyNames: any = {};
 
   constructor() {
   }
@@ -44,5 +45,6 @@ export class ContextService {
     this.targetStudy = {};
     this.variablesMap = {};
     this.sourceStudyWasPreviouslyImportedFromTarget = false;
+    this.sourceVariablesAliasByOntologyNames = {};
   }
 }
