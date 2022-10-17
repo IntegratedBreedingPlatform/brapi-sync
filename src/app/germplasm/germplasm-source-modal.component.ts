@@ -6,8 +6,7 @@ import { CrossExternalReferences } from '../shared/brapi/2.0/model/cross-externa
 
 @Component({
   selector: 'app-germplasm-details',
-  templateUrl: './germplasm-source-modal.component.html',
-  styleUrls: ['./germplasm-source-modal.component.css']
+  templateUrl: './germplasm-source-modal.component.html'
 })
 export class GermplasmSourceModalComponent implements OnInit {
 
