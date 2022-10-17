@@ -8,6 +8,9 @@ import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
+import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
+import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
+import { GermplasmSourceModalComponent } from './germplasm-source-modal.component';
 
 declare const BrAPI: any;
 
@@ -366,5 +369,10 @@ export class GermplasmComponent implements OnInit {
       return '';
     }
     return synonyms.map((s) => s.synonym).join(', ');
+  }
+
+  showGermplasmSourceModal(sourceGermplasm: Germplasm): void {
+    const modalReference = this.modalService.open(GermplasmSourceModalComponent, { size: 'xl', backdrop: 'static' });
+    modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
   }
 }

@@ -33,6 +33,7 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
 import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 import { BlockUIModule, BlockUIService } from 'ng-block-ui';
+import { GermplasmSourceModalComponent } from './germplasm/germplasm-source-modal.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import { BlockUIModule, BlockUIService } from 'ng-block-ui';
     ObjectKeysPipe,
     StudySelectorComponent,
     ToastsContainer,
-    DropdownVirtualScrollComponent
+    DropdownVirtualScrollComponent,
+    GermplasmSourceModalComponent
   ],
   imports: [
     OAuthModule.forRoot(),
