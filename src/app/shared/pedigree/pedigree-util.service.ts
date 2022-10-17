@@ -523,6 +523,14 @@ export class PedigreeUtilService {
                                germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm },
                                checkForExistingAncestors?: boolean): void {
 
+    // Check if source germplasm (pedigree node) already exists in the destination server
+    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId },
+      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+
+    if (existingGermplasmInDestination && checkForExistingAncestors && sourcePedigreeNode) {
+      this.addToInvalidPedigreeNodes(PedigreeNodeValidationType.ROOT_GERMPLASM_HAS_EXISTING_ANCESTORS,
+        invalidPedigreeNodes, rootGermplasmDbId, sourcePedigreeNode);
+    }
 
     // Immediately terminate the function once max level is reached.
     if (level >= maximumLevelOfRecursion) {
@@ -534,9 +542,6 @@ export class PedigreeUtilService {
     const sourcePedigreeNodeParent2 = this.getParent2(sourcePedigreeNode);
     const sourcePedigreeOtherMaleParents = this.getOtherMaleParents(sourcePedigreeNode);
 
-    // Check if source germplasm (pedigree node) already exists in the destination server
-    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId },
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
     if (sourcePedigreeNode?.germplasmDbId && existingGermplasmInDestination) {
       // Get the existing germplasm of the source germplasm's parents
       const existingSourceGermplasmParent1 =
@@ -556,11 +561,6 @@ export class PedigreeUtilService {
 
       if (!existingSourceGermplasmParent1 && !existingSourceGermplasmParent2 && existingSourceGermplasmOtherParents.size === 0) {
         return;
-      }
-
-      if (checkForExistingAncestors) {
-        this.addToInvalidPedigreeNodes(PedigreeNodeValidationType.ROOT_GERMPLASM_HAS_EXISTING_ANCESTORS,
-          invalidPedigreeNodes, rootGermplasmDbId, sourcePedigreeNode);
       }
 
       // Extract the parents of the existing germplasm from the target
@@ -609,18 +609,21 @@ export class PedigreeUtilService {
       // So that if germplasm is derivative, we can avoid multiple validations of the same group source in derivatine line.
       this.validatePedigreeNode((level + 1), maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
         pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
-        pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds,
+        checkForExistingAncestors);
     }
     if (sourcePedigreeNodeParent2?.germplasmDbId) {
       this.validatePedigreeNode((level + 1), maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
         pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
-        pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds,
+        checkForExistingAncestors);
     }
     sourcePedigreeOtherMaleParents?.forEach(sourcePedigreeOtherParent => {
       if (sourcePedigreeOtherParent?.germplasmDbId) {
         this.validatePedigreeNode((level + 1), maximumLevelOfRecursion, rootGermplasmDbId, invalidPedigreeNodes,
           pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId),
-          pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds,
+          checkForExistingAncestors);
       }
     });
 
