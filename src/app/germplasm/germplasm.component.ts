@@ -9,7 +9,6 @@ import { EntityEnum, ExternalReferenceService } from '../shared/external-referen
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
-import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
 import { GermplasmSourceModalComponent } from './germplasm-source-modal.component';
 
 declare const BrAPI: any;
