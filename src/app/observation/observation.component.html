@@ -38,8 +38,8 @@
                     <td>{{sourceObservationsByVariable[key]?.length}}</td>
                     <td><app-expandable-json-viewer [json]="sanitizeObject(sourceObservationsByVariable[key])"></app-expandable-json-viewer></td>
                     <td>
-                        <span *ngIf="isValidForImport(context.variablesMap[key]?.observationVariableName)" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
-                        <span *ngIf="!isValidForImport(context.variablesMap[key]?.observationVariableName)"><fa-icon style="color:goldenrod" [icon]="['fas', 'exclamation-triangle']"></fa-icon> Observation(s) already exists for this variable.</span>
+                        <span *ngIf="isValidForImport(context.variablesMap[key])" style="color: green"><fa-icon [icon]="['fas', 'check']"></fa-icon></span>
+                        <span *ngIf="!isValidForImport(context.variablesMap[key])"><fa-icon style="color:goldenrod" [icon]="['fas', 'exclamation-triangle']"></fa-icon> Observation(s) already exists for this variable.</span>
                     </td>
                   </tr>
                   </tbody>
@@ -58,7 +58,6 @@
       Import Observations
     </button>
   </div>
-  
   
   
   

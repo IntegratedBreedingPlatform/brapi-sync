@@ -6,6 +6,8 @@ import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { ContextService } from '../context.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
+import { StudiesService } from '../shared/brapi/2.1/api/studies.service';
+import { StudyUpdateRequest } from '../shared/brapi/2.1/model/study-update-request';
 
 declare const BrAPI: any;
 
@@ -23,14 +25,16 @@ export class VariableComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   variablesSaved = false;
-  isStudySelectable: boolean = false;
+  isStudySelectable = false;
+  sourceVariablesAliasByOntologyNames: any = {};
 
   constructor(private router: Router,
               private http: HttpClient,
               public externalReferenceService: ExternalReferenceService,
               public context: ContextService,
               private alertService: AlertService,
-              private blockUIService: BlockUIService) {
+              private blockUIService: BlockUIService,
+              private studiesService: StudiesService) {
     this.brapiSource = BrAPI(this.context.source, '2.0', this.context.sourceToken);
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
   }
@@ -48,13 +52,13 @@ export class VariableComponent implements OnInit {
     this.load();
   }
 
-  async load() {
+  async load(): Promise<void> {
     this.isLoading = true;
     this.setTargetStudyToContext();
 
     if (this.context.targetStudy) {
       this.sourceVariables = await this.loadVariablesFromSource();
-      this.loadVariablesFromTarget(this.sourceVariables);
+      this.loadVariablesFromTarget();
     } else {
       this.alertService.showDanger(`${this.context.sourceStudy.studyName} is not present in the destination server nor was previously imported from the target server.`);
     }
@@ -62,7 +66,7 @@ export class VariableComponent implements OnInit {
     this.isLoading = false;
   }
 
-  async setTargetStudyToContext() {
+  async setTargetStudyToContext(): Promise<void> {
     // try to get study from target by external reference
     this.context.targetStudy = await this.getStudyFromTargetServer({
       externalReferenceId: this.externalReferenceService.getReferenceId(EntityEnum.STUDIES, this.context.sourceStudy.studyDbId),
@@ -94,34 +98,60 @@ export class VariableComponent implements OnInit {
         }
       ).all((result: any[]) => {
         result.forEach((observationVariable) => {
-          variables[observationVariable.observationVariableName] = observationVariable;
+          if (observationVariable.contextOfUse?.includes('PLOT')) {
+            variables[observationVariable.observationVariableName] = observationVariable;
+          }
         });
         resolve(variables);
       });
     });
   }
 
-  loadVariablesFromTarget(sourceVariables: any) {
+  async loadVariablesFromTarget(): Promise<void> {
     // Get the variables from target system
-    const variables: any = {};
+    const observationVariableNames: string[] = [];
     Object.entries<any>(this.sourceVariables).forEach(async ([key, value]) => {
-      const variableFromTarget = await this.findVariableFromTarget(key);
-        this.variablesMap[key] = variableFromTarget;
+      const variableName: string = value.observationVariableName;
+      observationVariableNames.push(variableName);
+
+      if (value.ontologyReference && value.ontologyReference.ontologyName !== variableName) {
+        const ontologyName: string = value.ontologyReference.ontologyName;
+
+        observationVariableNames.push(ontologyName);
+        this.sourceVariablesAliasByOntologyNames[ontologyName] = variableName;
+      }
     });
+
+    if (observationVariableNames.length > 0) {
+      const targetVariables: any[] = await this.findVariablesFromTarget(observationVariableNames);
+      targetVariables.forEach((variableFromTarget) => {
+        const variableName: string = variableFromTarget.observationVariableName;
+        if (this.sourceVariables[variableName]) {
+          // variable matches with by the same alias or name in source and target
+          this.variablesMap[variableName] = variableFromTarget;
+        } else if (variableFromTarget.ontologyReference && this.sourceVariables[variableFromTarget.ontologyReference.ontologyName]) {
+          // variable has an alias in target
+          this.variablesMap[variableFromTarget.ontologyReference.ontologyName] = variableFromTarget;
+        } else if (this.sourceVariablesAliasByOntologyNames[variableName]) {
+          // variable has an alias in source
+          const variableAlias: string = this.sourceVariablesAliasByOntologyNames[variableName];
+          this.variablesMap[variableAlias] = variableFromTarget;
+        } else {
+          // variable has alias in both source and target
+          const variableAlias: string = this.sourceVariablesAliasByOntologyNames[variableFromTarget.ontologyReference.ontologyName];
+          this.variablesMap[variableAlias] = variableFromTarget;
+        }
+      });
+    }
   }
 
-  findVariableFromTarget(observationVariableName: string): Promise<any> {
+  findVariablesFromTarget(observationVariableNames: string[]): Promise<any> {
     return new Promise<any>(resolve => {
       this.brapiDestination.search_variables({
-          observationVariableNames: [observationVariableName]
+          observationVariableNames
         }
-      ).all((result: any[]) => {
-        if (result && result.length > 0) {
-          // Return the first result
-          resolve(result[0]);
-        } else {
-          resolve(null);
-        }
+      ).all((results: any[]) => {
+        resolve(results);
       });
     });
   }
@@ -130,55 +160,29 @@ export class VariableComponent implements OnInit {
     const allVariableHasAMatch = Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
     if (allVariableHasAMatch) {
       // Add Observation Variable to the study
-      this.updateObservationVariables(Object.values(this.variablesMap));
+      this.associateTraitsToStudy(Object.values(this.variablesMap));
     }
   }
 
-  async updateObservationVariables(observationVariables: any[]) {
+  async associateTraitsToStudy(observationVariables: any[]): Promise<void> {
     this.isSaving = true;
-    let errors: any[] = [];
-    let info: any[] = [];
     this.blockUIService.start('main');
 
-    for (const observationVariable of observationVariables) {
-      const observationVariableNewRequest = {
+    const observationVariableDbIds: string[] = observationVariables.map((o: any) => o.observationVariableDbId);
+    const studyUpdateRequest: StudyUpdateRequest = new StudyUpdateRequest();
+    studyUpdateRequest.observationVariableDbIds = observationVariableDbIds;
+    studyUpdateRequest.trialDbId = this.context.targetStudy.trialDbId;
 
-        additionalInfo: observationVariable.additionalInfo,
-        commonCropName: observationVariable.commonCropName,
-        contextOfUse: observationVariable.contextOfUse,
-        defaultValue: observationVariable.defaultValue,
-        documentationURL: observationVariable.documentationURL,
-        externalReferences: observationVariable.externalReferences,
-        growthStage: observationVariable.growthStage,
-        institution: observationVariable.institution,
-        language: observationVariable.language,
-        observationVariableDbId: observationVariable.observationVariableDbId,
-        observationVariableName: observationVariable.observationVariableName,
-        ontologyDbId: observationVariable.ontologyDbId,
-        ontologyName: observationVariable.ontologyName,
-        ontologyReference: observationVariable.ontologyReference,
-        trait: observationVariable.trait,
-        method: observationVariable.method,
-        scale: observationVariable.scale,
-        scientist: observationVariable.scientist,
-        status: observationVariable.status,
-        submissionTimestamp: observationVariable.submissionTimestamp,
-        synonyms: observationVariable.synonyms,
-        studyDbIds: [this.context.targetStudy.studyDbId]
+    // Use v2.1 PUT /studyies/{studyDbId} to associate observation variables to a study.
+    const response = await this.studiesService.studiesStudyDbIdPut(this.context.destination,
+      this.context.targetStudy.studyDbId, studyUpdateRequest).toPromise();
 
-      };
+    const errors = response?.body?.metadata?.status?.filter((s) => s.messageType === 'ERROR');
+    const info = response?.body?.metadata?.status?.filter((s) => s.messageType === 'INFO');
 
-      // Use v2.1 PUT /variables to update and associate observation variable to a study.
-      const postRes: any = await this.http.put(this.context.destination + '/variables/' + observationVariable.observationVariableDbId, observationVariableNewRequest
-      ).toPromise();
-
-      errors = errors.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'ERROR'));
-      info = info.concat(postRes.metadata.status.filter((s: any) => s.messageType === 'INFO'));
-    }
-
-    if (errors.length) {
+    if (errors?.length) {
       this.alertService.showDanger(errors);
-    } else if (info.length) {
+    } else if (info?.length) {
       this.alertService.showSuccess(info);
     }
 
@@ -202,7 +206,7 @@ export class VariableComponent implements OnInit {
     });
   }
 
-  sanitizeObject(variable: any) {
+  sanitizeObject(variable: any): any {
     const copy = Object.assign({}, variable);
     // TODO: check why the code is adding __response automatic to the object.
     delete copy.__response;
@@ -214,21 +218,24 @@ export class VariableComponent implements OnInit {
   }
 
   isValid(): boolean {
-    return Object.keys(this.sourceVariables).length > 0 && !this.variablesSaved && !this.isLoading && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
+    return Object.keys(this.sourceVariables).length > 0 && !this.variablesSaved && !this.isLoading
+      && Object.entries(this.sourceVariables).every(([key, value]) => this.isValidMapping(value));
   }
 
   isValidMapping(sourceVariable: any): boolean {
     const targetVariable = this.variablesMap[sourceVariable.observationVariableName];
     // Source variable should have a match in the target server
     // Source and target variable should have the same datatype.
-    return targetVariable && targetVariable.scale.dataType === sourceVariable.scale.dataType && this.isValidCategoricalValues(sourceVariable, targetVariable);
+    return targetVariable && targetVariable.scale.dataType === sourceVariable.scale.dataType
+      && this.isValidCategoricalValues(sourceVariable, targetVariable);
   }
 
-  isValidCategoricalValues(sourceVariable: any, targetVariable: any) {
+  isValidCategoricalValues(sourceVariable: any, targetVariable: any): boolean {
     // Check if the source and target variables cagetorical valid values are equal
     if (targetVariable.scale.dataType === sourceVariable.scale.dataType && targetVariable.scale.dataType === 'Nominal') {
       const sortArray = (array: any[]) => array.sort((a, b) => (a.value > b.value) ? 1 : -1);
-      const objectsEqual = (o1: any, o2: any) => Object.keys(o1).length === Object.keys(o2).length && Object.keys(o1).every(p => o1[p] === o2[p]);
+      const objectsEqual = (o1: any, o2: any) => Object.keys(o1).length === Object.keys(o2).length
+        && Object.keys(o1).every(p => o1[p] === o2[p]);
       const arraysEqual = (a1: any[], a2: any[]) => a1.length === a2.length && a1.every((o: any, idx: any) => objectsEqual(o, a2[idx]));
       return arraysEqual(sortArray(sourceVariable.scale.validValues.categories), sortArray(targetVariable.scale.validValues.categories));
     } else {
@@ -240,8 +247,9 @@ export class VariableComponent implements OnInit {
     return this.variablesSaved;
   }
 
-  async next() {
+  async next(): Promise<void> {
     this.context.variablesMap = this.variablesMap;
+    this.context.sourceVariablesAliasByOntologyNames = this.sourceVariablesAliasByOntologyNames;
     this.router.navigate(['observation']);
   }
 
