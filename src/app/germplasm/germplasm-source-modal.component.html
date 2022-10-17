@@ -13,36 +13,50 @@
   </div>
   <div class="modal-body">
     <app-collapsible heading="Germplasm Attributes">
-      <table class="table">
-        <thead class="thead-light">
-        <th>ATTRIBUTE NAME</th>
-        <th>VALUE</th>
-        </thead>
-        <tbody>
-        <tr *ngFor="let key of additionalInfo | objectKeys">
-          <td>{{key}}</td>
-          <td>{{additionalInfo[key]}}</td>
-        </tr>
-        </tbody>
-      </table>
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.additionalInfo">No records found</span>
+          <table class="table" *ngIf="sourceGermplasm.additionalInfo">
+            <thead class="thead-light">
+            <th>ATTRIBUTE NAME</th>
+            <th>VALUE</th>
+            </thead>
+            <tbody>
+            <tr *ngFor="let key of additionalInfo | objectKeys">
+              <td>{{key}}</td>
+              <td>{{additionalInfo[key]}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </app-collapsible>
     <app-collapsible heading="External References">
-      <table class="table">
-        <thead class="thead-light">
-        <th>External Reference ID</th>
-        <th>External Reference Source</th>
-        </thead>
-        <tbody>
-        <tr *ngFor="let reference of sourceGermplasm.externalReferences">
-          <td>{{reference.referenceID}}</td>
-          <td>{{reference.referenceSource}}</td>
-        </tr>
-        </tbody>
-      </table>
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.externalReferences">No records found</span>
+          <table class="table" *ngIf="sourceGermplasm.externalReferences">
+            <thead class="thead-light">
+            <th>External Reference ID</th>
+            <th>External Reference Source</th>
+            </thead>
+            <tbody>
+            <tr *ngFor="let reference of sourceGermplasm.externalReferences">
+              <td>{{reference.referenceID}}</td>
+              <td>{{reference.referenceSource}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </app-collapsible>
     <app-collapsible heading="Germplasm Origin">
-      <ngx-json-viewer *ngIf="sourceGermplasm.germplasmOrigin" [json]="sourceGermplasm.germplasmOrigin"></ngx-json-viewer>
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.germplasmOrigin">No record found.</span>
+          <ngx-json-viewer *ngIf="sourceGermplasm.germplasmOrigin" [json]="sourceGermplasm.germplasmOrigin"></ngx-json-viewer>
+        </div>
+      </div>
     </app-collapsible>
-
   </div>
 </div>

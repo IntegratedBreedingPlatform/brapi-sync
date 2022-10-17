@@ -24,7 +24,6 @@ export class GermplasmSourceModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log(this.sourceGermplasm);
     this.additionalInfo = this.sourceGermplasm.additionalInfo? this.sourceGermplasm.additionalInfo: {};
     this.externalReferences = this.sourceGermplasm.externalReferences? this.sourceGermplasm.externalReferences: [];
   }
