@@ -47,7 +47,7 @@
                     <fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
                   </td>
                   <td>{{row.germplasmDbId}}</td>
-                  <td>{{row.germplasmName}}</td>
+                  <td><a (click)="showGermplasmSourceModal(row)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
                   <td>{{getSynonyms(row.synonyms)}}</td>
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
