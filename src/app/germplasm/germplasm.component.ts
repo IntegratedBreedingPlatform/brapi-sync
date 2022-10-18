@@ -100,6 +100,7 @@ export class GermplasmComponent implements OnInit {
     const copy = Object.assign({}, germplasm);
 
     delete copy.germplasmDbId;
+    delete copy.germplasmOrigin;
     // TODO: check why the code is adding __response automatic to the object.
     delete copy.__response;
 
