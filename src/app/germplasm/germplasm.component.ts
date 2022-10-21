@@ -7,9 +7,10 @@ import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
+import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
+import { GermplasmSourceModalComponent } from './germplasm-source-modal.component';
 import { PedigreeService } from '../shared/brapi/2.1/api/pedigree.service';
 import { PedigreeNode } from '../shared/brapi/2.1/model/pedigree-node';
-import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
 import { PedigreeNodeParents } from '../shared/brapi/2.1/model/pedigree-node-parents';
 import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
@@ -212,6 +213,7 @@ export class GermplasmComponent implements OnInit {
     const copy = Object.assign({}, germplasm);
 
     delete copy.germplasmDbId;
+    delete copy.germplasmOrigin;
     // TODO: check why the code is adding __response automatic to the object.
     delete copy.__response;
 
@@ -377,6 +379,11 @@ export class GermplasmComponent implements OnInit {
       return '';
     }
     return synonyms.map((s) => s.synonym).join(', ');
+  }
+
+  showGermplasmSourceModal(sourceGermplasm: Germplasm): void {
+    const modalReference = this.modalService.open(GermplasmSourceModalComponent, { size: 'xl', backdrop: 'static' });
+    modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
   }
 
   showPedigreeGraph(sourceGermplasm: Germplasm, isPreviewTarget: boolean): void {

@@ -33,6 +33,7 @@ import { DropdownVirtualScrollComponent } from './shared/dropdown-virtual-scroll
 import { OAuthModule, OAuthService } from 'angular-oauth2-oidc';
 import { DelegatedAuthenticationService } from './auth/delegated-authentication.service';
 import { BlockUIModule, BlockUIService } from 'ng-block-ui';
+import { GermplasmSourceModalComponent } from './germplasm/germplasm-source-modal.component';
 import { StudiesService } from './shared/brapi/2.1/api/studies.service';
 import { PedigreeService } from './shared/brapi/2.1/api/pedigree.service';
 import { GermplasmService } from './shared/brapi/2.0/api/germplasm.service';
@@ -59,6 +60,7 @@ import { PedigreeUtilService } from './shared/pedigree/pedigree-util.service';
     StudySelectorComponent,
     ToastsContainer,
     DropdownVirtualScrollComponent,
+    GermplasmSourceModalComponent,
     PedigreeGraphComponent,
     GermplasmPedigreeGraphModalComponent
   ],

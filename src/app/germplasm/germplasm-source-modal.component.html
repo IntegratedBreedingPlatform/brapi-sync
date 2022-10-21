@@ -1,0 +1,62 @@
+<div class="container-fluid pl-0 pr-0">
+  <div class="modal-header">
+    <div class="col-xs-11 col-md-11">
+      <h4 class="modal-title font-weight-bold word-wrap">
+        <span>SOURCE GERMPLASM:</span><span>{{sourceGermplasm.germplasmName}} (ID: {{sourceGermplasm.germplasmDbId}})</span>
+      </h4>
+    </div>
+    <div class="col-xs-1 col-md-1">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+              (click)="clear()">&times;
+      </button>
+    </div>
+  </div>
+  <div class="modal-body">
+    <app-collapsible heading="Germplasm Attributes">
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.additionalInfo">No records found</span>
+          <table class="table" *ngIf="sourceGermplasm.additionalInfo">
+            <thead class="thead-light">
+            <th>ATTRIBUTE NAME</th>
+            <th>VALUE</th>
+            </thead>
+            <tbody>
+            <tr *ngFor="let key of additionalInfo | objectKeys">
+              <td>{{key}}</td>
+              <td>{{additionalInfo[key]}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </app-collapsible>
+    <app-collapsible heading="External References">
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.externalReferences">No records found</span>
+          <table class="table" *ngIf="sourceGermplasm.externalReferences">
+            <thead class="thead-light">
+            <th>External Reference ID</th>
+            <th>External Reference Source</th>
+            </thead>
+            <tbody>
+            <tr *ngFor="let reference of sourceGermplasm.externalReferences">
+              <td>{{reference.referenceID}}</td>
+              <td>{{reference.referenceSource}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </app-collapsible>
+    <app-collapsible heading="Germplasm Origin">
+      <div class="card">
+        <div class="card-body">
+          <span *ngIf="!sourceGermplasm.germplasmOrigin">No record found.</span>
+          <ngx-json-viewer *ngIf="sourceGermplasm.germplasmOrigin" [json]="sourceGermplasm.germplasmOrigin"></ngx-json-viewer>
+        </div>
+      </div>
+    </app-collapsible>
+  </div>
+</div>
