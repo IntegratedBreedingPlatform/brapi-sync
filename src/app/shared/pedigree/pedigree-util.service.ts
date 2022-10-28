@@ -236,8 +236,8 @@ export class PedigreeUtilService {
     }
 
     // Check if source germplasm (pedigree node) already exists in the destination server
-    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId },
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId,
+        germplasmPUI: sourcePedigreeNode?.germplasmPUI }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
     if (existingGermplasmInDestination && existingGermplasmInDestination?.germplasmDbId && existingGermplasmInDestination?.germplasmName) {
       // If the germplasm already exists, show the germplasmDbId and germplasm name of the existing germplasm in destination
       graphNode.isExistingInTarget = true;
@@ -466,8 +466,8 @@ export class PedigreeUtilService {
     let germplasmTreeNode;
     if (pedigreeNode && pedigreeNode.germplasmDbId && pedigreeNode.germplasmName) {
 
-      const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: pedigreeNode?.germplasmDbId },
-        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+      const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: pedigreeNode?.germplasmDbId,
+        germplasmPUI: pedigreeNode?.germplasmPUI }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
       germplasmTreeNode = new GraphNode(pedigreeNode?.germplasmDbId, pedigreeNode?.germplasmName);
       germplasmTreeNode.isDerivative = this.isDerivative(pedigreeNode);
       germplasmTreeNode.isMismatched = isMismatched;
@@ -524,8 +524,8 @@ export class PedigreeUtilService {
                                checkForExistingAncestors?: boolean): void {
 
     // Check if source germplasm (pedigree node) already exists in the destination server
-    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId },
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+    const existingGermplasmInDestination = this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNode?.germplasmDbId,
+      germplasmPUI: sourcePedigreeNode?.germplasmPUI }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
 
     if (existingGermplasmInDestination && checkForExistingAncestors && sourcePedigreeNode) {
       this.addToInvalidPedigreeNodes(PedigreeNodeValidationType.ROOT_GERMPLASM_HAS_EXISTING_ANCESTORS,
