@@ -178,7 +178,8 @@ export class GermplasmComponent implements OnInit {
     if (pedigreeMap) {
       const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
       pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
-        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({ germplasmDbId, germplasmPUI: '' },
+        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({ germplasmDbId,
+            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         if (germplasmInDestination) {
           const pedigreeNodeForUpdate: PedigreeNode = {
@@ -189,7 +190,8 @@ export class GermplasmComponent implements OnInit {
             const pedigreeNodesForUpdateParents: PedigreeNodeParents[] = [];
             pedigreeNode.parents.forEach((pedigreeNodeParent: PedigreeNodeParents) => {
               const parent = this.pedigreeUtilService.getMatchingGermplasmInDestination({
-                germplasmDbId: pedigreeNodeParent.germplasmDbId || ''
+                germplasmDbId: pedigreeNodeParent.germplasmDbId || '',
+                germplasmPUI: this.pedigreeUtilService.getPUI(pedigreeNodeParent.germplasmDbId, pedigreeMap)
               }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
               pedigreeNodesForUpdateParents.push({
                 parentType: pedigreeNodeParent.parentType,

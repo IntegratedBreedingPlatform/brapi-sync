@@ -266,10 +266,12 @@ export class PedigreeUtilService {
     if (validate && sourcePedigreeNode?.germplasmDbId && existingGermplasmInDestination) {
       // Get the existing germplasm of the source germplasm's parents
       const existingSourceGermplasmParent1 =
-        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent1?.germplasmDbId },
+        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent1?.germplasmDbId,
+          germplasmPUI: this.getPUI(sourcePedigreeNodeParent1?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
       const existingSourceGermplasmParent2 =
-        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent2?.germplasmDbId },
+        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent2?.germplasmDbId,
+          germplasmPUI: this.getPUI(sourcePedigreeNodeParent2?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
 
       // Extract the parents of the existing germplasm from the target
@@ -304,7 +306,8 @@ export class PedigreeUtilService {
       // List of germplasmDbIds of existing other male parents
       const matches: string[] = [];
       sourcePedigreeOtherMaleParents?.forEach(p => {
-        const existingSourceGermplasmOtherParent = this.getMatchingGermplasmInDestination({ germplasmDbId: p?.germplasmDbId },
+        const existingSourceGermplasmOtherParent = this.getMatchingGermplasmInDestination({ germplasmDbId: p?.germplasmDbId,
+          germplasmPUI: this.getPUI(p?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         if (p.germplasmDbId && existingSourceGermplasmOtherParent
           && existingSourceGermplasmOtherParent.germplasmDbId
@@ -545,14 +548,17 @@ export class PedigreeUtilService {
     if (sourcePedigreeNode?.germplasmDbId && existingGermplasmInDestination) {
       // Get the existing germplasm of the source germplasm's parents
       const existingSourceGermplasmParent1 =
-        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent1?.germplasmDbId },
+        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent1?.germplasmDbId,
+            germplasmPUI: this.getPUI(sourcePedigreeNodeParent1?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
       const existingSourceGermplasmParent2 =
-        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent2?.germplasmDbId },
+        this.getMatchingGermplasmInDestination({ germplasmDbId: sourcePedigreeNodeParent2?.germplasmDbId,
+            germplasmPUI: this.getPUI(sourcePedigreeNodeParent2?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
       const existingSourceGermplasmOtherParents: Map<string, Germplasm> = new Map<string, Germplasm>();
       sourcePedigreeOtherMaleParents?.forEach(p => {
-        const existingSourceGermplasmOtherParent = this.getMatchingGermplasmInDestination({ germplasmDbId: p?.germplasmDbId },
+        const existingSourceGermplasmOtherParent = this.getMatchingGermplasmInDestination({ germplasmDbId: p?.germplasmDbId,
+          germplasmPUI: this.getPUI(p?.germplasmDbId, pedigreeMapSource) },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         if (existingSourceGermplasmOtherParent && existingSourceGermplasmOtherParent.germplasmDbId) {
           existingSourceGermplasmOtherParents.set(existingSourceGermplasmOtherParent.germplasmDbId, existingSourceGermplasmOtherParent);
@@ -643,5 +649,12 @@ export class PedigreeUtilService {
 
   private createUnknownGraphNode(): GraphNode {
     return new GraphNode('0', 'UNKNOWN');
+  }
+
+  getPUI(germplasmDbId: string | undefined, pedigreeMap: Map<string, PedigreeNode> | undefined): string | undefined{
+    if (germplasmDbId !== null && germplasmDbId !== undefined && pedigreeMap !== undefined) {
+      return pedigreeMap.get(germplasmDbId)?.germplasmPUI;
+    }
+    return undefined;
   }
 }
