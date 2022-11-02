@@ -193,16 +193,19 @@ export class GermplasmComponent implements OnInit {
                 germplasmDbId: pedigreeNodeParent.germplasmDbId || '',
                 germplasmPUI: this.pedigreeUtilService.getPUI(pedigreeNodeParent.germplasmDbId, pedigreeMap)
               }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
-              pedigreeNodesForUpdateParents.push({
-                parentType: pedigreeNodeParent.parentType,
-                germplasmDbId: parent?.germplasmDbId
-              });
+              if (parent !== undefined && parent.germplasmDbId !== null) {
+                pedigreeNodesForUpdateParents.push({
+                  parentType: pedigreeNodeParent.parentType,
+                  germplasmDbId: parent?.germplasmDbId
+                });
+              }
             });
             pedigreeNodeForUpdate.parents = pedigreeNodesForUpdateParents;
-          }
-          if (germplasmInDestination.germplasmDbId) {
-            // Add the pedigree node for update at the beginning of the list
-            pedigreeNodeUpdateRequest[germplasmInDestination.germplasmDbId] = pedigreeNodeForUpdate;
+
+            if (germplasmInDestination.germplasmDbId && pedigreeNodesForUpdateParents.length > 0) {
+              // Add the pedigree node for update at the beginning of the list
+              pedigreeNodeUpdateRequest[germplasmInDestination.germplasmDbId] = pedigreeNodeForUpdate;
+            }
           }
         }
       });
