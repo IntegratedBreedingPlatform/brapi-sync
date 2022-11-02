@@ -565,10 +565,6 @@ export class PedigreeUtilService {
         }
       });
 
-      if (!existingSourceGermplasmParent1 && !existingSourceGermplasmParent2 && existingSourceGermplasmOtherParents.size === 0) {
-        return;
-      }
-
       // Extract the parents of the existing germplasm from the target
       const destinationPedigreeNode = pedigreeMapDestination?.get(existingGermplasmInDestination?.germplasmDbId ?
         existingGermplasmInDestination.germplasmDbId : '');
