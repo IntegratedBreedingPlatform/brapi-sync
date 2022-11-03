@@ -184,7 +184,7 @@ export class GermplasmComponent implements OnInit {
         if (germplasmInDestination) {
           const pedigreeNodeForUpdate: PedigreeNode = {
             germplasmDbId: germplasmInDestination.germplasmDbId,
-            breedingMethodDbId: germplasmInDestination.breedingMethodDbId
+            breedingMethodDbId: this.getBreedingMethodIdInDestination({breedingMethodDbId: pedigreeNode.breedingMethodDbId })
           };
           if (pedigreeNode.parents) {
             const pedigreeNodesForUpdateParents: PedigreeNodeParents[] = [];
@@ -209,7 +209,8 @@ export class GermplasmComponent implements OnInit {
           }
         }
       });
-      await this.pedigreeService.pedigreePut(this.context.destination, pedigreeNodeUpdateRequest).toPromise();
+      const res = await this.pedigreeService.pedigreePut(this.context.destination, pedigreeNodeUpdateRequest).toPromise();
+      this.showPutErrors(res);
     }
 
   }
@@ -251,6 +252,13 @@ export class GermplasmComponent implements OnInit {
     // TODO ng-toast?
     // alert('error');
     console.error(res);
+  }
+
+  showPutErrors(res: any): void {
+    this.errors = res.body.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+    if (this.errors.length) {
+      this.alertService.showDanger(this.errors);
+    }
   }
 
   onSuccess(res: any): void {
