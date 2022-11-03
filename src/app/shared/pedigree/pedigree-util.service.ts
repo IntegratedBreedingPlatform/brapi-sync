@@ -12,6 +12,7 @@ import { PedigreeSearchRequest } from '../brapi/2.1/model/pedigree-search-reques
 import { GermplasmService } from '../brapi/2.0/api/germplasm.service';
 import { PedigreeService } from '../brapi/2.1/api/pedigree.service';
 import { PedigreeNodeValidationResult, PedigreeNodeValidationType } from './pedigree-node-validation-result';
+import {BreedingMethod} from '../brapi/2.0/model/breeding-method';
 
 declare const BrAPI: any;
 
@@ -209,15 +210,16 @@ export class PedigreeUtilService {
                                  pedigreeMapSource?: Map<string, PedigreeNode>,
                                  pedigreeMapDestination?: Map<string, PedigreeNode>,
                                  germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
-                                 germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): GraphNode | undefined {
+                                 germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm },
+                                 breedingMethodsDestinationById?: { [p: string]: BreedingMethod }): GraphNode | undefined {
 
     const pedigreeNode = pedigreeMapSource?.get(rootGermplasmDbId);
     const graphNode = this.convertToGermplasmTreeGraphNode(pedigreeNode, false, germplasmInDestinationByPUIs,
-      germplasmInDestinationByReferenceIds);
+      germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
     if (graphNode) {
       const level = 1;
       this.addParentNodes(level, maximumLevelOfRecursion, validate, graphNode, pedigreeNode, pedigreeMapSource, pedigreeMapDestination,
-        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
     }
     return graphNode;
   }
@@ -229,7 +231,8 @@ export class PedigreeUtilService {
                          pedigreeMapSource?: Map<string, PedigreeNode>,
                          pedigreeMapDestination?: Map<string, PedigreeNode>,
                          germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
-                         germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): void {
+                         germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm },
+                         breedingMethodsDestinationById?: { [p: string]: BreedingMethod }): void {
 
     if (!graphNode) {
       return;
@@ -330,20 +333,21 @@ export class PedigreeUtilService {
         // If source's parent 1 doesn't match the target's parent 1
         // Then show the parent 1 of the target germplasm and mark it as "mismatched"
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(destinationPedigreeNodeParent1?.germplasmDbId),
-          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
         graphNode.femaleParentNode = parentNode;
         // Display the parent tree nodes of the mismatched germplasm from the destination server
         this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode,
-          pedigreeMapDestination?.get(destinationPedigreeNodeParent1?.germplasmDbId), pedigreeMapDestination);
+          pedigreeMapDestination?.get(destinationPedigreeNodeParent1?.germplasmDbId), pedigreeMapDestination,
+          breedingMethodsDestinationById);
       } else {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId),
-          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          parent1Mismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeNodeParent1?.germplasmDbId);
         graphNode.femaleParentNode = parentNode;
         if (!this.isDerivative(sourcePedigreeNode)) {
           // This is to avoid multiple processing of the same group source in a derivative line.
           this.addParentNodes((level + 1), maximumLevelOfRecursion, validate, parentNode, pedigreeNode, pedigreeMapSource,
-            pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+            pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
         }
       }
     } else {
@@ -357,19 +361,21 @@ export class PedigreeUtilService {
         // In case germplasm is derivative, if the group and/or immediate source do not match, then mark the germplasn as "mismatched"
         const isMismatch = parent2Mismatch || (this.isDerivative(sourcePedigreeNode) && parent1Mismatch);
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(destinationPedigreeNodeParent2?.germplasmDbId),
-          isMismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          isMismatch, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
         graphNode.maleParentNode = parentNode;
         // Display the parent tree nodes of the mismatched germplasm from the destination server
         this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode,
-          pedigreeMapDestination?.get(destinationPedigreeNodeParent2?.germplasmDbId), pedigreeMapDestination);
+          pedigreeMapDestination?.get(destinationPedigreeNodeParent2?.germplasmDbId), pedigreeMapDestination,
+          breedingMethodsDestinationById);
       } else {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId),
           parent2Mismatch, germplasmInDestinationByPUIs,
-          germplasmInDestinationByReferenceIds);
+          germplasmInDestinationByReferenceIds,
+          breedingMethodsDestinationById);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeNodeParent2?.germplasmDbId);
         graphNode.maleParentNode = parentNode;
         this.addParentNodes((level + 1), maximumLevelOfRecursion, validate, parentNode, pedigreeNode, pedigreeMapSource,
-          pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
       }
     } else {
       // If germplasmDbId and germplasm are null, it means the parent is unknown.
@@ -379,26 +385,26 @@ export class PedigreeUtilService {
     sourcePedigreeOtherMaleParents?.forEach(sourcePedigreeOtherParent => {
       if (sourcePedigreeOtherParent?.germplasmDbId && sourcePedigreeOtherParent?.germplasmName) {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId),
-          false, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          false, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
         const pedigreeNode = pedigreeMapSource?.get(sourcePedigreeOtherParent?.germplasmDbId);
         if (parentNode) {
           graphNode.otherProgenitors?.push(parentNode);
         }
         this.addParentNodes((level + 1), maximumLevelOfRecursion, validate, parentNode, pedigreeNode, pedigreeMapSource,
-          pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+          pedigreeMapDestination, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
       }
     });
     if (otherMaleParentsMismatch?.length) {
       otherMaleParentsMismatch.forEach(o => {
         if (o.germplasmDbId) {
           const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(o.germplasmDbId), true,
-            germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+            germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
           if (parentNode) {
             graphNode.otherProgenitors?.push(parentNode);
           }
           // Display the parent tree nodes of the mismatched germplasm from the destination server
           this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode,
-            pedigreeMapDestination?.get(o.germplasmDbId), pedigreeMapDestination);
+            pedigreeMapDestination?.get(o.germplasmDbId), pedigreeMapDestination, breedingMethodsDestinationById);
         }
       });
     }
@@ -407,7 +413,8 @@ export class PedigreeUtilService {
   private addParentNodesFromDestinationTree(level: number,
                                             maximumLevelOfRecursion: number,
                                             graphNode?: GraphNode, destinationPedigreeNode?: PedigreeNode,
-                                            pedigreeMapDestination?: Map<string, PedigreeNode>): void {
+                                            pedigreeMapDestination?: Map<string, PedigreeNode>,
+                                            breedingMethodsDestinationById?: { [p: string]: BreedingMethod }): void {
 
     if (!graphNode) {
       return;
@@ -429,22 +436,26 @@ export class PedigreeUtilService {
     }
 
     if (pedigreeNodeParent1?.germplasmDbId && pedigreeNodeParent1?.germplasmName) {
-      const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(pedigreeNodeParent1?.germplasmDbId), true);
+      const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(pedigreeNodeParent1?.germplasmDbId),
+        true, breedingMethodsDestinationById);
       const pedigreeNode = pedigreeMapDestination?.get(pedigreeNodeParent1?.germplasmDbId);
       graphNode.femaleParentNode = parentNode;
       if (!this.isDerivative(destinationPedigreeNode)) {
         // This is to avoid multiple processing of the same group source in a derivative line.
-        this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination);
+        this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination,
+          breedingMethodsDestinationById);
       }
     } else {
       // If germplasmDbId and germplasm are null, it means the parent is unknown.
       graphNode.femaleParentNode = this.createUnknownGraphNode();
     }
     if (pedigreeNodeParent2?.germplasmDbId && pedigreeNodeParent2?.germplasmName) {
-      const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(pedigreeNodeParent2?.germplasmDbId), true);
+      const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(pedigreeNodeParent2?.germplasmDbId),
+        true, breedingMethodsDestinationById);
       const pedigreeNode = pedigreeMapDestination?.get(pedigreeNodeParent2?.germplasmDbId);
       graphNode.maleParentNode = parentNode;
-      this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination);
+      this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination,
+        breedingMethodsDestinationById);
     } else {
       // If germplasmDbId and germplasm are null, it means the parent is unknown.
       graphNode.maleParentNode = this.createUnknownGraphNode();
@@ -453,19 +464,21 @@ export class PedigreeUtilService {
     pedigreeNodeOtherMaleParents?.forEach(sourcePedigreeOtherParent => {
       if (sourcePedigreeOtherParent?.germplasmDbId && sourcePedigreeOtherParent?.germplasmName) {
         const parentNode = this.convertToGermplasmTreeGraphNode(pedigreeMapDestination?.get(sourcePedigreeOtherParent?.germplasmDbId),
-          true);
+          true, breedingMethodsDestinationById);
         const pedigreeNode = pedigreeMapDestination?.get(sourcePedigreeOtherParent?.germplasmDbId);
         if (parentNode) {
           graphNode.otherProgenitors?.push(parentNode);
         }
-        this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination);
+        this.addParentNodesFromDestinationTree((level + 1), maximumLevelOfRecursion, parentNode, pedigreeNode, pedigreeMapDestination,
+          breedingMethodsDestinationById);
       }
     });
   }
 
   convertToGermplasmTreeGraphNode(pedigreeNode?: PedigreeNode, isMismatched: boolean = false,
                                   germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
-                                  germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): GraphNode | undefined {
+                                  germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm },
+                                  breedingMethodsDestinationById?: { [p: string]: BreedingMethod }): GraphNode | undefined {
     let germplasmTreeNode;
     if (pedigreeNode && pedigreeNode.germplasmDbId && pedigreeNode.germplasmName) {
 
@@ -481,9 +494,18 @@ export class PedigreeUtilService {
         germplasmTreeNode.isExistingInTarget = true;
         germplasmTreeNode.germplasmDbId = existingGermplasmInDestination?.germplasmDbId;
         germplasmTreeNode.preferredName = existingGermplasmInDestination?.germplasmName;
+        germplasmTreeNode.methodName =
+          this.getBreedingMethodName(breedingMethodsDestinationById, existingGermplasmInDestination.breedingMethodDbId);
       }
     }
     return germplasmTreeNode;
+  }
+
+  getBreedingMethodName(breedingMethodsDestinationById: any, breedingMethodDbId: any): string | undefined {
+    if (breedingMethodsDestinationById && breedingMethodDbId && breedingMethodsDestinationById[breedingMethodDbId]) {
+      return breedingMethodsDestinationById[breedingMethodDbId].breedingMethodName;
+    }
+    return undefined;
   }
 
   validatePedigreeTreeNodes(maximumLevelOfRecursion: number, germplasm: Germplasm[],

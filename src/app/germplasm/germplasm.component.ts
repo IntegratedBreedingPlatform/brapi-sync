@@ -502,7 +502,9 @@ export class GermplasmComponent implements OnInit {
 
     if (!b) {
       cell = '<i class="text-danger" title="Doesn\'t exists in target">&#10007;</i> ' + cell;
-    } else {
+    } else if (this.hasDifferentBreedingMethods(g)) {
+      cell = '<i class="text-danger" title="different breeding method in target">&#10007;</i> ' + cell;
+    }else {
       cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
     }
     return cell;
@@ -510,7 +512,9 @@ export class GermplasmComponent implements OnInit {
 
   isSelectable(germplasm: Germplasm): boolean {
     if (germplasm.germplasmDbId) {
-      if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, this.invalidPedigreeNodes)) {
+      if (this.hasDifferentBreedingMethods(germplasm)) {
+        return false;
+      } else if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, this.invalidPedigreeNodes)) {
         return false;
       } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIsTemp,
         this.germplasmInDestinationByReferenceIdsTemp)) {
@@ -519,5 +523,19 @@ export class GermplasmComponent implements OnInit {
       return true;
     }
     return false;
+  }
+
+  hasDifferentBreedingMethods(germplasm: any): boolean {
+    const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination(germplasm,
+        this.germplasmInDestinationByPUIsTemp, this.germplasmInDestinationByReferenceIdsTemp);
+    if (germplasmInDestination) {
+      return this.breedingMethodsSourceById[germplasm.breedingMethodDbId].breedingMethodName
+        !== this.getDestinationBreedingMethodId(germplasmInDestination);
+    }
+    return false;
+  }
+
+  getDestinationBreedingMethodId(germplasmInDestination: any): string {
+    return this.breedingMethodsDestById[germplasmInDestination.breedingMethodDbId].breedingMethodName;
   }
 }

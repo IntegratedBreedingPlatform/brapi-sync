@@ -6,6 +6,8 @@ import { ContextService } from '../context.service';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { PedigreeUtilService } from '../shared/pedigree/pedigree-util.service';
 import { GraphNode } from '../shared/pedigree-graph/graph-node';
+import {GermplasmService} from "../shared/brapi/2.0/api/germplasm.service";
+import {BreedingMethod} from "../shared/brapi/2.0/model/breeding-method";
 
 @Component({
   selector: 'app-germplasm-pedigree-graph',
@@ -23,7 +25,8 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
   constructor(private activeModal: NgbActiveModal,
               private context: ContextService,
               private pedigreeService: PedigreeService,
-              private pedigreeUtilService: PedigreeUtilService) {
+              private pedigreeUtilService: PedigreeUtilService,
+              private germplasmService: GermplasmService) {
   }
 
   clear(): void {
@@ -69,9 +72,16 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
 
     if (this.sourceGermplasm?.germplasmDbId) {
       if (isPreviewTarget) {
+        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
+        const breedingMethodsDestinationById: { [p: string]: BreedingMethod } = {};
+        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
+          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+            breedingMethodsDestinationById[breedingMethod.breedingMethodDbId] = breedingMethod;
+          });
+        }
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
           this.isAttemptToConnectTargetAncestors, pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs,
-          germplasmInDestinationByReferenceIds);
+          germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
       } else {
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
           this.isAttemptToConnectTargetAncestors, pedigreeMapSource);
