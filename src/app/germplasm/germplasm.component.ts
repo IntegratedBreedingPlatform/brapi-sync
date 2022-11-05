@@ -118,9 +118,14 @@ export class GermplasmComponent implements OnInit {
       const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
         validSelectedGermplasmForImport, this.numberOfGenerations);
 
+      // Extract the germplasmDbIds of the germplasm and their pedigree (ancestors)
+      const germplasmDbIdsForCreation = this.pedigreeUtilService.filterGermplasmForCreation(validSelectedGermplasmForImport,
+        pedigreeMapSource,
+        this.numberOfGenerations);
+
       // Retrieve the details of the germplasm and of their pedigree (ancestors)
       const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
-        { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
+        { germplasmDbIds: Array.from(germplasmDbIdsForCreation.values()) });
 
       this.post(germplasmWithAncestors, pedigreeMapSource);
     } else {
@@ -149,7 +154,7 @@ export class GermplasmComponent implements OnInit {
         germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds));
 
       if (!filteredGermplasm.length) {
-        // await this.updatePedigreeTree(germplasm, pedigreeMap);
+        await this.updatePedigreeTree(germplasm, pedigreeMap);
         // If all germplasm already exists in the server, show an error message
         this.alertService.showWarning('No new germplasm can be imported.');
       } else {
@@ -169,48 +174,98 @@ export class GermplasmComponent implements OnInit {
 
   async updatePedigreeTree(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
 
-    // Once the germplasm are saved, check search again for germplasm that exist in the destination
+    // Only update pedigree tree of number of generation is more than 1
+    if (this.numberOfGenerations <= 1) {
+      return;
+    }
+    // Once the germplasm are saved, search again for germplasm that exist in the destination
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
     const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
     // Find germplasm in destination by referenceId (germplasmDbId)
     const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
 
     if (pedigreeMap) {
-      const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
+
+      const existingGermplasmFromDestination: Germplasm[] = [];
       pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
-        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({ germplasmDbId,
-            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap) },
+        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+            germplasmDbId,
+            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap)
+          },
           germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
         if (germplasmInDestination) {
+          existingGermplasmFromDestination.push(germplasmInDestination);
+        }
+      });
+
+      const pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination,
+        existingGermplasmFromDestination, this.numberOfGenerations);
+
+      const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
+      pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
+        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+            germplasmDbId,
+            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap)
+          },
+          germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        if (germplasmInDestination) {
+
+          // Only update the parents of a germplasm if it's a terminal node (parents still unknown)
+          if (germplasmInDestination.germplasmDbId &&
+            !this.pedigreeUtilService.isTerminalNode(pedigreeMapDestination.get(germplasmInDestination.germplasmDbId))) {
+            return;
+          }
+
           const pedigreeNodeForUpdate: PedigreeNode = {
             germplasmDbId: germplasmInDestination.germplasmDbId,
-            breedingMethodDbId: this.getBreedingMethodIdInDestination({breedingMethodDbId: pedigreeNode.breedingMethodDbId })
+            breedingMethodDbId: this.getBreedingMethodIdInDestination({ breedingMethodDbId: pedigreeNode.breedingMethodDbId })
           };
           if (pedigreeNode.parents) {
             const pedigreeNodesForUpdateParents: PedigreeNodeParents[] = [];
             pedigreeNode.parents.forEach((pedigreeNodeParent: PedigreeNodeParents) => {
-              const parent = this.pedigreeUtilService.getMatchingGermplasmInDestination({
-                germplasmDbId: pedigreeNodeParent.germplasmDbId || '',
-                germplasmPUI: this.pedigreeUtilService.getPUI(pedigreeNodeParent.germplasmDbId, pedigreeMap)
-              }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
-              if (parent !== undefined && parent.germplasmDbId !== null) {
+              // If the parent is null or undefined it means it is unknown
+              if (!pedigreeNodeParent.germplasmDbId) {
                 pedigreeNodesForUpdateParents.push({
                   parentType: pedigreeNodeParent.parentType,
-                  germplasmDbId: parent?.germplasmDbId
+                  // Set the parent's germplasmDbId to undefined so that it will be processed/tagged as UNKNOWN (0 gid)
+                  germplasmDbId: undefined
                 });
+              } else {
+                const parent = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+                  germplasmDbId: pedigreeNodeParent.germplasmDbId || '',
+                  germplasmPUI: this.pedigreeUtilService.getPUI(pedigreeNodeParent.germplasmDbId, pedigreeMap)
+                }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+                if (parent && parent.germplasmDbId) {
+                  pedigreeNodesForUpdateParents.push({
+                    parentType: pedigreeNodeParent.parentType,
+                    germplasmDbId: parent?.germplasmDbId
+                  });
+                }
               }
             });
             pedigreeNodeForUpdate.parents = pedigreeNodesForUpdateParents;
 
-            if (germplasmInDestination.germplasmDbId && pedigreeNodesForUpdateParents.length > 0) {
+            const parent1 = this.pedigreeUtilService.getParent1(pedigreeNodeForUpdate);
+            const parent2 = this.pedigreeUtilService.getParent2(pedigreeNodeForUpdate);
+
+            if (!parent1?.germplasmDbId && !parent2?.germplasmDbId) {
+              return;
+            }
+
+            // Only update germplasm if it has parents and both parent1 and parent2 are defined.
+            if (germplasmInDestination.germplasmDbId && pedigreeNodesForUpdateParents.length > 0
+              && parent1 && parent2) {
               // Add the pedigree node for update at the beginning of the list
               pedigreeNodeUpdateRequest[germplasmInDestination.germplasmDbId] = pedigreeNodeForUpdate;
             }
           }
         }
       });
-      const res = await this.pedigreeService.pedigreePut(this.context.destination, pedigreeNodeUpdateRequest).toPromise();
-      this.showPutErrors(res);
+      // Only update pedigree if there's data.
+      if (Object.keys(pedigreeNodeUpdateRequest).length > 0) {
+        const res = await this.pedigreeService.pedigreePut(this.context.destination, pedigreeNodeUpdateRequest).toPromise();
+        this.showPutErrors(res);
+      }
     }
 
   }
@@ -504,7 +559,7 @@ export class GermplasmComponent implements OnInit {
       cell = '<i class="text-danger" title="Doesn\'t exists in target">&#10007;</i> ' + cell;
     } else if (this.hasDifferentBreedingMethods(g)) {
       cell = '<i class="text-danger" title="different breeding method in target">&#10007;</i> ' + cell;
-    }else {
+    } else {
       cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
     }
     return cell;
@@ -527,7 +582,7 @@ export class GermplasmComponent implements OnInit {
 
   hasDifferentBreedingMethods(germplasm: any): boolean {
     const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination(germplasm,
-        this.germplasmInDestinationByPUIsTemp, this.germplasmInDestinationByReferenceIdsTemp);
+      this.germplasmInDestinationByPUIsTemp, this.germplasmInDestinationByReferenceIdsTemp);
     if (germplasmInDestination) {
       return this.breedingMethodsSourceById[germplasm.breedingMethodDbId].breedingMethodName
         !== this.getDestinationBreedingMethodId(germplasmInDestination);
