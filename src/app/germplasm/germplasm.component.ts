@@ -592,7 +592,7 @@ export class GermplasmComponent implements OnInit {
     if (germplasm.germplasmDbId) {
       if (this.hasDifferentBreedingMethods(germplasm)) {
         return false;
-      } else if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, this.invalidPedigreeNodes)) {
+      } else if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, invalidPedigreeNodes)) {
         return false;
       } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIsTemp,
         this.germplasmInDestinationByReferenceIdsTemp)) {
