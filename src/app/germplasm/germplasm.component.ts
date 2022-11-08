@@ -64,6 +64,8 @@ export class GermplasmComponent implements OnInit {
   // This is just a temporary storage for the current page.
   germplasmInDestinationByReferenceIdsTemp: { [p: string]: Germplasm } = {};
 
+  private readonly noNewGermplasmCanBeImportedMessage = 'No new germplasm can be imported.';
+
   constructor(
     private router: Router,
     public context: ContextService,
@@ -112,34 +114,41 @@ export class GermplasmComponent implements OnInit {
 
     if (this.isImportAncestors) {
 
-      const validSelectedGermplasmForImport = this.isAttemptToConnectTargetAncestors ?
-        await this.filterValidGermplasm(selectedGermplasm) : selectedGermplasm;
+      const validSelectedGermplasmForImport = await this.filterValidGermplasm(selectedGermplasm, this.isAttemptToConnectTargetAncestors);
 
-      // Retrieve the pedigree of the selected germplasm
-      // This will return the pedigree nodes of the germplasm including all their ancestors
-      const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
-        validSelectedGermplasmForImport, this.numberOfGenerations);
+      if (validSelectedGermplasmForImport.length) {
+        // Retrieve the pedigree of the selected germplasm
+        // This will return the pedigree nodes of the germplasm including all their ancestors
+        const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
+          validSelectedGermplasmForImport, this.numberOfGenerations);
 
-      // Extract the germplasmDbIds of the germplasm and their pedigree (ancestors)
-      const germplasmDbIdsForCreation = this.pedigreeUtilService.filterGermplasmForCreation(validSelectedGermplasmForImport,
-        pedigreeMapSource,
-        this.numberOfGenerations);
+        // Extract the germplasmDbIds of the germplasm and their pedigree (ancestors)
+        const germplasmDbIdsForCreation = this.pedigreeUtilService.filterGermplasmForCreation(validSelectedGermplasmForImport,
+          pedigreeMapSource,
+          this.numberOfGenerations);
 
-      // Retrieve the details of the germplasm and of their pedigree (ancestors)
-      const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
-        { germplasmDbIds: Array.from(germplasmDbIdsForCreation.values()) });
+        // Retrieve the details of the germplasm and of their pedigree (ancestors)
+        const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
+          { germplasmDbIds: Array.from(germplasmDbIdsForCreation.values()) });
 
-      this.post(germplasmWithAncestors, pedigreeMapSource);
+        this.post(germplasmWithAncestors, pedigreeMapSource);
+      } else {
+        this.alertService.showWarning(this.noNewGermplasmCanBeImportedMessage);
+        this.isSaving = false;
+        this.blockUIService.stop('main');
+      }
     } else {
       this.post(selectedGermplasm);
     }
 
   }
 
-  async filterValidGermplasm(selectedGermplasm: Germplasm[]): Promise<Germplasm[]> {
+  async filterValidGermplasm(selectedGermplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean): Promise<Germplasm[]> {
     // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with valid tree.
-    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm);
-    return selectedGermplasm.filter((g) => g.germplasmDbId && !invalidPedigreeNodes.has(g.germplasmDbId));
+    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm,
+      isAttemptToConnectTargetAncestors);
+
+    return selectedGermplasm.filter((g) => this.isSelectable(g, invalidPedigreeNodes));
   }
 
   private async post(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
@@ -482,11 +491,12 @@ export class GermplasmComponent implements OnInit {
       return;
     }
 
-    const invalid = await this.validatePedigreeTree(this.numberOfGenerations, this.germplasm);
+    const invalid = await this.validatePedigreeTree(this.numberOfGenerations, this.germplasm, this.isAttemptToConnectTargetAncestors);
     this.invalidPedigreeNodes = invalid;
   }
 
-  async validatePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[]): Promise<Map<string, Array<PedigreeNode>>> {
+  async validatePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean):
+    Promise<Map<string, Array<PedigreeNode>>> {
 
 
     // Retrieve the pedigree of the selected germplasm
@@ -522,7 +532,7 @@ export class GermplasmComponent implements OnInit {
     }
 
     return this.pedigreeUtilService.validatePedigreeTreeNodes(maximumLevelOfRecursion, germplasm, pedigreeMapSource, pedigreeMapDestination,
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, !this.isAttemptToConnectTargetAncestors);
+      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, !isAttemptToConnectTargetAncestors);
 
   }
 
@@ -578,7 +588,7 @@ export class GermplasmComponent implements OnInit {
     return cell;
   }
 
-  isSelectable(germplasm: Germplasm): boolean {
+  isSelectable(germplasm: Germplasm, invalidPedigreeNodes: Map<string, PedigreeNode[]>): boolean {
     if (germplasm.germplasmDbId) {
       if (this.hasDifferentBreedingMethods(germplasm)) {
         return false;
