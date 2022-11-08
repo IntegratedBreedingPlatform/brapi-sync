@@ -51,7 +51,9 @@ export class GermplasmComponent implements OnInit {
   invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
 
   // Import Ancestor Options
+  maxNumberOfAncestors = 15;
   numberOfGenerations = 1;
+  isNumberOfGenerationsValid = true;
   isImportAncestors = false;
   isAttemptToConnectTargetAncestors = false;
 
@@ -337,46 +339,56 @@ export class GermplasmComponent implements OnInit {
   async load(): Promise<void> {
     this.reset();
     this.isLoading = true;
-    try {
-      // TODO: Move this to germplasmService
-      const res: any = await this.http.get(this.context.source + '/germplasm', {
-        params: {
-          studyDbId: this.context.sourceStudy.studyDbId,
-          page: (this.page - 1).toString(),
-          pageSize: this.pageSize.toString(),
+    if (this.isNumberOfGenerationsValid) {
+      try {
+        // TODO: Move this to germplasmService
+        const res: any = await this.http.get(this.context.source + '/germplasm', {
+          params: {
+            studyDbId: this.context.sourceStudy.studyDbId,
+            page: (this.page - 1).toString(),
+            pageSize: this.pageSize.toString(),
+          }
+        }).toPromise();
+        this.germplasm = res.result.data;
+        this.totalCount = res.metadata.pagination.totalCount;
+
+        // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+        this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchInTargetByPUIs(this.germplasm);
+        // Find germplasm in destination by referenceId (germplasmDbId)
+        this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchInTargetByReferenceIds(this.germplasm);
+
+        // Retrieve the breeding methods from source server
+        const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGet(this.context.source).toPromise();
+        if (breedingMethodsFromSource.body && breedingMethodsFromSource.body.result.data) {
+          breedingMethodsFromSource.body.result.data.forEach((breedingMethod) => {
+            this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
+            this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
+          });
         }
-      }).toPromise();
-      this.germplasm = res.result.data;
-      this.totalCount = res.metadata.pagination.totalCount;
+        // Retrive the breeding methods from destination server
+        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
+        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
+          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+            this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
+            this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
+          });
+        }
 
-      // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-      this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchInTargetByPUIs(this.germplasm);
-      // Find germplasm in destination by referenceId (germplasmDbId)
-      this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchInTargetByReferenceIds(this.germplasm);
+        this.applyImportAncestorsSettings(this.germplasm);
 
-      // Retrieve the breeding methods from source server
-      const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGet(this.context.source).toPromise();
-      if (breedingMethodsFromSource.body && breedingMethodsFromSource.body.result.data) {
-        breedingMethodsFromSource.body.result.data.forEach((breedingMethod) => {
-          this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
-          this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
-        });
+      } catch (error) {
+        this.onError(error);
       }
-      // Retrive the breeding methods from destination server
-      const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
-      if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
-        breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
-          this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
-          this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
-        });
-      }
-
-      this.applyImportAncestorsSettings(this.germplasm);
-
-    } catch (error) {
-      this.onError(error);
     }
     this.isLoading = false;
+  }
+
+  validateNumberOfGenerations(): boolean {
+    if (this.isImportAncestors && (this.numberOfGenerations < 1 || this.numberOfGenerations > this.maxNumberOfAncestors)) {
+      this.alertService.showDanger('Number of generations should be greater than 0 and less than or equal to 15.');
+      return false;
+    }
+    return true;
   }
 
   reset(): void {
@@ -388,6 +400,7 @@ export class GermplasmComponent implements OnInit {
     this.breedingMethodsSourceById = {};
     this.germplasmInDestinationByPUIsTemp = {};
     this.germplasmInDestinationByReferenceIdsTemp = {};
+    this.isNumberOfGenerationsValid = this.validateNumberOfGenerations();
   }
 
   isGermplasmExistsInDestination(germplasm: any,

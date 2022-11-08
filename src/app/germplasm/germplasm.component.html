@@ -43,7 +43,7 @@
               </div>
             </div>
           </app-collapsible>
-          <app-collapsible heading="Germplasm Mapping" *ngIf="germplasm.length && !isLoading">
+          <app-collapsible heading="Germplasm Mapping" *ngIf="germplasm.length && !isLoading && isNumberOfGenerationsValid">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
               <label class="form-check-label" for="selectAll">
