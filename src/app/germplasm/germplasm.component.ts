@@ -3,13 +3,19 @@ import { Router } from '@angular/router';
 import { ContextService } from '../context.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { brapiAll } from '../util/brapi-all';
 import { EXTERNAL_REFERENCE_SOURCE } from '../app.constants';
 import { EntityEnum, ExternalReferenceService } from '../shared/external-reference/external-reference.service';
 import { AlertService } from '../shared/alert/alert.service';
 import { BlockUIService } from 'ng-block-ui';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { GermplasmSourceModalComponent } from './germplasm-source-modal.component';
+import { PedigreeService } from '../shared/brapi/2.1/api/pedigree.service';
+import { PedigreeNode } from '../shared/brapi/2.1/model/pedigree-node';
+import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
+import { PedigreeNodeParents } from '../shared/brapi/2.1/model/pedigree-node-parents';
+import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
+import { GermplasmPedigreeGraphModalComponent } from './germplasm-pedigree-graph-modal.component';
+import { PedigreeUtilService } from '../shared/pedigree/pedigree-util.service';
 
 declare const BrAPI: any;
 
@@ -19,8 +25,11 @@ declare const BrAPI: any;
   styleUrls: ['./germplasm.component.css']
 })
 export class GermplasmComponent implements OnInit {
+  MAX_NAME_DISPLAY_SIZE = 50;
 
   brapiDestination: any;
+  brapiSource: any;
+
   isSaving = false;
   isLoading = false;
   germplasm: any = [];
@@ -35,12 +44,27 @@ export class GermplasmComponent implements OnInit {
   errors: any = [];
   info: any = [];
 
-  breedingMethodsDestByName: any = {};
-  breedingMethodsDestById: any = {};
-  breedingMethodsSourceByName: any = {};
-  breedingMethodsSourceById: any = {};
-  germplasmInDestinationByPUIs: any = {};
-  germplasmInDestinationByRefIds: any = {};
+  breedingMethodsDestByName: { [p: string]: BreedingMethod } = {};
+  breedingMethodsDestById: { [p: string]: BreedingMethod } = {};
+  breedingMethodsSourceByName: { [p: string]: BreedingMethod } = {};
+  breedingMethodsSourceById: { [p: string]: BreedingMethod } = {};
+  invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
+
+  // Import Ancestor Options
+  maxNumberOfAncestors = 15;
+  numberOfGenerations = 1;
+  isNumberOfGenerationsValid = true;
+  isImportAncestors = false;
+  isAttemptToConnectTargetAncestors = false;
+
+  // Map of existing germplasm matched by PUI,
+  // This is just a temporary storage for the current page.
+  germplasmInDestinationByPUIsTemp: { [p: string]: Germplasm } = {};
+  // Map of existing germplasm matched by ReferenceIds,
+  // This is just a temporary storage for the current page.
+  germplasmInDestinationByReferenceIdsTemp: { [p: string]: Germplasm } = {};
+
+  private readonly noNewGermplasmCanBeImportedMessage = 'No new germplasm can be imported.';
 
   constructor(
     private router: Router,
@@ -49,11 +73,15 @@ export class GermplasmComponent implements OnInit {
     private http: HttpClient,
     private externalReferenceService: ExternalReferenceService,
     private alertService: AlertService,
-    private blockUIService: BlockUIService
+    private blockUIService: BlockUIService,
+    private germplasmService: GermplasmService,
+    private pedigreeService: PedigreeService,
+    public pedigreeUtilService: PedigreeUtilService
   ) {
     // TODO / testing / remove
     // this.load();
     this.brapiDestination = BrAPI(this.context.destination, '2.0', this.context.destinationToken);
+    this.brapiSource = BrAPI(this.context.source, '2.0', this.context.source);
   }
 
   ngOnInit(): void {
@@ -64,36 +92,193 @@ export class GermplasmComponent implements OnInit {
     this.router.navigate(['entity-selector']);
   }
 
-  import(): void {
-    this.blockUIService.start('main'); 
+  async importSelectedGermplasm(): Promise<void> {
+    this.blockUIService.start('main');
+    let selectedGermplasm: Germplasm[] = [];
     if (this.isSelectAllPages) {
       this.isSaving = true;
-      this.loadAll().then(allGermplasm => {
-        this.post(allGermplasm);
-      });
+      // If select all is checked, we should retrieve all germplasm records of the selected study from source server.
+      const res: any = await this.http.get(this.context.source + '/germplasm', {
+        params: {
+          studyDbId: this.context.sourceStudy.studyDbId,
+          page: '0',
+          pageSize: this.totalCount.toString(),
+        }
+      }).toPromise();
+      selectedGermplasm = res.result.data as Germplasm[];
+      this.totalCount = res.metadata.pagination.totalCount;
     } else {
-      const germplasm = Object.values(this.selectedItems);
-      this.post(germplasm);
+      // Process only selected germplasm.
+      selectedGermplasm = Object.values(this.selectedItems) as Germplasm[];
     }
+
+    if (this.isImportAncestors) {
+
+      const validSelectedGermplasmForImport = await this.filterValidGermplasm(selectedGermplasm, this.isAttemptToConnectTargetAncestors);
+
+      if (validSelectedGermplasmForImport.length) {
+        // Retrieve the pedigree of the selected germplasm
+        // This will return the pedigree nodes of the germplasm including all their ancestors
+        const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
+          validSelectedGermplasmForImport, this.numberOfGenerations);
+
+        // Extract the germplasmDbIds of the germplasm and their pedigree (ancestors)
+        const germplasmDbIdsForCreation = this.pedigreeUtilService.filterGermplasmForCreation(validSelectedGermplasmForImport,
+          pedigreeMapSource,
+          this.numberOfGenerations);
+
+        // Retrieve the details of the germplasm and of their pedigree (ancestors)
+        const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
+          { germplasmDbIds: Array.from(germplasmDbIdsForCreation.values()) });
+
+        this.post(germplasmWithAncestors, pedigreeMapSource);
+      } else {
+        this.alertService.showWarning(this.noNewGermplasmCanBeImportedMessage);
+        this.isSaving = false;
+        this.blockUIService.stop('main');
+      }
+    } else {
+      this.post(selectedGermplasm);
+    }
+
   }
 
-  private async post(germplasm: any[]): Promise<void> {
+  async filterValidGermplasm(selectedGermplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean): Promise<Germplasm[]> {
+    // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with valid tree.
+    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm,
+      isAttemptToConnectTargetAncestors);
+
+    return selectedGermplasm.filter((g) => this.isSelectable(g, invalidPedigreeNodes));
+  }
+
+  private async post(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
     try {
       this.isSaving = true;
-      germplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g));
-      if (!germplasm.length) {
-        this.alertService.showDanger('All germplasm already exists in the destination server.');
-        this.isSaving = false;
-        return;
+
+      // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+      const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
+      // Find germplasm in destination by referenceId (germplasmDbId)
+      const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
+
+      // Get the germplasm that do not exist yet in the destination server
+      const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g,
+        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds));
+
+      if (!filteredGermplasm.length) {
+        await this.updatePedigreeTree(germplasm, pedigreeMap);
+        // If all germplasm already exists in the server, show an error message
+        this.alertService.showWarning('No new germplasm can be imported.');
+      } else {
+        // Import the germplasm into the destination server
+        const createNewGermplasmRequest = filteredGermplasm.map((g) => this.transformForSave(g));
+        const res = await this.http.post(this.context.destination + '/germplasm', createNewGermplasmRequest).toPromise();
+        // Update the pedigree of newly created germplasm
+        await this.updatePedigreeTree(germplasm, pedigreeMap);
+        this.onSuccess(res);
       }
-      const request = germplasm.map((g) => this.transformForSave(g));
-      const res = await this.http.post(this.context.destination + '/germplasm', request).toPromise();
-      this.onSuccess(res);
-    } catch (error: any) {
+    } catch (error) {
       this.onError(error);
     }
     this.isSaving = false;
     this.blockUIService.stop('main');
+  }
+
+  async updatePedigreeTree(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
+
+    // Only update pedigree tree of number of generation is more than 1
+    if (this.numberOfGenerations <= 1) {
+      return;
+    }
+    // Once the germplasm are saved, search again for germplasm that exist in the destination
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
+    // Find germplasm in destination by referenceId (germplasmDbId)
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
+
+    if (pedigreeMap) {
+
+      const existingGermplasmFromDestination: Germplasm[] = [];
+      pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
+        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+            germplasmDbId,
+            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap)
+          },
+          germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        if (germplasmInDestination) {
+          existingGermplasmFromDestination.push(germplasmInDestination);
+        }
+      });
+
+      const pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination,
+        existingGermplasmFromDestination, this.numberOfGenerations);
+
+      const pedigreeNodeUpdateRequest: { [key: string]: PedigreeNode; } = {};
+      pedigreeMap.forEach((pedigreeNode, germplasmDbId, map) => {
+        const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+            germplasmDbId,
+            germplasmPUI: this.pedigreeUtilService.getPUI(germplasmDbId, pedigreeMap)
+          },
+          germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        if (germplasmInDestination) {
+
+          // Only update the parents of a germplasm if it's a terminal node (parents still unknown)
+          if (germplasmInDestination.germplasmDbId &&
+            !this.pedigreeUtilService.isTerminalNode(pedigreeMapDestination.get(germplasmInDestination.germplasmDbId))) {
+            return;
+          }
+
+          const pedigreeNodeForUpdate: PedigreeNode = {
+            germplasmDbId: germplasmInDestination.germplasmDbId,
+            breedingMethodDbId: this.getBreedingMethodIdInDestination({ breedingMethodDbId: pedigreeNode.breedingMethodDbId })
+          };
+          if (pedigreeNode.parents) {
+            const pedigreeNodesForUpdateParents: PedigreeNodeParents[] = [];
+            pedigreeNode.parents.forEach((pedigreeNodeParent: PedigreeNodeParents) => {
+              // If the parent is null or undefined it means it is unknown
+              if (!pedigreeNodeParent.germplasmDbId) {
+                pedigreeNodesForUpdateParents.push({
+                  parentType: pedigreeNodeParent.parentType,
+                  // Set the parent's germplasmDbId to undefined so that it will be processed/tagged as UNKNOWN (0 gid)
+                  germplasmDbId: undefined
+                });
+              } else {
+                const parent = this.pedigreeUtilService.getMatchingGermplasmInDestination({
+                  germplasmDbId: pedigreeNodeParent.germplasmDbId || '',
+                  germplasmPUI: this.pedigreeUtilService.getPUI(pedigreeNodeParent.germplasmDbId, pedigreeMap)
+                }, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+                if (parent && parent.germplasmDbId) {
+                  pedigreeNodesForUpdateParents.push({
+                    parentType: pedigreeNodeParent.parentType,
+                    germplasmDbId: parent?.germplasmDbId
+                  });
+                }
+              }
+            });
+            pedigreeNodeForUpdate.parents = pedigreeNodesForUpdateParents;
+
+            const parent1 = this.pedigreeUtilService.getParent1(pedigreeNodeForUpdate);
+            const parent2 = this.pedigreeUtilService.getParent2(pedigreeNodeForUpdate);
+
+            if (!parent1?.germplasmDbId && !parent2?.germplasmDbId) {
+              return;
+            }
+
+            // Only update germplasm if it has parents and both parent1 and parent2 are defined.
+            if (germplasmInDestination.germplasmDbId && pedigreeNodesForUpdateParents.length > 0
+              && parent1 && parent2) {
+              // Add the pedigree node for update at the beginning of the list
+              pedigreeNodeUpdateRequest[germplasmInDestination.germplasmDbId] = pedigreeNodeForUpdate;
+            }
+          }
+        }
+      });
+      // Only update pedigree if there's data.
+      if (Object.keys(pedigreeNodeUpdateRequest).length > 0) {
+        const res = await this.pedigreeService.pedigreePut(this.context.destination, pedigreeNodeUpdateRequest).toPromise();
+        this.showPutErrors(res);
+      }
+    }
+
   }
 
   transformForSave(germplasm: any): any {
@@ -112,7 +297,7 @@ export class GermplasmComponent implements OnInit {
       referenceSource: EXTERNAL_REFERENCE_SOURCE
     });
 
-    copy.breedingMethodDbId = this.getBreedingMethodIdInDest(copy);
+    copy.breedingMethodDbId = this.getBreedingMethodIdInDestination(copy);
 
     // FIXME! bms should handle defaults
     if (!copy.acquisitionDate) {
@@ -129,37 +314,17 @@ export class GermplasmComponent implements OnInit {
     return copy;
   }
 
-  private getBreedingMethodIdInDest(copy: any): string {
-    const bmSource = this.breedingMethodsSourceById[copy.breedingMethodDbId];
-    if (!bmSource) {
-      return '';
-    }
-    const bmDest = this.breedingMethodsDestByName[bmSource.breedingMethodName];
-    if (!bmDest) {
-      return '';
-    }
-    return bmDest.breedingMethodDbId;
-  }
-
-  renderBreedingMethodCell(g: any): string {
-    if (!this.breedingMethodsSourceById[g.breedingMethodDbId]) {
-      return '';
-    }
-    let cell = this.breedingMethodsSourceById[g.breedingMethodDbId].breedingMethodName;
-    const b = this.getBreedingMethodIdInDest(g);
-
-    if (!b) {
-      cell = '<i class="text-danger" title="Doesn\'t exists in target">&#10007;</i> ' + cell;
-    } else {
-      cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
-    }
-    return cell;
-  }
-
   onError(res: HttpErrorResponse): void {
     // TODO ng-toast?
     // alert('error');
     console.error(res);
+  }
+
+  showPutErrors(res: any): void {
+    this.errors = res.body.metadata.status.filter((s: any) => s.messageType === 'ERROR');
+    if (this.errors.length) {
+      this.alertService.showDanger(this.errors);
+    }
   }
 
   onSuccess(res: any): void {
@@ -180,68 +345,59 @@ export class GermplasmComponent implements OnInit {
     }
   }
 
-  async loadAll() {
-    // Get all germplasm records from source server.
-    const res: any = await this.http.get(this.context.source + '/germplasm', {
-      params: {
-        studyDbId: this.context.sourceStudy.studyDbId,
-        page: '0',
-        pageSize: this.totalCount.toString(),
-      }
-    }).toPromise();
-    const allGermplasm = res.result.data;
-    this.totalCount = res.metadata.pagination.totalCount;
-
-    await this.searchInTarget(allGermplasm);
-    return allGermplasm;
-  }
-
   async load(): Promise<void> {
     this.reset();
-    /* TODO get page count brapijs?
-    const brapi = BrAPI(this.context.source, '2.0', this.context.sourceToken);
-    brapi.germplasm({
-      studyDbId: this.context.studySelected.studyDbId,
-      // page: this.page,
-      pageSize: this.pageSize,
-      pageRange: [this.page - 1, this.page]
-    }).all((germplasm: any[]) => {
-      this.germplasm = germplasm;
-    });
-     */
     this.isLoading = true;
-    try {
-      const res: any = await this.http.get(this.context.source + '/germplasm', {
-        params: {
-          studyDbId: this.context.sourceStudy.studyDbId,
-          page: (this.page - 1).toString(),
-          pageSize: this.pageSize.toString(),
+    if (this.isNumberOfGenerationsValid) {
+      try {
+        // TODO: Move this to germplasmService
+        const res: any = await this.http.get(this.context.source + '/germplasm', {
+          params: {
+            studyDbId: this.context.sourceStudy.studyDbId,
+            page: (this.page - 1).toString(),
+            pageSize: this.pageSize.toString(),
+          }
+        }).toPromise();
+        this.germplasm = res.result.data;
+        this.totalCount = res.metadata.pagination.totalCount;
+
+        // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+        this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchInTargetByPUIs(this.germplasm);
+        // Find germplasm in destination by referenceId (germplasmDbId)
+        this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchInTargetByReferenceIds(this.germplasm);
+
+        // Retrieve the breeding methods from source server
+        const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGet(this.context.source).toPromise();
+        if (breedingMethodsFromSource.body && breedingMethodsFromSource.body.result.data) {
+          breedingMethodsFromSource.body.result.data.forEach((breedingMethod) => {
+            this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
+            this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
+          });
         }
-      }).toPromise();
-      this.germplasm = res.result.data;
-      this.totalCount = res.metadata.pagination.totalCount;
+        // Retrive the breeding methods from destination server
+        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
+        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
+          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+            this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
+            this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
+          });
+        }
 
-      await this.searchInTarget(this.germplasm);
+        this.applyImportAncestorsSettings(this.germplasm);
 
-      const bmDestSource: any = await this.http.get(this.context.source + '/breedingmethods').toPromise();
-      if (bmDestSource.result.data && bmDestSource.result.data.length) {
-        bmDestSource.result.data.forEach((bm: any) => {
-          this.breedingMethodsSourceByName[bm.breedingMethodName] = bm;
-          this.breedingMethodsSourceById[bm.breedingMethodDbId] = bm;
-        });
+      } catch (error) {
+        this.onError(error);
       }
-
-      const bmDestResp: any = await this.http.get(this.context.destination + '/breedingmethods').toPromise();
-      if (bmDestResp.result.data && bmDestResp.result.data.length) {
-        bmDestResp.result.data.forEach((bm: any) => {
-          this.breedingMethodsDestByName[bm.breedingMethodName] = bm;
-          this.breedingMethodsDestById[bm.breedingMethodDbId] = bm;
-        });
-      }
-    } catch (error: any) {
-      this.onError(error);
     }
     this.isLoading = false;
+  }
+
+  validateNumberOfGenerations(): boolean {
+    if (this.isImportAncestors && (this.numberOfGenerations < 1 || this.numberOfGenerations > this.maxNumberOfAncestors)) {
+      this.alertService.showDanger('Number of generations should be greater than 0 and less than or equal to 15.');
+      return false;
+    }
+    return true;
   }
 
   reset(): void {
@@ -251,73 +407,17 @@ export class GermplasmComponent implements OnInit {
     this.breedingMethodsDestById = {};
     this.breedingMethodsSourceByName = {};
     this.breedingMethodsSourceById = {};
-    this.germplasmInDestinationByPUIs = {};
-    this.germplasmInDestinationByRefIds = {};
+    this.germplasmInDestinationByPUIsTemp = {};
+    this.germplasmInDestinationByReferenceIdsTemp = {};
+    this.isNumberOfGenerationsValid = this.validateNumberOfGenerations();
   }
 
-  async searchInTarget(germplasm: any[]): Promise<void> {
-    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
-    let currentPage = 0;
-    let totalPages = 1;
-    // FIXME: This is a workaround to get all the items in all pages.
-    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
-    // 1000 records from the first page.
-
-    if (germplasmPUIs.length) {
-      while (currentPage <= totalPages) {
-        const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
-          germplasmPUIs: germplasmPUIs,
-          pageRange: [currentPage, 1]
-        }));
-        if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
-          let tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
-          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-          totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
-          if (germplasmByPUIsResult[0].data.length) {
-            germplasmByPUIsResult[0].data.forEach((g: any) => {
-              this.germplasmInDestinationByPUIs[g.germplasmPUI] = g;
-            });
-          }
-        }
-      }
-    }
-   
-    // Find germplasm in destination by external reference ID
-    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
-    currentPage = 0;
-    totalPages = 1;
-    // FIXME: This is a workaround to get all the items in all pages.
-    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
-    // 1000 records from the first page.
-    if (germplasmRefIds.length) {
-      while (currentPage <= totalPages) {
-        const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
-          externalReferenceIDs: germplasmRefIds,
-          pageRange: [currentPage, 1]
-        }));
-        if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
-          let tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
-          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-          totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
-          if (germplasmByRefIdsResult[0].data.length) {
-            germplasmByRefIdsResult[0].data.forEach((g: any) => {
-              if (g.externalReferences && g.externalReferences.length) {
-                g.externalReferences.forEach((ref: any) => {
-                  this.germplasmInDestinationByRefIds[ref.referenceID] = g;
-                });
-              }
-            });
-          }
-        }
-      }
-    }
-   
-  }
-
-  isGermplasmExistsInDestination(germplasm: any) {
+  isGermplasmExistsInDestination(germplasm: any,
+                                 germplasmInDestinationByPUIs?: { [p: string]: Germplasm },
+                                 germplasmInDestinationByReferenceIds?: { [p: string]: Germplasm }): boolean {
     // Check first if the germplasm has a match by PUI
-    return this.germplasmInDestinationByPUIs[germplasm.germplasmPUI] || this.germplasmInDestinationByRefIds[this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, germplasm.germplasmDbId)];
+    return this.pedigreeUtilService.getMatchingGermplasmInDestination(germplasm,
+      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds) ? true : false;
   }
 
   isSelected(row: any): boolean {
@@ -374,5 +474,146 @@ export class GermplasmComponent implements OnInit {
   showGermplasmSourceModal(sourceGermplasm: Germplasm): void {
     const modalReference = this.modalService.open(GermplasmSourceModalComponent, { size: 'xl', backdrop: 'static' });
     modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
+  }
+
+  showPedigreeGraph(sourceGermplasm: Germplasm, isPreviewTarget: boolean): void {
+    const modalReference = this.modalService.open(GermplasmPedigreeGraphModalComponent, { size: 'lg', backdrop: 'static', windowClass: 'modal-max-width' });
+    modalReference.componentInstance.sourceGermplasm = sourceGermplasm;
+    modalReference.componentInstance.numberOfGenerations = this.numberOfGenerations;
+    modalReference.componentInstance.showSourcePedigreeTree = !isPreviewTarget;
+    modalReference.componentInstance.showDestinationPreviewTree = isPreviewTarget;
+    modalReference.componentInstance.isAttemptToConnectTargetAncestors = this.isAttemptToConnectTargetAncestors;
+  }
+
+  async applyImportAncestorsSettings(germplasm: Germplasm[]): Promise<void> {
+
+    if (!this.isImportAncestors) {
+      return;
+    }
+
+    const invalid = await this.validatePedigreeTree(this.numberOfGenerations, this.germplasm, this.isAttemptToConnectTargetAncestors);
+    this.invalidPedigreeNodes = invalid;
+  }
+
+  async validatePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean):
+    Promise<Map<string, Array<PedigreeNode>>> {
+
+
+    // Retrieve the pedigree of the selected germplasm
+    // This will return the pedigree nodes of the germplasm including all their ancestors
+    const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source, germplasm,
+      this.numberOfGenerations);
+
+    // Retrieve the details of the germplasm and of their pedigree (ancestors)
+    const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
+      { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
+
+    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasmWithAncestors);
+    // Find germplasm in destination by referenceId (germplasmDbId)
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasmWithAncestors);
+
+    // Get the existing germplasm from the target server
+    const existingGermplasmFromDestination: Germplasm[] = [];
+    germplasmWithAncestors.forEach(o => {
+      const existingGermplasm = this.pedigreeUtilService.getMatchingGermplasmInDestination(o,
+        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+      if (existingGermplasm) {
+        existingGermplasmFromDestination.push(existingGermplasm);
+      }
+    });
+
+    let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
+    if (existingGermplasmFromDestination) {
+      // Get the pedigree information of the existing germplasm from the target server, we will use
+      // this to compare the pedigree of the source to the pedigree of the target.
+      pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
+        this.numberOfGenerations);
+    }
+
+    return this.pedigreeUtilService.validatePedigreeTreeNodes(maximumLevelOfRecursion, germplasm, pedigreeMapSource, pedigreeMapDestination,
+      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, !isAttemptToConnectTargetAncestors);
+
+  }
+
+
+  hasInvalidPedigreeNodes(germplasmDbId: string, invalidPedigreeNodes: Map<string, Array<PedigreeNode>>): boolean {
+    if (!germplasmDbId) {
+      return false;
+    }
+    return this.isImportAncestors && invalidPedigreeNodes?.has(germplasmDbId);
+  }
+
+  private addRootGermplasmDbIdToMap(map: Map<string, Set<string>>, rootGermplasmDbId?: string, pedigreeNode?: PedigreeNode,
+                                    pedigreeMap?: Map<string, PedigreeNode>): void {
+    if (rootGermplasmDbId) {
+      pedigreeNode?.parents?.forEach(parent => {
+        if (parent.germplasmDbId) {
+          if (!map.get(parent.germplasmDbId)) {
+            map.set(parent.germplasmDbId, new Set<string>());
+          }
+          map.get(parent.germplasmDbId)?.add(rootGermplasmDbId);
+          this.addRootGermplasmDbIdToMap(map, rootGermplasmDbId, pedigreeMap?.get(parent.germplasmDbId), pedigreeMap);
+        }
+      });
+    }
+  }
+
+  private getBreedingMethodIdInDestination(copy: any): string {
+    const bmSource = this.breedingMethodsSourceById[copy.breedingMethodDbId];
+    if (!bmSource) {
+      return '';
+    }
+    const bmDest = this.breedingMethodsDestByName[bmSource.breedingMethodName];
+    if (!bmDest) {
+      return '';
+    }
+    return bmDest.breedingMethodDbId;
+  }
+
+  renderBreedingMethodCell(g: any): string {
+    if (!this.breedingMethodsSourceById[g.breedingMethodDbId]) {
+      return '';
+    }
+    let cell = this.breedingMethodsSourceById[g.breedingMethodDbId].breedingMethodName;
+    const b = this.getBreedingMethodIdInDestination(g);
+
+    if (!b) {
+      cell = '<i class="text-danger" title="Doesn\'t exists in target">&#10007;</i> ' + cell;
+    } else if (this.hasDifferentBreedingMethods(g)) {
+      cell = '<i class="text-danger" title="different breeding method in target">&#10007;</i> ' + cell;
+    } else {
+      cell = '<i class="text-success" title="exists in target">&#10003;</i> ' + cell;
+    }
+    return cell;
+  }
+
+  isSelectable(germplasm: Germplasm, invalidPedigreeNodes: Map<string, PedigreeNode[]>): boolean {
+    if (germplasm.germplasmDbId) {
+      if (this.hasDifferentBreedingMethods(germplasm)) {
+        return false;
+      } else if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, invalidPedigreeNodes)) {
+        return false;
+      } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIsTemp,
+        this.germplasmInDestinationByReferenceIdsTemp)) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  hasDifferentBreedingMethods(germplasm: any): boolean {
+    const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination(germplasm,
+      this.germplasmInDestinationByPUIsTemp, this.germplasmInDestinationByReferenceIdsTemp);
+    if (germplasmInDestination) {
+      return this.breedingMethodsSourceById[germplasm.breedingMethodDbId].breedingMethodName
+        !== this.getDestinationBreedingMethodId(germplasmInDestination);
+    }
+    return false;
+  }
+
+  getDestinationBreedingMethodId(germplasmInDestination: any): string {
+    return this.breedingMethodsDestById[germplasmInDestination.breedingMethodDbId].breedingMethodName;
   }
 }

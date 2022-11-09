@@ -9,16 +9,41 @@
   </div>
   <div class="row">
     <div class="col">
-      <div class="row" *ngIf="germplasm.length && !isLoading">
+      <div class="row">
         <div class="col">
-          <app-collapsible heading="Connection Info">
+          <app-collapsible *ngIf="germplasm.length" heading="Connection Info">
             <div class="card">
               <div class="card-body">
                 <h5><span class="badge badge-pill badge-primary">{{context.sourceStudy.studyName}}</span></h5>
               </div>
             </div>
           </app-collapsible>
-          <app-collapsible heading="Germplasm Mapping">
+          <app-collapsible *ngIf="germplasm.length" heading="Options">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" name="importAncestorsCheckbox" id="importAncestorsCheckbox" [(ngModel)]="isImportAncestors" (change)="load()">
+              <label class="custom-control-label" for="importAncestorsCheckbox">Import Ancestors</label>
+            </div>
+            <div class="card">
+              <div class="card-body">
+                <form>
+                  <div class="form-group row">
+                    <label for="numberOfGenerations" class="col-sm-2 col-form-label">Number of generations</label>
+                    <div class="col-sm-1">
+                      <input type="number" class="form-control" name="numberOfGenerationsText" id="numberOfGenerationsText" [(ngModel)]="numberOfGenerations" [disabled]="!isImportAncestors" min="1" max="15">
+                    </div>
+                    <div class="col-sm-1">
+                      <button type="button" class="btn btn-primary" (click)="load()" [disabled]="!isImportAncestors">Apply</button>
+                    </div>
+                  </div>
+                  <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="connectWithTargetAncestorsCheckbox" id="connectWithTargetAncestorsCheckbox" [(ngModel)]="isAttemptToConnectTargetAncestors" [disabled]="!isImportAncestors" (change)="load()">
+                    <label class="custom-control-label" for="connectWithTargetAncestorsCheckbox">Attempt to connect with target ancestors</label>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </app-collapsible>
+          <app-collapsible heading="Germplasm Mapping" *ngIf="germplasm.length && !isLoading && isNumberOfGenerationsValid">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
               <label class="form-check-label" for="selectAll">
@@ -37,22 +62,29 @@
                 <th>ORIGIN</th>
                 <th>DOCUMENTATION URL</th>
                 <th>ACQUISITION DATE</th>
-                <th>PEDIGREE</th>
+                <th *ngIf="this.isImportAncestors">SOURCE PEDIGREE</th>
+                <th *ngIf="this.isImportAncestors">PREVIEW TARGET PEDIGREE</th>
                 <th>BREEDING METHOD NAME</th>
                 </thead>
                 <tbody>
                 <tr *ngFor="let row of germplasm">
                   <td *ngIf="!isSelectAllPages">
-                    <input *ngIf="!isGermplasmExistsInDestination(row)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
-                    <fa-icon *ngIf="isGermplasmExistsInDestination(row)" [icon]="['fas', 'check']" title="already in target" style="color: green"></fa-icon>
+                    <input *ngIf="isSelectable(row, invalidPedigreeNodes)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
                   </td>
-                  <td>{{row.germplasmDbId}}</td>
+                  <td [ngClass]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp) ? 'table-cell-yellow' : 'table-cell-green'"
+                      [attr.title]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp) ? 'Germplasm already exists in the destination server' : 'Germplasm does not exist yet in the destination server'">{{row.germplasmDbId}}</td>
                   <td><a (click)="showGermplasmSourceModal(row)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
                   <td>{{getSynonyms(row.synonyms)}}</td>
                   <td>{{row.countryOfOrigin}}</td>
                   <td>{{row.documentationURL}}</td>
                   <td>{{row.acquisitionDate}}</td>
-                  <td>{{row.pedigree}}</td>
+                  <td *ngIf="this.isImportAncestors"><a (click)="showPedigreeGraph(row, false)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
+                  <td *ngIf="this.isImportAncestors">
+                    <fa-icon *ngIf="this.isAttemptToConnectTargetAncestors && !hasInvalidPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
+                    <fa-icon *ngIf="this.isAttemptToConnectTargetAncestors && hasInvalidPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
+                    &nbsp;&nbsp;
+                    <a (click)="showPedigreeGraph(row, true)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)?.germplasmName || row.germplasmName}}</a>
+                  </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>
                 </tbody>
@@ -83,7 +115,7 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" (click)="import()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">
+  <button type="button" class="btn btn-primary" (click)="importSelectedGermplasm()" [disabled]="isSaving || !(size(selectedItems) || isSelectAllPages && germplasm.length)">
     <span class="throbber throbber-btn" *ngIf="isSaving"></span>
     Import
   </button>

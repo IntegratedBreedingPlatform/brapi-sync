@@ -22,6 +22,8 @@ export interface Germplasm {
   genus?: string;
   germplasmDbId?: string;
   germplasmName?: string;
+  // FIXME array on pedigree sync branch?
+  // germplasmOrigin?: Array<GermplasmGermplasmOrigin>;
   germplasmOrigin?: GermplasmGermplasmOrigin;
   germplasmPUI?: string;
   germplasmPreprocessing?: string;

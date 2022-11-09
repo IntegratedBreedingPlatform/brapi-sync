@@ -1,11 +1,9 @@
-
-import { MetadataDatafiles } from './metadata-datafiles';
-import { MetadataPagination } from './metadata-pagination';
-import { MetadataStatus } from './metadata-status';
-
+import { MetadataDatafiles } from './metadataDatafiles';
+import { MetadataPagination } from './metadataPagination';
+import { MetadataStatus } from './metadataStatus';
 
 export interface Metadata {
-    datafiles?: Array<MetadataDatafiles>;
-    pagination?: MetadataPagination;
-    status?: Array<MetadataStatus>;
+  datafiles?: Array<MetadataDatafiles>;
+  pagination?: MetadataPagination;
+  status?: Array<MetadataStatus>;
 }
