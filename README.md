@@ -3,7 +3,7 @@
 A standalone tool to exchange and migrate data between two [BrAPI] enabled database/servers.
 
 This tool can be used to synchronize entities via [BrAPI] standard. This includes:
-* Germplasm
+* Germplasm (option to include ancestors/pedigree tree)
 * Trial
 * Study
 * Observation Units
@@ -28,9 +28,12 @@ This is an alpha version and still under develppment.
 * [POST /observationunits](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Units/post_observationunits)
 * [GET /search/variables/{searchResultsDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Variables/get_search_variables__searchResultsDbId_)
 * [POST /search/variables](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observation%20Variables/post_search_variables)
-* PUT /variables/{observationVariableDbId} (experimental) This is a preliminary implementation of BrAPI version 2.1 endpoint
+* [PUT /studies/{studyDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Core/2.1#/Studies/put_studies__studyDbId_)
 * [GET /observations](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observations/get_observations)
 * [POST /observations](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Phenotyping/2.0#/Observations/post_observations)
+* [GET /search/pedigree/{searchResultsDbId}](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Germplasm/2.1#/Pedigree/get_search_pedigree__searchResultsDbId_)
+* [POST /search/pedigree](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Germplasm/2.1#/Pedigree/post_search_pedigree)
+* [PUT /pedigree](https://app.swaggerhub.com/apis/PlantBreedingAPI/BrAPI-Germplasm/2.1#/Pedigree/put_pedigree)
 
 ![preview](images/preview.png)
 
@@ -73,15 +76,6 @@ then it is used as parameter to get the target study.
 ## Pedigree sync
 
 ![pedigree-sync](images/pedigree-sync.svg)
-
-## TODO
-
-- [x] Keep track using external references 
-- [ ] Keep track using PUID
-- [ ] Map variables by alias
-- [ ] Optimize germplasm table
-- [ ] OAuth authentication
-- [ ] Various bug fixes
 
 
 # How to run
