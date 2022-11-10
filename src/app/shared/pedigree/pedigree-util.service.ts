@@ -63,7 +63,7 @@ export class PedigreeUtilService {
 
   async getPedigreeMap(basePath: string, germplasm: Germplasm[], pedigreeDepth: number): Promise<Map<string, PedigreeNode>> {
 
-    if (!germplasm) {
+    if (!germplasm || germplasm.length === 0) {
       return new Map<string, PedigreeNode>();
     }
 
