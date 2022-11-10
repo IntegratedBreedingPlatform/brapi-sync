@@ -63,7 +63,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
     });
 
     let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
-    if (existingGermplasmFromDestination) {
+    if (existingGermplasmFromDestination && existingGermplasmFromDestination.length > 0) {
       // Get the pedigree information of the existing germplasm from the target server, we will use
       // this to compare the pedigree of the source to the pedigree of the target.
       pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,

@@ -85,34 +85,32 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
 
   addNode(dot: string[], graphNode: GraphNode): void {
 
-    dot.push(this.createNodeTextWithFormatting(dot, graphNode) + ';\n');
+    dot.push(`${this.createNodeTextWithFormatting(dot, graphNode)}\n`);
 
     if (this.isUnknownImmediateSource(graphNode)) {
       if (graphNode.maleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + '->'
-          + graphNode.germplasmDbId + ';\n');
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + `->"${graphNode.germplasmDbId}";\n`);
         this.addNode(dot, graphNode.maleParentNode);
       }
       if (graphNode.femaleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + '->'
-          + graphNode.maleParentNode?.germplasmDbId + ';\n');
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + `-> "${graphNode.maleParentNode?.germplasmDbId}";\n`);
         this.addNode(dot, graphNode.femaleParentNode);
       }
     } else {
       if (!graphNode.isDerivative && graphNode.femaleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + '->'
-          + graphNode.germplasmDbId + ((graphNode.isDerivative && !graphNode.maleParentNode) ? ';\n' :
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.femaleParentNode) + `-> "${graphNode.germplasmDbId}"`
+          + ((graphNode.isDerivative && !graphNode.maleParentNode) ? ';\n' :
             ' [color=\"RED\", arrowhead=\"odottee\"];\n'));
         this.addNode(dot, graphNode.femaleParentNode);
       }
       if (graphNode.maleParentNode) {
-        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + '->'
-          + graphNode.germplasmDbId + ((graphNode.isDerivative) ? ';\n' : ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n'));
+        dot.push(this.createNodeTextWithFormatting(dot, graphNode.maleParentNode) + `-> "${graphNode.germplasmDbId}"`
+          + ((graphNode.isDerivative) ? ';\n' : ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n'));
         this.addNode(dot, graphNode.maleParentNode);
       }
       if (graphNode.otherProgenitors && graphNode.otherProgenitors.length > 0) {
         graphNode.otherProgenitors.forEach((otherProgenitorGermplasmTreeNode: any) => {
-          dot.push(this.createNodeTextWithFormatting(dot, otherProgenitorGermplasmTreeNode) + '->' + graphNode.germplasmDbId
+          dot.push(this.createNodeTextWithFormatting(dot, otherProgenitorGermplasmTreeNode) + `-> "${graphNode.germplasmDbId}"`
             + ' [color=\"BLUE\", arrowhead=\"veeodot\"];\n');
           this.addNode(dot, otherProgenitorGermplasmTreeNode);
         });
@@ -137,18 +135,18 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
       name.push(preferredName + '\n');
     }
     if (graphNode.germplasmDbId === '0') {
-      dot.push(graphNode.germplasmDbId + ' [shape=box, style=dashed];\n');
+      dot.push(`"${graphNode.germplasmDbId}" [shape=box, style=dashed];\n`);
     } else {
       name.push('ID: ' + graphNode.germplasmDbId);
-      dot.push(`${graphNode.germplasmDbId} [shape="box" ${this.getNodeColor(graphNode)}];\n`);
+      dot.push(`"${graphNode.germplasmDbId}" [shape="box" ${this.getNodeColor(graphNode)}];\n`);
       if (this.includeBreedingMethod && graphNode.methodName) {
         name.push(`\n\n${graphNode.methodName}`);
       }
     }
-    dot.push(graphNode.germplasmDbId + ` [label="${name.join('')}", tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0,` +
+    dot.push(`"${graphNode.germplasmDbId}" [label="${name.join('')}", tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0,` +
       ` ordering="in"];\n`);
 
-    return graphNode.germplasmDbId;
+    return `"${graphNode.germplasmDbId}"`;
   }
 
   getNodeColor(graphNode: GraphNode): string {
