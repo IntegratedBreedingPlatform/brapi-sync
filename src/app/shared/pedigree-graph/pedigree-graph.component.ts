@@ -85,7 +85,7 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
 
   addNode(dot: string[], graphNode: GraphNode): void {
 
-    dot.push(`"${this.createNodeTextWithFormatting(dot, graphNode)}"\n`);
+    dot.push(`${this.createNodeTextWithFormatting(dot, graphNode)}\n`);
 
     if (this.isUnknownImmediateSource(graphNode)) {
       if (graphNode.maleParentNode) {
@@ -146,7 +146,7 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
     dot.push(`"${graphNode.germplasmDbId}" [label="${name.join('')}", tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0,` +
       ` ordering="in"];\n`);
 
-    return graphNode.germplasmDbId;
+    return `"${graphNode.germplasmDbId}"`;
   }
 
   getNodeColor(graphNode: GraphNode): string {
