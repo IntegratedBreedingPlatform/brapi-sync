@@ -48,9 +48,11 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
       { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasmWithAncestors);
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
+      germplasmWithAncestors);
     // Find germplasm in destination by reference Id (germplasmDbId)
-    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasmWithAncestors);
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(this.context.destination,
+      germplasmWithAncestors);
 
     // Get the existing germplasm from the target server
     const existingGermplasmFromDestination: Germplasm[] = [];

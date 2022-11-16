@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { brapiAll } from '../../util/brapi-all';
 import { EntityEnum, ExternalReferenceService } from '../external-reference/external-reference.service';
 import { Germplasm } from '../brapi/2.0/model/germplasm';
 import { ContextService } from '../../context.service';
@@ -89,72 +88,41 @@ export class PedigreeUtilService {
     return new Map<string, PedigreeNode>();
   }
 
-  async searchInTargetByPUIs(germplasm: Germplasm[]): Promise<{ [p: string]: Germplasm }> {
+  async searchGermplasmByPUIs(basePath: string, germplasm: Germplasm[]): Promise<{ [p: string]: Germplasm }> {
 
     const germplasmInDestinationByPUIs: { [p: string]: Germplasm } = {};
 
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
     const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
-    let currentPage = 0;
-    let totalPages = 1;
-    // FIXME: This is a workaround to get all the items in all pages.
-    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
-    // 1000 records from the first page.
 
     if (germplasmPUIs.length) {
-      while (currentPage <= totalPages) {
-        const germplasmByPUIsResult = await brapiAll(this.brapiDestination.search_germplasm({
-          germplasmPUIs,
-          pageRange: [currentPage, 1]
-        }));
-        if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
-          const tempCurrentPage = germplasmByPUIsResult[0].__response.metadata.pagination.currentPage;
-          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-          totalPages = germplasmByPUIsResult[0].__response.metadata.pagination.totalPages - 1;
-          if (germplasmByPUIsResult[0].data.length) {
-            germplasmByPUIsResult[0].data.forEach((g: any) => {
-              germplasmInDestinationByPUIs[g.germplasmPUI] = g;
-            });
-          }
-        }
+      const germplasmByPUIsResult = await this.searchGermplasm(basePath, { germplasmPUIs });
+      if (germplasmByPUIsResult && germplasmByPUIsResult.length) {
+        germplasmByPUIsResult.forEach((g: any) => {
+          germplasmInDestinationByPUIs[g.germplasmPUI] = g;
+        });
       }
     }
-
     return germplasmInDestinationByPUIs;
-
   }
 
-  async searchInTargetByReferenceIds(germplasm: any[]): Promise<{ [p: string]: Germplasm }> {
+  async searchGermplasmByReferenceIds(basePath: string, germplasm: any[]): Promise<{ [p: string]: Germplasm }> {
 
     const germplasmInDestinationByReferenceIds: { [p: string]: Germplasm } = {};
 
     // Find germplasm in destination by external reference ID
-    const germplasmRefIds = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
-    let currentPage = 0;
-    let totalPages = 1;
-    // FIXME: This is a workaround to get all the items in all pages.
-    // Brapi-Js doesn't have a way to specify the page size, so a brapi call will always only return
-    // 1000 records from the first page.
-    if (germplasmRefIds.length) {
-      while (currentPage <= totalPages) {
-        const germplasmByRefIdsResult = await brapiAll(this.brapiDestination.search_germplasm({
-          externalReferenceIDs: germplasmRefIds,
-          pageRange: [currentPage, 1]
-        }));
-        if (germplasmByRefIdsResult && germplasmByRefIdsResult.length) {
-          const tempCurrentPage = germplasmByRefIdsResult[0].__response.metadata.pagination.currentPage;
-          currentPage = tempCurrentPage ? (tempCurrentPage + 1) : 1;
-          totalPages = germplasmByRefIdsResult[0].__response.metadata.pagination.totalPages - 1;
-          if (germplasmByRefIdsResult[0].data.length) {
-            germplasmByRefIdsResult[0].data.forEach((g: any) => {
-              if (g.externalReferences && g.externalReferences.length) {
-                g.externalReferences.forEach((ref: any) => {
-                  germplasmInDestinationByReferenceIds[ref.referenceID] = g;
-                });
-              }
+    const externalReferenceIDs = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+    if (externalReferenceIDs.length) {
+      const germplasmByReferenceIdsResult = await this.searchGermplasm(basePath, { externalReferenceIDs });
+
+      if (germplasmByReferenceIdsResult && germplasmByReferenceIdsResult.length) {
+        germplasmByReferenceIdsResult.forEach((g: any) => {
+          if (g.externalReferences && g.externalReferences.length) {
+            g.externalReferences.forEach((ref: any) => {
+              germplasmInDestinationByReferenceIds[ref.referenceID] = g;
             });
           }
-        }
+        });
       }
     }
     return germplasmInDestinationByReferenceIds;

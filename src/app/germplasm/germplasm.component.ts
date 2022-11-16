@@ -156,9 +156,12 @@ export class GermplasmComponent implements OnInit {
       this.isSaving = true;
 
       // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-      const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
-      // Find germplasm in destination by referenceId (germplasmDbId)
-      const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
+      const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
+      const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination, germplasm);
+      // Find germplasm in destination by external reference ID
+      const externalReferenceIDs = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
+      const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(this.context.destination,
+        germplasm);
 
       // Get the germplasm that do not exist yet in the destination server
       const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g,
@@ -191,9 +194,10 @@ export class GermplasmComponent implements OnInit {
     }
     // Once the germplasm are saved, search again for germplasm that exist in the destination
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasm);
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination, germplasm);
     // Find germplasm in destination by referenceId (germplasmDbId)
-    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasm);
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(
+      this.context.destination, germplasm);
 
     if (pedigreeMap) {
 
@@ -362,9 +366,11 @@ export class GermplasmComponent implements OnInit {
         this.totalCount = res.metadata.pagination.totalCount;
 
         // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-        this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchInTargetByPUIs(this.germplasm);
+        this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
+          this.germplasm);
         // Find germplasm in destination by referenceId (germplasmDbId)
-        this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchInTargetByReferenceIds(this.germplasm);
+        this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchGermplasmByReferenceIds(
+          this.context.destination, this.germplasm);
 
         // Retrieve the breeding methods from source server
         const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGetAll(this.context.source).toPromise();
@@ -509,9 +515,11 @@ export class GermplasmComponent implements OnInit {
       { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
 
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasmWithAncestors);
+    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
+      germplasmWithAncestors);
     // Find germplasm in destination by referenceId (germplasmDbId)
-    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasmWithAncestors);
+    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(this.context.destination,
+      germplasmWithAncestors);
 
     // Get the existing germplasm from the target server
     const existingGermplasmFromDestination: Germplasm[] = [];
