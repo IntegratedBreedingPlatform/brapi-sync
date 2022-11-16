@@ -32,33 +32,17 @@ export class PedigreeUtilService {
 
   async searchGermplasm(basePath: string, request: GermplasmSearchRequest): Promise<Germplasm[]> {
     // Search germplasm
-    const allResults: Array<Germplasm> = new Array<Germplasm>();
-
     const searchGermplasmPost = await this.germplasmService.searchGermplasmPost(basePath, request).toPromise();
     if (searchGermplasmPost.body && searchGermplasmPost.body.result) {
       // Get the actual search results based on the searchResultsDbId
       // If the result is paginated, we need to make sure that we get all the data from all the pages
-      let currentPage = 0;
-      let totalPages = 1;
-      // 5000 is the maxiumum number of items that can be retrieved in a page.
-      const numberOfItemsPerPage = 5000;
-      const initialResult = await this.germplasmService.searchGermplasmSearchResultsDbIdGet(basePath,
-        searchGermplasmPost.body.result.searchResultsDbId, currentPage, numberOfItemsPerPage).toPromise();
-      if (initialResult.body && initialResult.body.result) {
-        currentPage = (!initialResult.body.metadata.pagination?.currentPage ? 0 : initialResult.body.metadata.pagination?.currentPage);
-        totalPages = !initialResult.body.metadata.pagination?.totalPages ? 1 : initialResult.body.metadata.pagination?.totalPages;
-        allResults.push(...initialResult.body.result.data);
-        while (currentPage < totalPages - 1) {
-          currentPage = currentPage + 1;
-          const pageResult = await this.germplasmService.searchGermplasmSearchResultsDbIdGet(basePath,
-            searchGermplasmPost.body.result.searchResultsDbId, currentPage, numberOfItemsPerPage).toPromise();
-          if (pageResult.body && pageResult.body.result) {
-            allResults.push(...pageResult.body.result.data);
-          }
-        }
+      const germplasm = await this.germplasmService.searchGermplasmSearchResultsDbIdGetAll(basePath,
+        searchGermplasmPost.body.result.searchResultsDbId).toPromise();
+      if (germplasm && germplasm.length) {
+        return germplasm;
       }
     }
-    return allResults;
+    return [];
   }
 
   async getPedigreeMap(basePath: string, germplasm: Germplasm[], pedigreeDepth: number): Promise<Map<string, PedigreeNode>> {
@@ -89,12 +73,12 @@ export class PedigreeUtilService {
     const searchPedigreePost = await this.pedigreeService.searchPedigreePost(basePath, request).toPromise();
     if (searchPedigreePost.body && searchPedigreePost.body.result) {
       // Get the actual search results based ob the searchResultsDbId
-      const searchPedigreeGetResult = await this.pedigreeService.searchPedigreeSearchResultsDbIdGet(basePath,
+      const searchPedigreeGetResult = await this.pedigreeService.searchPedigreeSearchResultsDbIdGetAll(basePath,
         searchPedigreePost.body.result.searchResultsDbId).toPromise();
       // Convert the array of PedigreeNodes to Map
       const map = new Map<string, PedigreeNode>();
-      if (searchPedigreeGetResult.body && searchPedigreeGetResult.body.result) {
-        searchPedigreeGetResult.body.result.data.forEach(value => {
+      if (searchPedigreeGetResult && searchPedigreeGetResult.length) {
+        searchPedigreeGetResult.forEach(value => {
           if (value.germplasmDbId) {
             map.set(value.germplasmDbId, value);
           }

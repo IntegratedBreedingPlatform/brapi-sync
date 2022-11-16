@@ -1,9 +1,15 @@
-import { BreedingMethodListResponseResult } from './breeding-method-list-response-result';
-import { Context } from './context';
 import { Metadata } from './metadata';
+import { ListResponse } from '../../shared/model/list-response';
+import { BreedingMethod } from './breeding-method';
+import { ListResponseResult } from '../../shared/model/list-response-result';
 
-export interface BreedingMethodListResponse {
-  context?: Context;
+export class BreedingMethodListResponse implements ListResponse<BreedingMethod> {
   metadata: Metadata;
-  result: BreedingMethodListResponseResult;
+  result: ListResponseResult<BreedingMethod>;
+
+  constructor(metadata: Metadata, result: ListResponseResult<BreedingMethod>) {
+    this.metadata = metadata;
+    this.result = result;
+  }
+
 }

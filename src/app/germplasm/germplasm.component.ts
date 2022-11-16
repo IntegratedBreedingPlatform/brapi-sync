@@ -367,17 +367,17 @@ export class GermplasmComponent implements OnInit {
         this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchInTargetByReferenceIds(this.germplasm);
 
         // Retrieve the breeding methods from source server
-        const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGet(this.context.source).toPromise();
-        if (breedingMethodsFromSource.body && breedingMethodsFromSource.body.result.data) {
-          breedingMethodsFromSource.body.result.data.forEach((breedingMethod) => {
+        const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGetAll(this.context.source).toPromise();
+        if (breedingMethodsFromSource && breedingMethodsFromSource.length) {
+          breedingMethodsFromSource.forEach((breedingMethod) => {
             this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
             this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
           });
         }
         // Retrive the breeding methods from destination server
-        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
-        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
-          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGetAll(this.context.destination).toPromise();
+        if (breedingMethodsFromDestination && breedingMethodsFromDestination.length) {
+          breedingMethodsFromDestination.forEach((breedingMethod) => {
             this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
             this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
           });

@@ -6,8 +6,8 @@ import { ContextService } from '../context.service';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { PedigreeUtilService } from '../shared/pedigree/pedigree-util.service';
 import { GraphNode } from '../shared/pedigree-graph/graph-node';
-import {GermplasmService} from "../shared/brapi/2.0/api/germplasm.service";
-import {BreedingMethod} from "../shared/brapi/2.0/model/breeding-method";
+import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
+import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
 
 @Component({
   selector: 'app-germplasm-pedigree-graph',
@@ -72,10 +72,10 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
 
     if (this.sourceGermplasm?.germplasmDbId) {
       if (isPreviewTarget) {
-        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
+        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGetAll(this.context.destination).toPromise();
         const breedingMethodsDestinationById: { [p: string]: BreedingMethod } = {};
-        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
-          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
+        if (breedingMethodsFromDestination && breedingMethodsFromDestination.length) {
+          breedingMethodsFromDestination.forEach((breedingMethod) => {
             breedingMethodsDestinationById[breedingMethod.breedingMethodDbId] = breedingMethod;
           });
         }

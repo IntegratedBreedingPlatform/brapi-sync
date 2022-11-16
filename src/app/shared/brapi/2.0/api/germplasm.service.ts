@@ -5,6 +5,9 @@ import { GermplasmSearchRequest } from '../model/germplasm-search-request';
 import { GermplasmListResponse } from '../model/germplasm-list-response';
 import { GermplasmSearchResponse } from '../model/germplasm-search-response';
 import { BreedingMethodListResponse } from '../model/breeding-method-list-response';
+import { getAllRecords } from '../../shared/get-all-records';
+import { Germplasm } from '../model/germplasm';
+import { BreedingMethod } from '../model/breeding-method';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +54,13 @@ export class GermplasmService {
     );
   }
 
+  public searchGermplasmSearchResultsDbIdGetAll(basePath: string, searchResultsDbId: string): Observable<Germplasm[]> {
+    return getAllRecords<Germplasm>((page, pageSize) => {
+      return this.searchGermplasmSearchResultsDbIdGet(basePath, searchResultsDbId, page, pageSize);
+    });
+  }
+
+
   public breedingmethodsGet(basePath: string, page?: number, pageSize?: number): Observable<HttpResponse<BreedingMethodListResponse>> {
 
     let queryParameters = new HttpParams();
@@ -67,6 +77,12 @@ export class GermplasmService {
         observe: 'response'
       }
     );
+  }
+
+  public breedingmethodsGetAll(basePath: string): Observable<BreedingMethod[]> {
+    return getAllRecords<BreedingMethod>((page, pageSize) => {
+      return this.breedingmethodsGet(basePath, page, pageSize);
+    });
   }
 
 }
