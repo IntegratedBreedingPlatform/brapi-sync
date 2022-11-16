@@ -145,7 +145,7 @@ export class GermplasmComponent implements OnInit {
 
   async filterValidGermplasm(selectedGermplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean): Promise<Germplasm[]> {
     // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with valid tree.
-    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations - 1, selectedGermplasm,
+    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations, selectedGermplasm,
       isAttemptToConnectTargetAncestors);
 
     return selectedGermplasm.filter((g) => this.isSelectable(g, invalidPedigreeNodes));
