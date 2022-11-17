@@ -5,8 +5,7 @@
   font-size: 90%;
 }
 .node-legend .legend-scale ul {
-  margin: 0;
-  margin-bottom: 5px;
+  margin: 0 0 5px;
   padding: 0;
   list-style: none;
 }
@@ -17,10 +16,27 @@
   line-height: 18px;
   margin-bottom: 2px;
 }
-.node-legend ul.legend-labels li span {
-  height: 16px;
-  width: 30px;
-  margin-right: 5px;
-  margin-left: 0;
+
+.node-legend .legend-scale ul li span {
+  margin-left: 5px;
+}
+
+div.box {
+  width:40px;
+  height:16px;
   border: 1px solid #999;
+  display: inline-block;
+  font-weight: bold;
+}
+div.box.gold {
+  background:Gold;
+}
+div.box.lime-green {
+  background:LimeGreen;
+}
+div.box.red {
+  background:Red;
+}
+div.box.no-border {
+  border: 0;
 }
