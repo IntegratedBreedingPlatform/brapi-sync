@@ -71,8 +71,8 @@
                   <td *ngIf="!isSelectAllPages">
                     <input *ngIf="isSelectable(row, invalidPedigreeNodes)" type="checkbox" [checked]="isSelected(row)" (click)="toggleSelect(row)">
                   </td>
-                  <td [ngClass]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp) ? 'table-cell-yellow' : 'table-cell-green'"
-                      [attr.title]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp) ? 'Germplasm already exists in the destination server' : 'Germplasm does not exist yet in the destination server'">{{row.germplasmDbId}}</td>
+                  <td [ngClass]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds) ? 'table-cell-yellow' : 'table-cell-green'"
+                      [attr.title]="isGermplasmExistsInDestination(row, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds) ? 'Germplasm already exists in the destination server' : 'Germplasm does not exist yet in the destination server'">{{row.germplasmDbId}}</td>
                   <td><a (click)="showGermplasmSourceModal(row)" href="javascript: void(0)">{{row.germplasmName}}</a></td>
                   <td>{{getSynonyms(row.synonyms)}}</td>
                   <td>{{row.countryOfOrigin}}</td>
@@ -83,7 +83,7 @@
                     <fa-icon *ngIf="this.isAttemptToConnectTargetAncestors && !hasInvalidPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'check']" title="" style="color: green" class="pl-1"></fa-icon>
                     <fa-icon *ngIf="this.isAttemptToConnectTargetAncestors && hasInvalidPedigreeNodes(row.germplasmDbId, invalidPedigreeNodes)" [icon]="['fas', 'times']" title="" style="color: red" class="pl-1"></fa-icon>
                     &nbsp;&nbsp;
-                    <a (click)="showPedigreeGraph(row, true)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIsTemp, germplasmInDestinationByReferenceIdsTemp)?.germplasmName || row.germplasmName}}</a>
+                    <a (click)="showPedigreeGraph(row, true)" href="javascript: void(0)">{{pedigreeUtilService.getMatchingGermplasmInDestination(row, germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds)?.germplasmName || row.germplasmName}}</a>
                   </td>
                   <td [innerHTML]="renderBreedingMethodCell(row)"></td>
                 </tr>

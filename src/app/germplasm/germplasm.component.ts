@@ -48,7 +48,6 @@ export class GermplasmComponent implements OnInit {
   breedingMethodsDestById: { [p: string]: BreedingMethod } = {};
   breedingMethodsSourceByName: { [p: string]: BreedingMethod } = {};
   breedingMethodsSourceById: { [p: string]: BreedingMethod } = {};
-  invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
 
   // Import Ancestor Options
   maxNumberOfAncestors = 15;
@@ -58,11 +57,14 @@ export class GermplasmComponent implements OnInit {
   isAttemptToConnectTargetAncestors = false;
 
   // Map of existing germplasm matched by PUI,
-  // This is just a temporary storage for the current page.
-  germplasmInDestinationByPUIsTemp: { [p: string]: Germplasm } = {};
+  germplasmInDestinationByPUIs: { [p: string]: Germplasm } = {};
   // Map of existing germplasm matched by ReferenceIds,
-  // This is just a temporary storage for the current page.
-  germplasmInDestinationByReferenceIdsTemp: { [p: string]: Germplasm } = {};
+  germplasmInDestinationByReferenceIds: { [p: string]: Germplasm } = {};
+  pedigreeMapSource: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
+  pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
+  germplasmWithAncestors: Germplasm[] = [];
+  invalidPedigreeNodes: Map<string, Array<PedigreeNode>> = new Map<string, Array<PedigreeNode>>();
+
 
   private readonly noNewGermplasmCanBeImportedMessage = 'No new germplasm can be imported.';
 
@@ -86,6 +88,27 @@ export class GermplasmComponent implements OnInit {
 
   ngOnInit(): void {
     this.alertService.removeAll();
+    // Load breeding methods only once when the page initialized.
+    this.loadBreedingMethods();
+  }
+
+  async loadBreedingMethods(): Promise<void> {
+    // Retrieve the breeding methods from source server
+    const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGetAll(this.context.source).toPromise();
+    if (breedingMethodsFromSource && breedingMethodsFromSource.length) {
+      breedingMethodsFromSource.forEach((breedingMethod) => {
+        this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
+        this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
+      });
+    }
+    // Retrive the breeding methods from destination server
+    const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGetAll(this.context.destination).toPromise();
+    if (breedingMethodsFromDestination && breedingMethodsFromDestination.length) {
+      breedingMethodsFromDestination.forEach((breedingMethod) => {
+        this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
+        this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
+      });
+    }
   }
 
   back(): void {
@@ -114,24 +137,22 @@ export class GermplasmComponent implements OnInit {
 
     if (this.isImportAncestors) {
 
-      const validSelectedGermplasmForImport = await this.filterValidGermplasm(selectedGermplasm, this.isAttemptToConnectTargetAncestors);
+      await this.applyImportAncestorsSettings(selectedGermplasm);
+
+      const validSelectedGermplasmForImport = selectedGermplasm.filter((g) => this.isSelectable(g, this.invalidPedigreeNodes));
 
       if (validSelectedGermplasmForImport.length) {
-        // Retrieve the pedigree of the selected germplasm
-        // This will return the pedigree nodes of the germplasm including all their ancestors
-        const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
-          validSelectedGermplasmForImport, this.numberOfGenerations);
 
         // Extract the germplasmDbIds of the germplasm and their pedigree (ancestors)
         const germplasmDbIdsForCreation = this.pedigreeUtilService.filterGermplasmForCreation(validSelectedGermplasmForImport,
-          pedigreeMapSource,
+          this.pedigreeMapSource,
           this.numberOfGenerations);
 
         // Retrieve the details of the germplasm and of their pedigree (ancestors)
         const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
           { germplasmDbIds: Array.from(germplasmDbIdsForCreation.values()) });
 
-        this.post(germplasmWithAncestors, pedigreeMapSource);
+        this.post(germplasmWithAncestors, this.pedigreeMapSource);
       } else {
         this.alertService.showWarning(this.noNewGermplasmCanBeImportedMessage);
         this.isSaving = false;
@@ -143,29 +164,13 @@ export class GermplasmComponent implements OnInit {
 
   }
 
-  async filterValidGermplasm(selectedGermplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean): Promise<Germplasm[]> {
-    // Compare the pedigree tree of source and destination germplasm, and only return the selected germplasm with valid tree.
-    const invalidPedigreeNodes = await this.validatePedigreeTree(this.numberOfGenerations, selectedGermplasm,
-      isAttemptToConnectTargetAncestors);
-
-    return selectedGermplasm.filter((g) => this.isSelectable(g, invalidPedigreeNodes));
-  }
-
   private async post(germplasm: Germplasm[], pedigreeMap?: Map<string, PedigreeNode>): Promise<void> {
     try {
       this.isSaving = true;
 
-      // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-      const germplasmPUIs = germplasm.filter(g => g.germplasmPUI !== null && g.germplasmPUI !== undefined).map(g => g.germplasmPUI);
-      const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination, germplasm);
-      // Find germplasm in destination by external reference ID
-      const externalReferenceIDs = germplasm.map(g => this.externalReferenceService.getReferenceId(EntityEnum.GERMPLASM, g.germplasmDbId));
-      const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(this.context.destination,
-        germplasm);
-
       // Get the germplasm that do not exist yet in the destination server
       const filteredGermplasm = germplasm.filter((g) => !this.isGermplasmExistsInDestination(g,
-        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds));
+        this.germplasmInDestinationByPUIs, this.germplasmInDestinationByReferenceIds));
 
       if (!filteredGermplasm.length) {
         await this.updatePedigreeTree(germplasm, pedigreeMap);
@@ -365,31 +370,18 @@ export class GermplasmComponent implements OnInit {
         this.germplasm = res.result.data;
         this.totalCount = res.metadata.pagination.totalCount;
 
-        // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-        this.germplasmInDestinationByPUIsTemp = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
-          this.germplasm);
-        // Find germplasm in destination by referenceId (germplasmDbId)
-        this.germplasmInDestinationByReferenceIdsTemp = await this.pedigreeUtilService.searchGermplasmByReferenceIds(
-          this.context.destination, this.germplasm);
+        if (this.isImportAncestors) {
 
-        // Retrieve the breeding methods from source server
-        const breedingMethodsFromSource = await this.germplasmService.breedingmethodsGetAll(this.context.source).toPromise();
-        if (breedingMethodsFromSource && breedingMethodsFromSource.length) {
-          breedingMethodsFromSource.forEach((breedingMethod) => {
-            this.breedingMethodsSourceByName[breedingMethod.breedingMethodName] = breedingMethod;
-            this.breedingMethodsSourceById[breedingMethod.breedingMethodDbId] = breedingMethod;
-          });
-        }
-        // Retrive the breeding methods from destination server
-        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGetAll(this.context.destination).toPromise();
-        if (breedingMethodsFromDestination && breedingMethodsFromDestination.length) {
-          breedingMethodsFromDestination.forEach((breedingMethod) => {
-            this.breedingMethodsDestByName[breedingMethod.breedingMethodName] = breedingMethod;
-            this.breedingMethodsDestById[breedingMethod.breedingMethodDbId] = breedingMethod;
-          });
-        }
+          await this.applyImportAncestorsSettings(this.germplasm);
 
-        this.applyImportAncestorsSettings(this.germplasm);
+        } else {
+          // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
+          this.germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
+            this.germplasm);
+          // Find germplasm in destination by referenceId (germplasmDbId)
+          this.germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(
+            this.context.destination, this.germplasm);
+        }
 
       } catch (error) {
         this.onError(error);
@@ -409,12 +401,12 @@ export class GermplasmComponent implements OnInit {
   reset(): void {
     this.selectedItems = {};
     this.isSelectAllPages = false;
-    this.breedingMethodsDestByName = {};
-    this.breedingMethodsDestById = {};
-    this.breedingMethodsSourceByName = {};
-    this.breedingMethodsSourceById = {};
-    this.germplasmInDestinationByPUIsTemp = {};
-    this.germplasmInDestinationByReferenceIdsTemp = {};
+    this.germplasmInDestinationByPUIs = {};
+    this.germplasmInDestinationByReferenceIds = {};
+    this.pedigreeMapSource.clear();
+    this.pedigreeMapDestination.clear();
+    this.germplasmWithAncestors = [];
+    this.invalidPedigreeNodes.clear();
     this.isNumberOfGenerationsValid = this.validateNumberOfGenerations();
   }
 
@@ -489,61 +481,57 @@ export class GermplasmComponent implements OnInit {
     modalReference.componentInstance.showSourcePedigreeTree = !isPreviewTarget;
     modalReference.componentInstance.showDestinationPreviewTree = isPreviewTarget;
     modalReference.componentInstance.isAttemptToConnectTargetAncestors = this.isAttemptToConnectTargetAncestors;
+    // Pass the variables required to generate pedigree graph
+    modalReference.componentInstance.germplasmInDestinationByPUIs = this.germplasmInDestinationByPUIs;
+    modalReference.componentInstance.germplasmInDestinationByReferenceIds = this.germplasmInDestinationByReferenceIds;
+    modalReference.componentInstance.germplasmWithAncestors = this.germplasmWithAncestors;
+    modalReference.componentInstance.pedigreeMapSource = this.pedigreeMapSource;
+    modalReference.componentInstance.pedigreeMapDestination = this.pedigreeMapDestination;
+    modalReference.componentInstance.breedingMethodsDestinationById = this.breedingMethodsDestById;
   }
 
   async applyImportAncestorsSettings(germplasm: Germplasm[]): Promise<void> {
 
-    if (!this.isImportAncestors) {
-      return;
-    }
-
-    const invalid = await this.validatePedigreeTree(this.numberOfGenerations, this.germplasm, this.isAttemptToConnectTargetAncestors);
-    this.invalidPedigreeNodes = invalid;
-  }
-
-  async validatePedigreeTree(maximumLevelOfRecursion: number, germplasm: Germplasm[], isAttemptToConnectTargetAncestors: boolean):
-    Promise<Map<string, Array<PedigreeNode>>> {
-
-
     // Retrieve the pedigree of the selected germplasm
     // This will return the pedigree nodes of the germplasm including all their ancestors
-    const pedigreeMapSource: Map<string, PedigreeNode> = await this.pedigreeUtilService.getPedigreeMap(this.context.source, germplasm,
+    this.pedigreeMapSource = await this.pedigreeUtilService.getPedigreeMap(this.context.source, germplasm,
       this.numberOfGenerations);
 
     // Retrieve the details of the germplasm and of their pedigree (ancestors)
-    const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
-      { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
+    this.germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
+      { germplasmDbIds: Array.from(this.pedigreeMapSource.keys()) });
 
     // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
-      germplasmWithAncestors);
+    this.germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchGermplasmByPUIs(this.context.destination,
+      this.germplasmWithAncestors);
     // Find germplasm in destination by referenceId (germplasmDbId)
-    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(this.context.destination,
-      germplasmWithAncestors);
+    this.germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchGermplasmByReferenceIds(
+      this.context.destination, this.germplasmWithAncestors);
 
     // Get the existing germplasm from the target server
     const existingGermplasmFromDestination: Germplasm[] = [];
-    germplasmWithAncestors.forEach(o => {
+    this.germplasmWithAncestors.forEach(o => {
       const existingGermplasm = this.pedigreeUtilService.getMatchingGermplasmInDestination(o,
-        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        this.germplasmInDestinationByPUIs, this.germplasmInDestinationByReferenceIds);
       if (existingGermplasm) {
         existingGermplasmFromDestination.push(existingGermplasm);
       }
     });
 
-    let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
     if (existingGermplasmFromDestination && existingGermplasmFromDestination.length > 0) {
       // Get the pedigree information of the existing germplasm from the target server, we will use
       // this to compare the pedigree of the source to the pedigree of the target.
-      pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
-        this.numberOfGenerations);
+      this.pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination,
+        existingGermplasmFromDestination, this.numberOfGenerations);
     }
 
-    return this.pedigreeUtilService.validatePedigreeTreeNodes(maximumLevelOfRecursion, germplasm, pedigreeMapSource, pedigreeMapDestination,
-      germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds, !isAttemptToConnectTargetAncestors);
+    const invalidPedigreeNodes = this.pedigreeUtilService.validatePedigreeTreeNodes(this.numberOfGenerations, germplasm,
+      this.pedigreeMapSource, this.pedigreeMapDestination, this.germplasmInDestinationByPUIs,
+      this.germplasmInDestinationByReferenceIds, !this.isAttemptToConnectTargetAncestors);
+
+    this.invalidPedigreeNodes = invalidPedigreeNodes;
 
   }
-
 
   hasInvalidPedigreeNodes(germplasmDbId: string, invalidPedigreeNodes: Map<string, Array<PedigreeNode>>): boolean {
     if (!germplasmDbId) {
@@ -602,8 +590,8 @@ export class GermplasmComponent implements OnInit {
         return false;
       } else if (this.isImportAncestors && this.hasInvalidPedigreeNodes(germplasm.germplasmDbId, invalidPedigreeNodes)) {
         return false;
-      } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIsTemp,
-        this.germplasmInDestinationByReferenceIdsTemp)) {
+      } else if (!this.isImportAncestors && this.isGermplasmExistsInDestination(germplasm, this.germplasmInDestinationByPUIs,
+        this.germplasmInDestinationByReferenceIds)) {
         return false;
       }
       return true;
@@ -613,7 +601,7 @@ export class GermplasmComponent implements OnInit {
 
   hasDifferentBreedingMethods(germplasm: any): boolean {
     const germplasmInDestination = this.pedigreeUtilService.getMatchingGermplasmInDestination(germplasm,
-      this.germplasmInDestinationByPUIsTemp, this.germplasmInDestinationByReferenceIdsTemp);
+      this.germplasmInDestinationByPUIs, this.germplasmInDestinationByReferenceIds);
     if (germplasmInDestination) {
       return this.breedingMethodsSourceById[germplasm.breedingMethodDbId].breedingMethodName
         !== this.getDestinationBreedingMethodId(germplasmInDestination);
