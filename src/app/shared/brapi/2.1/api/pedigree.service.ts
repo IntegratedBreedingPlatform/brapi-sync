@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { PedigreeListResponse } from '../model/pedigree-list-response';
 import { PedigreeNode } from '../model/pedigree-node';
 import { PedigreeSearchResponse } from '../model/pedigree-search-response';
+import { getAllRecords } from '../../shared/get-all-records';
 
 @Injectable({
   providedIn: 'root'
@@ -48,6 +49,12 @@ export class PedigreeService {
         observe: 'response'
       }
     );
+  }
+
+  public searchPedigreeSearchResultsDbIdGetAll(basePath: string, searchResultsDbId: string): Observable<PedigreeNode[]> {
+    return getAllRecords<PedigreeNode>((page, pageSize) => {
+      return this.searchPedigreeSearchResultsDbIdGet(basePath, searchResultsDbId, page, pageSize);
+    });
   }
 
   public pedigreePut(basePath: string, body?: { [key: string]: PedigreeNode; }):

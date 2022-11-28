@@ -1,9 +1,14 @@
-import { Context } from './context';
-import { GermplasmListResponseResult } from './germplasm-list-response-result';
 import { Metadata } from './metadata';
+import { ListResponse } from '../../shared/model/list-response';
+import { Germplasm } from './germplasm';
+import { ListResponseResult } from '../../shared/model/list-response-result';
 
-export interface GermplasmListResponse {
-  context?: Context;
+export class GermplasmListResponse implements ListResponse<Germplasm> {
   metadata: Metadata;
-  result: GermplasmListResponseResult;
+  result: ListResponseResult<Germplasm>;
+
+  constructor(metadata: Metadata, result: ListResponseResult<Germplasm>) {
+    this.metadata = metadata;
+    this.result = result;
+  }
 }

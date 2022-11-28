@@ -1,5 +1,5 @@
-import { Context } from './context';
-import { Metadata } from './metadata';
+import { Context } from '../../shared/model/context';
+import { Metadata } from '../../shared/model/metadata';
 import { PedigreeSearchResponseResult } from './pedigree-search-response-result';
 
 export interface PedigreeSearchResponse {

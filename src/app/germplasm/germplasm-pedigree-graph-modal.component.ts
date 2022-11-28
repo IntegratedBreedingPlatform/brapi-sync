@@ -6,8 +6,8 @@ import { ContextService } from '../context.service';
 import { Germplasm } from '../shared/brapi/2.0/model/germplasm';
 import { PedigreeUtilService } from '../shared/pedigree/pedigree-util.service';
 import { GraphNode } from '../shared/pedigree-graph/graph-node';
-import {GermplasmService} from "../shared/brapi/2.0/api/germplasm.service";
-import {BreedingMethod} from "../shared/brapi/2.0/model/breeding-method";
+import { GermplasmService } from '../shared/brapi/2.0/api/germplasm.service';
+import { BreedingMethod } from '../shared/brapi/2.0/model/breeding-method';
 
 @Component({
   selector: 'app-germplasm-pedigree-graph',
@@ -21,6 +21,13 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
   showSourcePedigreeTree = false;
   showDestinationPreviewTree = false;
   isAttemptToConnectTargetAncestors = false;
+
+  germplasmInDestinationByPUIs: { [p: string]: Germplasm } = {};
+  germplasmInDestinationByReferenceIds: { [p: string]: Germplasm } = {};
+  germplasmWithAncestors: Germplasm[] = [];
+  pedigreeMapSource: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
+  pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
+  breedingMethodsDestinationById: { [p: string]: BreedingMethod } = {};
 
   constructor(private activeModal: NgbActiveModal,
               private context: ContextService,
@@ -37,54 +44,25 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
   }
 
   async getGermplasmTreeNode(isPreviewTarget: boolean): Promise<GraphNode | undefined> {
-    // Retrieve the pedigree of the germplasm
-    // This will return the pedigree nodes of the germplasm including all their ancestors
-    const pedigreeMapSource = await this.pedigreeUtilService.getPedigreeMap(this.context.source,
-      [{ germplasmDbId: this.sourceGermplasm.germplasmDbId }],
-      this.numberOfGenerations);
-
-    // Retrieve the details of the germplasm and of their pedigree (ancestors)
-    const germplasmWithAncestors = await this.pedigreeUtilService.searchGermplasm(this.context.source,
-      { germplasmDbIds: Array.from(pedigreeMapSource.keys()) });
-
-    // Find germplasm in destination by Permanent Unique Identifier (germplasmPUI)
-    const germplasmInDestinationByPUIs = await this.pedigreeUtilService.searchInTargetByPUIs(germplasmWithAncestors);
-    // Find germplasm in destination by reference Id (germplasmDbId)
-    const germplasmInDestinationByReferenceIds = await this.pedigreeUtilService.searchInTargetByReferenceIds(germplasmWithAncestors);
 
     // Get the existing germplasm from the target server
     const existingGermplasmFromDestination: Germplasm[] = [];
-    germplasmWithAncestors.forEach(o => {
+    this.germplasmWithAncestors.forEach(o => {
       const existingGermplasm = this.pedigreeUtilService.getMatchingGermplasmInDestination(o,
-        germplasmInDestinationByPUIs, germplasmInDestinationByReferenceIds);
+        this.germplasmInDestinationByPUIs, this.germplasmInDestinationByReferenceIds);
       if (existingGermplasm) {
         existingGermplasmFromDestination.push(existingGermplasm);
       }
     });
 
-    let pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
-    if (existingGermplasmFromDestination && existingGermplasmFromDestination.length > 0) {
-      // Get the pedigree information of the existing germplasm from the target server, we will use
-      // this to compare the pedigree of the source to the pedigree of the target.
-      pedigreeMapDestination = await this.pedigreeUtilService.getPedigreeMap(this.context.destination, existingGermplasmFromDestination,
-        this.numberOfGenerations);
-    }
-
     if (this.sourceGermplasm?.germplasmDbId) {
       if (isPreviewTarget) {
-        const breedingMethodsFromDestination = await this.germplasmService.breedingmethodsGet(this.context.destination).toPromise();
-        const breedingMethodsDestinationById: { [p: string]: BreedingMethod } = {};
-        if (breedingMethodsFromDestination.body && breedingMethodsFromDestination.body.result.data) {
-          breedingMethodsFromDestination.body.result.data.forEach((breedingMethod) => {
-            breedingMethodsDestinationById[breedingMethod.breedingMethodDbId] = breedingMethod;
-          });
-        }
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
-          this.isAttemptToConnectTargetAncestors, pedigreeMapSource, pedigreeMapDestination, germplasmInDestinationByPUIs,
-          germplasmInDestinationByReferenceIds, breedingMethodsDestinationById);
+          this.isAttemptToConnectTargetAncestors, this.pedigreeMapSource, this.pedigreeMapDestination, this.germplasmInDestinationByPUIs,
+          this.germplasmInDestinationByReferenceIds, this.breedingMethodsDestinationById);
       } else {
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
-          this.isAttemptToConnectTargetAncestors, pedigreeMapSource);
+          this.isAttemptToConnectTargetAncestors, this.pedigreeMapSource);
       }
     }
     return;
