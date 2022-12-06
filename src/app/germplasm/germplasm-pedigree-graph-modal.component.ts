@@ -28,6 +28,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
   pedigreeMapSource: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
   pedigreeMapDestination: Map<string, PedigreeNode> = new Map<string, PedigreeNode>();
   breedingMethodsDestinationById: { [p: string]: BreedingMethod } = {};
+  breedingMethodsDestByName: { [p: string]: BreedingMethod } = {};
 
   constructor(private activeModal: NgbActiveModal,
               private context: ContextService,
@@ -59,7 +60,7 @@ export class GermplasmPedigreeGraphModalComponent implements OnInit {
       if (isPreviewTarget) {
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
           this.isAttemptToConnectTargetAncestors, this.pedigreeMapSource, this.pedigreeMapDestination, this.germplasmInDestinationByPUIs,
-          this.germplasmInDestinationByReferenceIds, this.breedingMethodsDestinationById);
+          this.germplasmInDestinationByReferenceIds, this.breedingMethodsDestinationById, this.breedingMethodsDestByName);
       } else {
         return this.pedigreeUtilService.generateGermplasmTreeGraphNode(this.sourceGermplasm?.germplasmDbId, this.numberOfGenerations,
           this.isAttemptToConnectTargetAncestors, this.pedigreeMapSource);
