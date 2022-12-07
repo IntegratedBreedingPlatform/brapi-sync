@@ -45,7 +45,7 @@
           </app-collapsible>
           <app-collapsible heading="Germplasm Mapping" *ngIf="germplasm.length && !isLoading && isNumberOfGenerationsValid">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()">
+              <input class="form-check-input" type="checkbox" value="" id="selectAll" (click)="onSelectAllPages()" [checked]="isSelectAllPages">
               <label class="form-check-label" for="selectAll">
                 Select all
               </label>
@@ -95,7 +95,7 @@
                               [maxSize]="15" [rotate]="true" [boundaryLinks]="true">
               </ngb-pagination>
 
-              <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="load()">
+              <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChanged()">
                 <option [ngValue]="5">5</option>
                 <option [ngValue]="20">20</option>
                 <option [ngValue]="50">50</option>

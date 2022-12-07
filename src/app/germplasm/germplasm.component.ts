@@ -350,8 +350,16 @@ export class GermplasmComponent implements OnInit {
 
   onStudySelect(): void {
     if (this.context.sourceStudy && this.context.sourceStudy.studyDbId) {
+      this.page = 1;
+
+      this.cleanItemsSelection();
       this.load();
     }
+  }
+
+  onPageSizeChanged(): void {
+    this.cleanItemsSelection();
+    this.load();
   }
 
   async load(): Promise<void> {
@@ -398,9 +406,12 @@ export class GermplasmComponent implements OnInit {
     return true;
   }
 
-  reset(): void {
+  cleanItemsSelection(): void {
     this.selectedItems = {};
     this.isSelectAllPages = false;
+  }
+
+  reset(): void {
     this.germplasmInDestinationByPUIs = {};
     this.germplasmInDestinationByReferenceIds = {};
     this.pedigreeMapSource.clear();
