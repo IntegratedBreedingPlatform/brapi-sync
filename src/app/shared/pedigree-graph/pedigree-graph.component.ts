@@ -136,6 +136,7 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
     }
     if (graphNode.germplasmDbId === '0') {
       dot.push(`"${graphNode.germplasmDbId}" [shape=box, style=dashed];\n`);
+      name += `>`;
     } else {
       name += `<FONT>ID: ${graphNode.germplasmDbId}</FONT>`;
       dot.push(`"${graphNode.germplasmDbId}" [shape="box" ${this.getNodeColor(graphNode)}];\n`);
