@@ -488,7 +488,8 @@ export class PedigreeUtilService {
       germplasmTreeNode = new GraphNode(pedigreeNode?.germplasmDbId, pedigreeNode?.germplasmName);
       germplasmTreeNode.isDerivative = this.isDerivative(pedigreeNode);
       germplasmTreeNode.isMismatched = isMismatched;
-      germplasmTreeNode.methodName = this.getBreedingMethodNameByName(breedingMethodsDestByName, pedigreeNode.breedingMethodName);
+      germplasmTreeNode.methodName =
+        this.getBreedingMethodNameByName(breedingMethodsDestByName, pedigreeNode.breedingMethodName, germplasmTreeNode);
       if (existingGermplasmInDestination && existingGermplasmInDestination?.germplasmDbId
         && existingGermplasmInDestination?.germplasmName) {
         // If the germplasm already exists, show the germplasmDbId and germplasm name of the existing germplasm in destination
@@ -509,10 +510,13 @@ export class PedigreeUtilService {
     return undefined;
   }
 
-  getBreedingMethodNameByName(breedingMethodsDestByName: any, breedingMethodName: any): string {
+  getBreedingMethodNameByName(breedingMethodsDestByName: any, breedingMethodName: any, node: any): string {
     if (breedingMethodsDestByName && breedingMethodName) {
-      return breedingMethodsDestByName[breedingMethodName] ? breedingMethodsDestByName[breedingMethodName].breedingMethodName :
-        '-';
+      if (breedingMethodsDestByName[breedingMethodName]) {
+        return breedingMethodsDestByName[breedingMethodName].breedingMethodName;
+      } else {
+        node.isBreedingMethodExisting = false;
+      }
     }
     return breedingMethodName;
   }

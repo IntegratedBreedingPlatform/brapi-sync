@@ -127,25 +127,27 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
 
   createNodeTextWithFormatting(dot: string[], graphNode: GraphNode): string {
 
-    const name: string[] = [];
+    let name = '';
 
     if (graphNode.preferredName) {
       const preferredName = graphNode.preferredName.length > this.MAX_NAME_DISPLAY_SIZE
         ? graphNode.preferredName.substring(0, this.MAX_NAME_DISPLAY_SIZE) + '...' : graphNode.preferredName;
-      name.push(preferredName + '\n');
+      name = `<<FONT>${preferredName}</FONT><BR/>`;
     }
     if (graphNode.germplasmDbId === '0') {
       dot.push(`"${graphNode.germplasmDbId}" [shape=box, style=dashed];\n`);
     } else {
-      name.push('ID: ' + graphNode.germplasmDbId);
+      name += `<FONT>ID: ${graphNode.germplasmDbId}</FONT>`;
       dot.push(`"${graphNode.germplasmDbId}" [shape="box" ${this.getNodeColor(graphNode)}];\n`);
       if (this.includeBreedingMethod && graphNode.methodName) {
-        name.push(`\n\n${graphNode.methodName}`);
+        if (graphNode.isBreedingMethodExisting) {
+          name += `<BR/><BR/><FONT>${graphNode.methodName}</FONT>>`;
+        } else {
+          name += `<BR/><BR/><FONT COLOR="RED">${graphNode.methodName}</FONT>>`;
+        }
       }
     }
-    dot.push(`"${graphNode.germplasmDbId}" [label="${name.join('')}", tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0,` +
-      ` ordering="in"];\n`);
-
+    dot.push(`"${graphNode.germplasmDbId}" [label=${name}, tooltip="${graphNode.preferredName}", fontname="Helvetica", fontsize=12.0, ordering="in"];\n`);
     return `"${graphNode.germplasmDbId}"`;
   }
 
