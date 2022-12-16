@@ -1,6 +1,6 @@
 {
   "name": "@ibp/brapi-sync",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "Synchronize BrAPI enabled instances",
   "dependencies": {
     "@angular/animations": "~11.2.4",
