@@ -16,8 +16,6 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
   @Input() colorizeNodes = false;
   @Input() graphId = 'pedigree-graph';
 
-  includeDerivativeLines = false;
-  includeBreedingMethod = true;
   graphviz: Graphviz<any, any, any, any> | undefined;
 
   MAX_NAME_DISPLAY_SIZE = 30;
@@ -140,7 +138,7 @@ export class PedigreeGraphComponent implements OnInit, AfterViewInit {
     } else {
       name += `<FONT>ID: ${graphNode.germplasmDbId}</FONT>`;
       dot.push(`"${graphNode.germplasmDbId}" [shape="box" ${this.getNodeColor(graphNode)}];\n`);
-      if (this.includeBreedingMethod && graphNode.methodName) {
+      if (graphNode.methodName) {
         if (graphNode.isBreedingMethodExisting) {
           name += `<BR/><BR/><FONT>${graphNode.methodName}</FONT>>`;
         } else {
