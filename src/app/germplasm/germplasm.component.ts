@@ -499,6 +499,7 @@ export class GermplasmComponent implements OnInit {
     modalReference.componentInstance.pedigreeMapSource = this.pedigreeMapSource;
     modalReference.componentInstance.pedigreeMapDestination = this.pedigreeMapDestination;
     modalReference.componentInstance.breedingMethodsDestinationById = this.breedingMethodsDestById;
+    modalReference.componentInstance.breedingMethodsDestByName = this.breedingMethodsDestByName;
   }
 
   async applyImportAncestorsSettings(germplasm: Germplasm[]): Promise<void> {
@@ -538,7 +539,7 @@ export class GermplasmComponent implements OnInit {
 
     const invalidPedigreeNodes = this.pedigreeUtilService.validatePedigreeTreeNodes(this.numberOfGenerations, germplasm,
       this.pedigreeMapSource, this.pedigreeMapDestination, this.germplasmInDestinationByPUIs,
-      this.germplasmInDestinationByReferenceIds, !this.isAttemptToConnectTargetAncestors);
+      this.germplasmInDestinationByReferenceIds, !this.isAttemptToConnectTargetAncestors, this.breedingMethodsDestByName);
 
     this.invalidPedigreeNodes = invalidPedigreeNodes;
 
