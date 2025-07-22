@@ -10,7 +10,8 @@ export class GraphNode {
     public isDerivative: boolean = false,
     public isExistingInTarget: boolean = false,
     public isMismatched: boolean = false,
-    public isBreedingMethodExisting: boolean = true
+    public isBreedingMethodExisting: boolean = true,
+    public isMale?: boolean
   ) {
   }
 }
